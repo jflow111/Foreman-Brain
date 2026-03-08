@@ -11,8 +11,6 @@
 <meta name="theme-color" content="#080b0e" />
 <meta name="description" content="AI Electrical Estimating System — Master Electrician Mode" />
 <title>Foreman Brain — AI Electrical Estimating</title>
-<link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Foreman Brain%22,%22short_name%22:%22Foreman%22,%22description%22:%22AI Electrical Estimating System%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23080b0e%22,%22theme_color%22:%22%23080b0e%22,%22orientation%22:%22portrait-primary%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23080b0e'/%3E%3Cpolygon points='256,40 472,156 472,356 256,472 40,356 40,156' fill='%23f0a500'/%3E%3Ctext x='256' y='320' font-size='200' text-anchor='middle' fill='%23080b0e'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22512x512%22,%22type%22:%22image/svg+xml%22,%22purpose%22:%22any maskable%22}]}" />
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%23080b0e'/><polygon points='256,40 472,156 472,356 256,472 40,356 40,156' fill='%23f0a500'/><text x='256' y='320' font-size='200' text-anchor='middle' fill='%23080b0e'>⚡</text></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet" />
 <style>
@@ -25,7 +23,6 @@
     --amber: #f0a500;
     --amber-dim: #a37010;
     --amber-glow: rgba(240,165,0,0.12);
-    --cyan: #00c8c8;
     --red: #e05050;
     --green: #3db87a;
     --text: #c8d4dc;
@@ -38,8 +35,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: var(--body); min-height: 100vh; overflow-x: hidden; }
   body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px); pointer-events:none; z-index:9999; }
-
-  .header { background:var(--surface); border-bottom:2px solid var(--amber); padding:0 32px; height:64px; display:flex; align-items:center; gap:20px; position:sticky; top:0; z-index:100; box-shadow:0 4px 40px rgba(240,165,0,0.08); padding-top:max(0px,env(safe-area-inset-top)); padding-left:max(32px,calc(32px + env(safe-area-inset-left))); padding-right:max(32px,calc(32px + env(safe-area-inset-right))); }
+  .header { background:var(--surface); border-bottom:2px solid var(--amber); padding:0 32px; height:64px; display:flex; align-items:center; gap:20px; position:sticky; top:0; z-index:100; box-shadow:0 4px 40px rgba(240,165,0,0.08); }
   .header-logo { width:40px; height:40px; background:var(--amber); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; animation:pulse-logo 3s ease-in-out infinite; }
   @keyframes pulse-logo { 0%,100%{box-shadow:0 0 0 0 rgba(240,165,0,0.4)} 50%{box-shadow:0 0 0 8px rgba(240,165,0,0)} }
   .header-title { font-family:var(--display); font-size:26px; font-weight:900; letter-spacing:4px; color:var(--amber); text-transform:uppercase; }
@@ -47,9 +43,7 @@
   .header-status { margin-left:auto; display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:10px; color:var(--text-dim); }
   .status-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:blink 2s ease-in-out infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-  .main { max-width:1200px; margin:0 auto; padding:36px 24px 80px; padding-left:max(24px,calc(24px + env(safe-area-inset-left))); padding-right:max(24px,calc(24px + env(safe-area-inset-right))); padding-bottom:max(80px,calc(80px + env(safe-area-inset-bottom))); }
-
+  .main { max-width:1200px; margin:0 auto; padding:36px 24px 80px; }
   .input-panel { background:var(--surface); border:1px solid var(--border); border-radius:2px; overflow:hidden; margin-bottom:28px; position:relative; }
   .input-panel::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,var(--amber),transparent); }
   .panel-header { background:var(--surface2); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; gap:10px; }
@@ -70,7 +64,6 @@
   @keyframes slide-loading { to{left:100%} }
   .btn-clear { font-family:var(--mono); font-size:11px; color:var(--text-muted); background:transparent; border:1px solid var(--border); border-radius:2px; padding:11px 20px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
   .btn-clear:hover { color:var(--red); border-color:var(--red); }
-
   .loading-panel { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:60px 32px; text-align:center; margin-bottom:28px; }
   .loading-hex { width:72px; height:72px; background:var(--amber-glow); border:2px solid var(--amber); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 24px; animation:spin 2s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg)} }
@@ -79,9 +72,7 @@
   .loading-step { font-family:var(--mono); font-size:10px; color:var(--text-muted); letter-spacing:1px; animation:step-fade 2.4s ease-in-out infinite; }
   .loading-step:nth-child(2){animation-delay:0.4s} .loading-step:nth-child(3){animation-delay:0.8s} .loading-step:nth-child(4){animation-delay:1.2s} .loading-step:nth-child(5){animation-delay:1.6s} .loading-step:nth-child(6){animation-delay:2.0s}
   @keyframes step-fade { 0%,100%{color:var(--text-muted)} 50%{color:var(--amber)} }
-
   .error-box { background:rgba(224,80,80,0.08); border:1px solid var(--red); border-radius:2px; padding:14px 20px; font-family:var(--mono); font-size:12px; color:var(--red); margin-bottom:24px; }
-
   .cost-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1.4fr; gap:12px; margin-bottom:24px; }
   .cost-card { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:16px 18px; position:relative; overflow:hidden; animation:card-in 0.4s ease both; }
   .cost-card:nth-child(1){animation-delay:0.05s} .cost-card:nth-child(2){animation-delay:0.1s} .cost-card:nth-child(3){animation-delay:0.15s} .cost-card:nth-child(4){animation-delay:0.2s}
@@ -93,25 +84,19 @@
   .cost-value { font-family:var(--display); font-size:26px; font-weight:700; color:var(--text); letter-spacing:1px; }
   .cost-card.total .cost-value { font-size:30px; color:var(--amber); }
   .cost-sub { font-family:var(--mono); font-size:9px; color:var(--text-muted); margin-top:6px; }
-
   .tabs-bar { display:flex; gap:2px; border-bottom:2px solid var(--border); }
   .tab-btn { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--text-muted); background:transparent; border:1px solid transparent; border-bottom:none; padding:10px 20px; cursor:pointer; text-transform:uppercase; transition:all 0.15s; border-radius:2px 2px 0 0; position:relative; top:2px; }
   .tab-btn:hover { color:var(--text-dim); }
   .tab-btn.active { color:var(--amber); background:var(--surface); border-color:var(--border); border-bottom:2px solid var(--surface); }
-
   .tab-content { background:var(--surface); border:1px solid var(--border); border-top:none; border-radius:0 0 2px 2px; padding:28px; min-height:320px; animation:fade-in 0.2s ease; }
   @keyframes fade-in { from{opacity:0} to{opacity:1} }
-
   .section-label { font-family:var(--mono); font-size:10px; color:var(--amber); letter-spacing:2px; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
   .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
-
   .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
   .summary-card { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:16px; }
   .summary-card-label { font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:2px; margin-bottom:8px; text-transform:uppercase; }
   .summary-card-value { font-size:13px; color:var(--text); line-height:1.7; font-family:var(--body); font-weight:300; }
-
   .logic-box { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:22px; font-family:var(--body); font-size:13px; font-weight:300; color:var(--text); line-height:1.9; white-space:pre-wrap; }
-
   .materials-table { width:100%; border-collapse:collapse; font-size:12px; }
   .materials-table thead tr { border-bottom:1px solid var(--amber); }
   .materials-table th { font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:2px; padding:8px 12px; text-align:left; font-weight:normal; }
@@ -127,7 +112,6 @@
   .tfoot-raw-val { text-align:right; color:var(--amber); font-size:16px; font-family:var(--display); font-weight:700; }
   .tfoot-markup { color:var(--text-dim); font-size:9px; }
   .tfoot-markup-val { text-align:right; color:var(--text); font-family:var(--mono); font-size:12px; }
-
   .labor-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
   .breakdown-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
   .breakdown-label { font-family:var(--body); font-size:13px; color:var(--text-dim); font-weight:300; }
@@ -139,54 +123,19 @@
   .hours-big { font-family:var(--display); font-size:72px; font-weight:900; color:var(--amber); line-height:1; }
   .hours-unit { font-family:var(--mono); font-size:11px; color:var(--text-dim); letter-spacing:2px; margin-top:8px; }
   .hours-rate { font-family:var(--mono); font-size:10px; color:var(--text-muted); margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
-
   .proposal-box { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:32px; font-family:var(--body); font-size:14px; color:var(--text); line-height:2; font-weight:300; white-space:pre-wrap; min-height:200px; }
   .proposal-actions { display:flex; gap:10px; margin-top:16px; }
   .btn-action { font-family:var(--mono); font-size:10px; color:var(--text-dim); background:transparent; border:1px solid var(--border); border-radius:2px; padding:9px 18px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
   .btn-action:hover { color:var(--amber); border-color:var(--amber); }
   .btn-action.copied { color:var(--green); border-color:var(--green); }
-  .exclusions { margin-top:24px; padding:14px 18px; background:var(--surface2); border-left:3px solid var(--border2); font-family:var(--mono); font-size:10px; color:var(--text-muted); line-height:1.8; letter-spacing:0.5px; }
-
-  .mobile-fab { display:none; position:fixed; bottom:max(24px,calc(24px + env(safe-area-inset-bottom))); right:max(20px,calc(20px + env(safe-area-inset-right))); z-index:200; }
+  .exclusions { margin-top:24px; padding:14px 18px; background:var(--surface2); border-left:3px solid var(--border2); font-family:var(--mono); font-size:10px; color:var(--text-muted); line-height:1.8; }
+  .mobile-fab { display:none; position:fixed; bottom:24px; right:20px; z-index:200; }
   .fab-btn { width:64px; height:64px; border-radius:50%; background:var(--amber); border:none; font-size:26px; cursor:pointer; box-shadow:0 4px 28px rgba(240,165,0,0.55); display:flex; align-items:center; justify-content:center; transition:transform 0.15s; color:#080b0e; }
   .fab-btn:active { transform:scale(0.91); }
   button { -webkit-tap-highlight-color:transparent; user-select:none; }
   html { scroll-behavior:smooth; }
-
-  @media (max-width:800px) {
-    .cost-grid { grid-template-columns:1fr 1fr; }
-    .summary-grid { grid-template-columns:1fr; }
-    .labor-grid { grid-template-columns:1fr; }
-    .header-title { font-size:20px; }
-    .tab-btn { padding:10px 12px; font-size:9px; }
-  }
-  @media (max-width:600px) {
-    .tab-btn { padding:13px 10px; font-size:8px; letter-spacing:1px; }
-    .qf-btn { padding:8px 14px; font-size:11px; }
-    .btn-estimate { padding:15px 24px; font-size:14px; width:100%; }
-    .btn-clear { padding:14px 16px; width:100%; }
-    .input-actions { flex-direction:column; }
-    .header { height:auto; padding-top:max(14px,calc(14px + env(safe-area-inset-top))); padding-bottom:14px; }
-    .header-status { display:none; }
-    .header-title { font-size:22px; }
-    .cost-grid { grid-template-columns:1fr 1fr; }
-    .cost-value { font-size:20px; }
-    .cost-card.total .cost-value { font-size:22px; }
-    .tab-content { padding:18px; }
-    .summary-grid { grid-template-columns:1fr; }
-    .labor-grid { grid-template-columns:1fr; }
-    .hours-big { font-size:56px; }
-    .proposal-actions { flex-direction:column; }
-    .btn-action { text-align:center; padding:13px; }
-    .mobile-fab { display:flex; }
-  }
-  @media print {
-    body::before { display:none; }
-    .header { position:relative; }
-    .input-panel { display:none; }
-    .tabs-bar { display:none; }
-    .tab-content { border:none; padding:0; }
-  }
+  @media (max-width:800px) { .cost-grid{grid-template-columns:1fr 1fr} .summary-grid{grid-template-columns:1fr} .labor-grid{grid-template-columns:1fr} .header-title{font-size:20px} .tab-btn{padding:10px 12px;font-size:9px} }
+  @media (max-width:600px) { .tab-btn{padding:13px 10px;font-size:8px;letter-spacing:1px} .btn-estimate{padding:15px 24px;font-size:14px;width:100%} .btn-clear{padding:14px 16px;width:100%} .input-actions{flex-direction:column} .header{height:auto;padding-top:14px;padding-bottom:14px} .header-status{display:none} .cost-grid{grid-template-columns:1fr 1fr} .tab-content{padding:18px} .hours-big{font-size:56px} .mobile-fab{display:flex} }
 </style>
 </head>
 <body>
@@ -210,7 +159,7 @@
       <span class="panel-badge">FIELD NOTES / DESCRIPTION / SCOPE</span>
     </div>
     <div class="input-body">
-      <textarea class="job-textarea" id="jobInput" placeholder="Describe the job. Be as specific or vague as needed — Foreman Brain will fill in the gaps.&#10;&#10;Examples: &quot;50A EV charger in garage, 80ft from panel&quot; or &quot;I need power for my welder in the shop&quot; or &quot;replace 100A panel with 200A service&quot;"></textarea>
+      <textarea class="job-textarea" id="jobInput" placeholder="Describe the job. Be as specific or vague as needed.&#10;&#10;Examples: 50A EV charger in garage, 80ft from panel | replace 100A panel with 200A service | add dedicated circuit for welder"></textarea>
       <div class="quick-fills">
         <button class="qf-btn" onclick="fillExample('50A EV charger in attached garage, approximately 60 feet from main panel. Panel is in the basement.')">▸ EV Charger</button>
         <button class="qf-btn" onclick="fillExample('200A service upgrade to replace existing 100A panel. House is 1970s construction, currently have 20 circuits.')">▸ Panel Upgrade</button>
@@ -267,56 +216,9 @@
 </div>
 
 <script>
-const SYSTEM_PROMPT = `You are Foreman Brain, an AI electrical estimating system designed to think and operate like a licensed master electrician and experienced electrical contractor.
+var SYSTEM_PROMPT = "You are Foreman Brain, an AI electrical estimating system designed to think and operate like a licensed master electrician and experienced electrical contractor. Your purpose is to convert job descriptions into a realistic electrical estimate package. You must reason internally like a master electrician planning a job before producing the final estimate. CORE IDENTITY: Master electrician, 20+ years experience, residential and light commercial. WORKFLOW: Step 1 - Job Intake: Determine job type, scope, assumptions. Step 2 - Code Logic: Circuit size, conductor, breaker, NEC requirements. Step 3 - Material Takeoff: COMPLETE list, every part including small parts (connectors, staples, wirenuts, straps, bushings, plates, grounding hardware). Never skip small parts. Step 4 - Pricing: Raw Material Total x 1.35 = Marked-Up Cost. Step 5 - Labor: Hours x $100/hr. Adjust for difficulty. Step 6 - Proposal: Professional, customer-ready. CONDUCTOR SIZING: 15A=14AWG, 20A=12AWG, 30A=10AWG, 40A=8AWG, 50A=6AWG. ASSUMPTIONS (when unknown): Residential wood-frame, standard drywall, normal access, short run=25-50ft, medium=50-100ft, long=100-150ft. FORMULAS: rawMaterialCost = sum of all materialTakeoff totalCost values. markedUpMaterialCost = rawMaterialCost x 1.35. laborCost = laborHours x 100. totalEstimate = markedUpMaterialCost + laborCost. EXCLUSIONS: drywall patching, painting, trenching, permit fees, utility coordination. CRITICAL: Return ONLY raw JSON. No markdown. No backticks. No explanation. Just the JSON object: {\"projectSummary\":{\"jobType\":\"string\",\"customerRequest\":\"string\",\"observedConditions\":\"string\",\"assumedConditions\":\"string\"},\"installationLogic\":\"string\",\"materialTakeoff\":[{\"item\":\"string\",\"qty\":\"string\",\"unitCost\":0,\"totalCost\":0}],\"laborHours\":0,\"rawMaterialCost\":0,\"markedUpMaterialCost\":0,\"laborCost\":0,\"totalEstimate\":0,\"customerProposal\":\"string\"}";
 
-Your purpose is to convert job descriptions into a realistic electrical estimate package.
-
-You must reason internally like a master electrician planning a job before producing the final estimate.
-
-CORE IDENTITY: Master electrician, 20+ years experience, residential and light commercial.
-
-WORKFLOW:
-Step 1 - Job Intake: Determine job type, scope, assumptions.
-Step 2 - Code Logic: Circuit size, conductor, breaker, NEC requirements.
-Step 3 - Material Takeoff: COMPLETE list — every part including small parts (connectors, staples, wirenuts, straps, bushings, plates, grounding hardware). Never skip small parts.
-Step 4 - Pricing: Raw Material Total x 1.35 = Marked-Up Cost
-Step 5 - Labor: Hours x $100/hr. Adjust for difficulty.
-Step 6 - Proposal: Professional, customer-ready.
-
-CONDUCTOR SIZING: 15A=14AWG, 20A=12AWG, 30A=10AWG, 40A=8AWG, 50A=6AWG, 100A feeder=2AWG Cu or 1/0 Al
-
-ASSUMPTIONS (when unknown): Residential wood-frame, standard drywall, normal access, short run=25-50ft, medium=50-100ft, long=100-150ft
-
-FORMULAS:
-rawMaterialCost = sum of all materialTakeoff totalCost values
-markedUpMaterialCost = rawMaterialCost x 1.35
-laborCost = laborHours x 100
-totalEstimate = markedUpMaterialCost + laborCost
-
-EXCLUSIONS: drywall patching, painting, trenching, permit fees, utility coordination.
-
-CRITICAL: Return ONLY raw JSON. No markdown. No backticks. No explanation. Just the JSON object.
-
-{
-  "projectSummary": {
-    "jobType": "string",
-    "customerRequest": "string",
-    "observedConditions": "string",
-    "assumedConditions": "string"
-  },
-  "installationLogic": "string",
-  "materialTakeoff": [
-    { "item": "string", "qty": "string", "unitCost": 0, "totalCost": 0 }
-  ],
-  "laborHours": 0,
-  "rawMaterialCost": 0,
-  "markedUpMaterialCost": 0,
-  "laborCost": 0,
-  "totalEstimate": 0,
-  "customerProposal": "string"
-}`;
-
-let currentEstimate = null;
+var currentEstimate = null;
 
 function fillExample(text) {
   document.getElementById('jobInput').value = text;
@@ -354,9 +256,8 @@ async function runEstimate() {
   document.getElementById('errorBox').style.display = 'none';
   document.getElementById('results').style.display = 'none';
   document.getElementById('loadingPanel').style.display = 'block';
-
   try {
-    var response = await fetch(var response = await fetch('https://foreman-brain.onrender.com/estimate', {
+    var response = await fetch('https://foreman-brain.onrender.com/estimate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -367,7 +268,7 @@ async function runEstimate() {
       })
     });
     var data = await response.json();
-    var raw = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
     var cleaned = raw.replace(/```json/g,'').replace(/```/g,'').trim();
     var parsed;
     try {
@@ -456,7 +357,7 @@ function switchTab(name, btn) {
     var el = document.getElementById('tab-' + t);
     if (el) el.style.display = 'none';
   });
-  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
   var pane = document.getElementById('tab-' + name);
   if (pane) pane.style.display = 'block';
   if (btn) btn.classList.add('active');
@@ -474,9 +375,9 @@ function printProposal() {
   if (!currentEstimate) return;
   var win = window.open('', '_blank');
   win.document.write('<html><head><title>Electrical Estimate</title><style>body{font-family:Georgia,serif;font-size:14px;line-height:1.8;padding:60px;color:#222;max-width:800px;margin:0 auto;}pre{white-space:pre-wrap;font-family:Georgia,serif;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #ddd;font-size:12px;}</style></head><body>');
-  win.document.write('<h2 style="margin-bottom:4px;">Electrical Estimate</h2><p style="color:#888;font-size:12px;margin-bottom:40px;">Generated by Foreman Brain</p>');
+  win.document.write('<h2>Electrical Estimate</h2><p style="color:#888;font-size:12px;margin-bottom:40px;">Generated by Foreman Brain</p>');
   win.document.write('<pre>' + (currentEstimate.customerProposal||'') + '</pre>');
-  win.document.write('<table style="margin-top:30px;border-top:2px solid #222;padding-top:20px;"><tr><th>Materials (with markup)</th><td>' + fmt(currentEstimate.markedUpMaterialCost) + '</td></tr><tr><th>Labor (' + currentEstimate.laborHours + ' hrs)</th><td>' + fmt(currentEstimate.laborCost) + '</td></tr><tr><th>Total Estimate</th><td><strong>' + fmt(currentEstimate.totalEstimate) + '</strong></td></tr></table>');
+  win.document.write('<table style="margin-top:30px;"><tr><th>Materials (with markup)</th><td>' + fmt(currentEstimate.markedUpMaterialCost) + '</td></tr><tr><th>Labor (' + currentEstimate.laborHours + ' hrs)</th><td>' + fmt(currentEstimate.laborCost) + '</td></tr><tr><th>Total Estimate</th><td><strong>' + fmt(currentEstimate.totalEstimate) + '</strong></td></tr></table>');
   win.document.write('</body></html>');
   win.document.close();
   win.print();
@@ -490,30 +391,11 @@ document.getElementById('jobInput').addEventListener('focus', function() {
   var fab = document.getElementById('mobileFab');
   if (fab) { fab.style.opacity='0'; fab.style.pointerEvents='none'; }
 });
+
 document.getElementById('jobInput').addEventListener('blur', function() {
   var fab = document.getElementById('mobileFab');
   if (fab) { fab.style.opacity='1'; fab.style.pointerEvents='auto'; }
 });
-
-// PWA install prompt
-window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
-  window._deferredInstall = e;
-  if (document.getElementById('installBanner')) return;
-  var banner = document.createElement('div');
-  banner.id = 'installBanner';
-  banner.style.cssText = 'position:fixed;bottom:120px;right:16px;background:#0e1318;border:1px solid #f0a500;border-radius:4px;padding:14px 18px;font-family:monospace;font-size:11px;color:#f0a500;z-index:300;max-width:240px;box-shadow:0 8px 32px rgba(0,0,0,0.6);';
-  var t = document.createElement('div'); t.style.marginBottom='8px'; t.style.letterSpacing='1px'; t.textContent='+ ADD TO HOME SCREEN'; banner.appendChild(t);
-  var d = document.createElement('div'); d.style.cssText='color:#6a7d8a;font-size:10px;margin-bottom:12px;line-height:1.6;'; d.textContent='Install Foreman Brain for fast access from your home screen.'; banner.appendChild(d);
-  var row = document.createElement('div'); row.style.cssText='display:flex;gap:8px;';
-  var ib = document.createElement('button'); ib.textContent='INSTALL'; ib.style.cssText='flex:1;background:#f0a500;color:#080b0e;border:none;border-radius:2px;padding:9px;font-size:10px;cursor:pointer;font-weight:bold;letter-spacing:1px;';
-  ib.addEventListener('click', function() { if(window._deferredInstall){ window._deferredInstall.prompt(); window._deferredInstall.userChoice.then(function(){ window._deferredInstall=null; banner.remove(); }); } });
-  var cb = document.createElement('button'); cb.textContent='X'; cb.style.cssText='background:transparent;color:#3a4a55;border:1px solid #1e2830;border-radius:2px;padding:9px 12px;font-size:10px;cursor:pointer;';
-  cb.addEventListener('click', function(){ banner.remove(); });
-  row.appendChild(ib); row.appendChild(cb); banner.appendChild(row);
-  document.body.appendChild(banner);
-});
 </script>
 </body>
 </html>
-
