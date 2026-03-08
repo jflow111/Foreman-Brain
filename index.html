@@ -268,7 +268,8 @@ async function runEstimate() {
       })
     });
     var data = await response.json();
-    var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
+    console.log('Server response:', JSON.stringify(data));
+var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
     var cleaned = raw.replace(/```json/g,'').replace(/```/g,'').trim();
     var parsed;
     try {
@@ -399,3 +400,4 @@ document.getElementById('jobInput').addEventListener('blur', function() {
 </script>
 </body>
 </html>
+
