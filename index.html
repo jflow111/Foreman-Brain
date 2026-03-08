@@ -356,7 +356,7 @@ async function runEstimate() {
   document.getElementById('loadingPanel').style.display = 'block';
 
   try {
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch(var response = await fetch('https://foreman-brain.onrender.com/estimate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -516,3 +516,4 @@ window.addEventListener('beforeinstallprompt', function(e) {
 </script>
 </body>
 </html>
+
