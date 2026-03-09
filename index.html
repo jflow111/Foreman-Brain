@@ -155,22 +155,22 @@
 <div class="main">
   <div class="input-panel">
     <div class="panel-header">
-      <span class="panel-label">▸ JOB INPUT</span>
+      <span class="panel-label">&#9658; JOB INPUT</span>
       <span class="panel-badge">FIELD NOTES / DESCRIPTION / SCOPE</span>
     </div>
     <div class="input-body">
       <textarea class="job-textarea" id="jobInput" placeholder="Describe the job. Be as specific or vague as needed.&#10;&#10;Examples: 50A EV charger in garage, 80ft from panel | replace 100A panel with 200A service | add dedicated circuit for welder"></textarea>
       <div class="quick-fills">
-        <button class="qf-btn" onclick="fillExample('50A EV charger in attached garage, approximately 60 feet from main panel. Panel is in the basement.')">▸ EV Charger</button>
-        <button class="qf-btn" onclick="fillExample('200A service upgrade to replace existing 100A panel. House is 1970s construction, currently have 20 circuits.')">▸ Panel Upgrade</button>
-        <button class="qf-btn" onclick="fillExample('Add a dedicated 20A circuit for a new refrigerator in the garage. About 40 feet from the panel.')">▸ Dedicated Circuit</button>
-        <button class="qf-btn" onclick="fillExample('Install a 60A subpanel in the detached garage. Garage is 80 feet from the main house panel.')">▸ Subpanel</button>
-        <button class="qf-btn" onclick="fillExample('240V circuit for a new hot tub on the back deck. Need GFCI disconnect. About 50 feet from panel.')">▸ Hot Tub Circuit</button>
-        <button class="qf-btn" onclick="fillExample('Add 4 recessed lights and a ceiling fan in the living room. Currently no overhead lighting, finished ceiling.')">▸ Lighting Install</button>
+        <button class="qf-btn" id="qf1">&#9658; EV Charger</button>
+        <button class="qf-btn" id="qf2">&#9658; Panel Upgrade</button>
+        <button class="qf-btn" id="qf3">&#9658; Dedicated Circuit</button>
+        <button class="qf-btn" id="qf4">&#9658; Subpanel</button>
+        <button class="qf-btn" id="qf5">&#9658; Hot Tub Circuit</button>
+        <button class="qf-btn" id="qf6">&#9658; Lighting Install</button>
       </div>
       <div class="input-actions">
-        <button class="btn-estimate" id="runBtn" onclick="runEstimate()">▸ RUN ESTIMATE</button>
-        <button class="btn-clear" onclick="clearAll()">CLEAR</button>
+        <button class="btn-estimate" id="runBtn">&#9658; RUN ESTIMATE</button>
+        <button class="btn-clear" id="clearBtn">CLEAR</button>
         <span id="charCount" style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-left:8px;"></span>
       </div>
     </div>
@@ -179,27 +179,27 @@
   <div class="error-box" id="errorBox" style="display:none;"></div>
 
   <div class="loading-panel" id="loadingPanel" style="display:none;">
-    <div class="loading-hex">⚡</div>
+    <div class="loading-hex">&#9889;</div>
     <div class="loading-title">FOREMAN BRAIN PROCESSING</div>
     <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);">Analyzing job scope and running code logic...</div>
     <div class="loading-steps">
-      <span class="loading-step">▸ JOB INTAKE</span>
-      <span class="loading-step">▸ CODE LOGIC</span>
-      <span class="loading-step">▸ MATERIAL TAKEOFF</span>
-      <span class="loading-step">▸ LABOR ESTIMATE</span>
-      <span class="loading-step">▸ PRICING</span>
-      <span class="loading-step">▸ PROPOSAL</span>
+      <span class="loading-step">&#9658; JOB INTAKE</span>
+      <span class="loading-step">&#9658; CODE LOGIC</span>
+      <span class="loading-step">&#9658; MATERIAL TAKEOFF</span>
+      <span class="loading-step">&#9658; LABOR ESTIMATE</span>
+      <span class="loading-step">&#9658; PRICING</span>
+      <span class="loading-step">&#9658; PROPOSAL</span>
     </div>
   </div>
 
   <div id="results" style="display:none;">
     <div class="cost-grid" id="costGrid"></div>
     <div class="tabs-bar">
-      <button class="tab-btn active" onclick="switchTab('summary',this)">SUMMARY</button>
-      <button class="tab-btn" onclick="switchTab('logic',this)">INSTALL LOGIC</button>
-      <button class="tab-btn" onclick="switchTab('materials',this)">TAKEOFF</button>
-      <button class="tab-btn" onclick="switchTab('labor',this)">LABOR & COST</button>
-      <button class="tab-btn" onclick="switchTab('proposal',this)">PROPOSAL</button>
+      <button class="tab-btn active" id="tab-btn-summary">SUMMARY</button>
+      <button class="tab-btn" id="tab-btn-logic">INSTALL LOGIC</button>
+      <button class="tab-btn" id="tab-btn-materials">TAKEOFF</button>
+      <button class="tab-btn" id="tab-btn-labor">LABOR & COST</button>
+      <button class="tab-btn" id="tab-btn-proposal">PROPOSAL</button>
     </div>
     <div class="tab-content">
       <div id="tab-summary"></div>
@@ -212,39 +212,23 @@
 </div>
 
 <div class="mobile-fab" id="mobileFab">
-  <button class="fab-btn" onclick="runEstimate()">⚡</button>
+  <button class="fab-btn" id="fabBtn">&#9889;</button>
 </div>
 
 <script>
-var SYSTEM_PROMPT = "You are Foreman Brain, an AI electrical estimating system designed to think and operate like a licensed master electrician and experienced electrical contractor. Your purpose is to convert job descriptions into a realistic electrical estimate package. You must reason internally like a master electrician planning a job before producing the final estimate. CORE IDENTITY: Master electrician, 20+ years experience, residential and light commercial. WORKFLOW: Step 1 - Job Intake: Determine job type, scope, assumptions. Step 2 - Code Logic: Circuit size, conductor, breaker, NEC requirements. Step 3 - Material Takeoff: COMPLETE list, every part including small parts (connectors, staples, wirenuts, straps, bushings, plates, grounding hardware). Never skip small parts. Step 4 - Pricing: Raw Material Total x 1.35 = Marked-Up Cost. Step 5 - Labor: Hours x $100/hr. Adjust for difficulty. Step 6 - Proposal: Professional, customer-ready. CONDUCTOR SIZING: 15A=14AWG, 20A=12AWG, 30A=10AWG, 40A=8AWG, 50A=6AWG.
-
-CIRCUIT SELECTION RULES:
-- General living room, bedroom Receptacles = 15A circuit, 14/2 NM-B wire
-- Kitchen small appliance circuits, dining rooms = 20A, 12/2 NM-B (NEC requires 2 minimum)
-- Bathroom receptacles = 20A, 12/2 NM-B with GFCI
-- Garage receptacles = 20A, 12/2 NM-B with GFCI
-- Outdoor receptacles = 20A, 12/2 NM-B with GFCI
-- Dedicated appliance circuits = size per appliance nameplate
-- Lighting circuits = 15A, 14/2 NM-B
-- Laundry receptacle = 20A, 12/2 NM-B dedicated
-- Refrigerator = 20A dedicated, 12/2 NM-B
-- Dishwasher = 20A dedicated, 12/2 NM-B
-- Microwave = 20A dedicated, 12/2 NM-B
-- Do NOT default everything to 20A. Use 15A for general receptacles and lighting unless NEC requires 20A.. ASSUMPTIONS (when unknown): Residential wood-frame, standard drywall, normal access, short run=25-50ft, medium=50-100ft, long=100-150ft. FORMULAS: rawMaterialCost = sum of all materialTakeoff totalCost values. markedUpMaterialCost = rawMaterialCost x 1.35. laborCost = laborHours x 100. totalEstimate = markedUpMaterialCost + laborCost. EXCLUSIONS: drywall patching, painting, trenching, permit fees, utility coordination. CRITICAL: Return ONLY raw JSON. No markdown. No backticks. No explanation. Just the JSON object: {\"projectSummary\":{\"jobType\":\"string\",\"customerRequest\":\"string\",\"observedConditions\":\"string\",\"assumedConditions\":\"string\"},\"installationLogic\":\"string\",\"materialTakeoff\":[{\"item\":\"string\",\"qty\":\"string\",\"unitCost\":0,\"totalCost\":0}],\"laborHours\":0,\"rawMaterialCost\":0,\"markedUpMaterialCost\":0,\"laborCost\":0,\"totalEstimate\":0,\"customerProposal\":\"string\"}";
+var SYSTEM_PROMPT = "You are Foreman Brain, an AI electrical estimating system designed to think and operate like a licensed master electrician and experienced electrical contractor. Your purpose is to convert job descriptions into a realistic electrical estimate package. You must reason internally like a master electrician planning a job before producing the final estimate. CORE IDENTITY: Master electrician, 20+ years experience, residential and light commercial. WORKFLOW: Step 1 - Job Intake: Determine job type, scope, assumptions. Step 2 - Code Logic: Circuit size, conductor, breaker, NEC requirements. Step 3 - Material Takeoff: COMPLETE list, every part including small parts. Never skip small parts. Step 4 - Pricing: Raw Material Total x 1.35 = Marked-Up Cost. Step 5 - Labor: Hours x $100 per hr. Adjust for difficulty. Step 6 - Proposal: Professional, customer-ready. CONDUCTOR SIZING: 15A=14AWG, 20A=12AWG, 30A=10AWG, 40A=8AWG, 50A=6AWG. CIRCUIT SELECTION RULES: General living room, bedroom, dining room receptacles = 15A circuit, 14/2 NM-B wire. Kitchen small appliance circuits = 20A, 12/2 NM-B. Bathroom receptacles = 20A, 12/2 NM-B with GFCI. Garage receptacles = 20A, 12/2 NM-B with GFCI. Outdoor receptacles = 20A, 12/2 NM-B with GFCI. Dedicated appliance circuits = size per appliance nameplate. Lighting circuits = 15A, 14/2 NM-B. Laundry receptacle = 20A, 12/2 NM-B dedicated. Refrigerator = 20A dedicated, 12/2 NM-B. Dishwasher = 20A dedicated, 12/2 NM-B. Microwave = 20A dedicated, 12/2 NM-B. Do NOT default everything to 20A. Use 15A for general receptacles and lighting unless NEC requires 20A. ASSUMPTIONS when unknown: Residential wood-frame, standard drywall, normal access, short run=25-50ft, medium=50-100ft, long=100-150ft. FORMULAS: rawMaterialCost = sum of all materialTakeoff totalCost values. markedUpMaterialCost = rawMaterialCost x 1.35. laborCost = laborHours x 100. totalEstimate = markedUpMaterialCost + laborCost. EXCLUSIONS: drywall patching, painting, trenching, permit fees, utility coordination. CRITICAL: Return ONLY raw JSON. No markdown. No backticks. No explanation. Just the JSON object: {\"projectSummary\":{\"jobType\":\"string\",\"customerRequest\":\"string\",\"observedConditions\":\"string\",\"assumedConditions\":\"string\"},\"installationLogic\":\"string\",\"materialTakeoff\":[{\"item\":\"string\",\"qty\":\"string\",\"unitCost\":0,\"totalCost\":0}],\"laborHours\":0,\"rawMaterialCost\":0,\"markedUpMaterialCost\":0,\"laborCost\":0,\"totalEstimate\":0,\"customerProposal\":\"string\"}";
 
 var currentEstimate = null;
 
-function fillExample(text) {
-  document.getElementById('jobInput').value = text;
-  updateCharCount();
+function fmt(n) {
+  if (typeof n !== 'number') return '$0.00';
+  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }
 
 function updateCharCount() {
   var v = document.getElementById('jobInput').value;
   document.getElementById('charCount').textContent = v.length > 0 ? v.length + ' chars' : '';
 }
-
-document.getElementById('jobInput').addEventListener('input', updateCharCount);
 
 function clearAll() {
   document.getElementById('jobInput').value = '';
@@ -255,9 +239,102 @@ function clearAll() {
   currentEstimate = null;
 }
 
-function fmt(n) {
-  if (typeof n !== 'number') return '$0.00';
-  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+function switchTab(name) {
+  var tabs = ['summary','logic','materials','labor','proposal'];
+  for (var i = 0; i < tabs.length; i++) {
+    var pane = document.getElementById('tab-' + tabs[i]);
+    var btn = document.getElementById('tab-btn-' + tabs[i]);
+    if (pane) pane.style.display = tabs[i] === name ? 'block' : 'none';
+    if (btn) btn.classList[tabs[i] === name ? 'add' : 'remove']('active');
+  }
+}
+
+function copyProposal() {
+  if (!currentEstimate) return;
+  navigator.clipboard.writeText(currentEstimate.customerProposal || '').then(function() {
+    var btn = document.getElementById('copyBtn');
+    if (btn) {
+      btn.textContent = 'COPIED';
+      btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'COPY PROPOSAL'; btn.classList.remove('copied'); }, 2000);
+    }
+  });
+}
+
+function printProposal() {
+  if (!currentEstimate) return;
+  var win = window.open('', '_blank');
+  win.document.write('<html><head><title>Electrical Estimate</title><style>body{font-family:Georgia,serif;font-size:14px;line-height:1.8;padding:60px;color:#222;max-width:800px;margin:0 auto;}pre{white-space:pre-wrap;font-family:Georgia,serif;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #ddd;font-size:12px;}</style></head><body>');
+  win.document.write('<h2>Electrical Estimate</h2><p style="color:#888;font-size:12px;margin-bottom:40px;">Generated by Foreman Brain</p>');
+  win.document.write('<pre>' + (currentEstimate.customerProposal || '') + '</pre>');
+  win.document.write('<table><tr><th>Materials (with markup)</th><td>' + fmt(currentEstimate.markedUpMaterialCost) + '</td></tr><tr><th>Labor (' + currentEstimate.laborHours + ' hrs)</th><td>' + fmt(currentEstimate.laborCost) + '</td></tr><tr><th>Total Estimate</th><td><strong>' + fmt(currentEstimate.totalEstimate) + '</strong></td></tr></table>');
+  win.document.write('</body></html>');
+  win.document.close();
+  win.print();
+}
+
+function renderEstimate(e) {
+  var grid = document.getElementById('costGrid');
+  grid.innerHTML =
+    '<div class="cost-card"><div class="cost-label">Raw Material Cost</div><div class="cost-value">' + fmt(e.rawMaterialCost) + '</div><div class="cost-sub">Before markup</div></div>' +
+    '<div class="cost-card"><div class="cost-label">Material w/ Markup</div><div class="cost-value">' + fmt(e.markedUpMaterialCost) + '</div><div class="cost-sub">Raw x 1.35</div></div>' +
+    '<div class="cost-card"><div class="cost-label">Labor Cost</div><div class="cost-value">' + fmt(e.laborCost) + '</div><div class="cost-sub">' + e.laborHours + ' hrs @ $100/hr</div></div>' +
+    '<div class="cost-card total"><div class="cost-label">Total Estimate</div><div class="cost-value">' + fmt(e.totalEstimate) + '</div><div class="cost-sub">Materials + Labor</div></div>';
+
+  var ps = e.projectSummary || {};
+  document.getElementById('tab-summary').innerHTML =
+    '<div class="section-label">PROJECT SUMMARY</div>' +
+    '<div class="summary-grid">' +
+    '<div class="summary-card"><div class="summary-card-label">Job Type</div><div class="summary-card-value">' + (ps.jobType || '---') + '</div></div>' +
+    '<div class="summary-card"><div class="summary-card-label">Customer Request</div><div class="summary-card-value">' + (ps.customerRequest || '---') + '</div></div>' +
+    '<div class="summary-card"><div class="summary-card-label">Observed Conditions</div><div class="summary-card-value">' + (ps.observedConditions || '---') + '</div></div>' +
+    '<div class="summary-card"><div class="summary-card-label">Assumed Conditions</div><div class="summary-card-value">' + (ps.assumedConditions || '---') + '</div></div>' +
+    '</div>';
+
+  document.getElementById('tab-logic').innerHTML =
+    '<div class="section-label">INSTALLATION LOGIC AND NEC REASONING</div>' +
+    '<div class="logic-box">' + (e.installationLogic || '---') + '</div>';
+
+  var rows = (e.materialTakeoff || []).map(function(r) {
+    return '<tr><td>' + (r.item || '---') + '</td><td class="dim right">' + (r.qty || '---') + '</td><td class="dim right">' + fmt(r.unitCost) + '</td><td class="right">' + fmt(r.totalCost) + '</td></tr>';
+  }).join('');
+
+  document.getElementById('tab-materials').innerHTML =
+    '<div class="section-label">MATERIAL TAKEOFF - ' + (e.materialTakeoff || []).length + ' LINE ITEMS</div>' +
+    '<table class="materials-table"><thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Unit Cost</th><th class="right">Total</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody>' +
+    '<tfoot><tr><td colspan="3" class="tfoot-raw">Raw Material Total</td><td class="tfoot-raw-val">' + fmt(e.rawMaterialCost) + '</td></tr>' +
+    '<tr><td colspan="3" class="tfoot-markup">Marked-Up (x1.35)</td><td class="tfoot-markup-val">' + fmt(e.markedUpMaterialCost) + '</td></tr></tfoot></table>';
+
+  document.getElementById('tab-labor').innerHTML =
+    '<div class="section-label">LABOR AND COST BREAKDOWN</div>' +
+    '<div class="labor-grid">' +
+    '<div>' +
+    '<div class="breakdown-row"><span class="breakdown-label">Raw Material Cost</span><span class="breakdown-val">' + fmt(e.rawMaterialCost) + '</span></div>' +
+    '<div class="breakdown-row"><span class="breakdown-label">Markup Factor</span><span class="breakdown-val">x 1.35</span></div>' +
+    '<div class="breakdown-row"><span class="breakdown-label">Marked-Up Materials</span><span class="breakdown-val">' + fmt(e.markedUpMaterialCost) + '</span></div>' +
+    '<div class="breakdown-row"><span class="breakdown-label">Labor Rate</span><span class="breakdown-val">$100.00 / hr</span></div>' +
+    '<div class="breakdown-row"><span class="breakdown-label">Labor Cost</span><span class="breakdown-val">' + fmt(e.laborCost) + '</span></div>' +
+    '<div class="total-row"><span class="total-row-label">Total Estimate</span><span class="total-row-val">' + fmt(e.totalEstimate) + '</span></div>' +
+    '</div>' +
+    '<div class="hours-display"><div style="font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:2px;margin-bottom:12px;">ESTIMATED LABOR</div><div class="hours-big">' + e.laborHours + '</div><div class="hours-unit">HOURS ON-SITE</div><div class="hours-rate">@ $100.00 / HOUR = ' + fmt(e.laborCost) + '</div></div>' +
+    '</div>';
+
+  document.getElementById('tab-proposal').innerHTML =
+    '<div class="section-label">CUSTOMER PROPOSAL</div>' +
+    '<div class="proposal-box" id="proposalText">' + (e.customerProposal || '---') + '</div>' +
+    '<div class="proposal-actions">' +
+    '<button class="btn-action" id="copyBtn">COPY PROPOSAL</button>' +
+    '<button class="btn-action" id="printBtn">PRINT</button>' +
+    '</div>' +
+    '<div class="exclusions">STANDARD EXCLUSIONS: Drywall patching or painting, Trenching or boring, Permit fees, Utility coordination, Unforeseen concealed conditions</div>';
+
+  document.getElementById('results').style.display = 'block';
+  switchTab('summary');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  document.getElementById('copyBtn').addEventListener('click', copyProposal);
+  document.getElementById('printBtn').addEventListener('click', printProposal);
 }
 
 async function runEstimate() {
@@ -265,7 +342,7 @@ async function runEstimate() {
   if (!input) return;
   var btn = document.getElementById('runBtn');
   btn.disabled = true;
-  btn.textContent = '⚙ ESTIMATING...';
+  btn.textContent = 'ESTIMATING...';
   btn.classList.add('loading');
   document.getElementById('errorBox').style.display = 'none';
   document.getElementById('results').style.display = 'none';
@@ -282,137 +359,60 @@ async function runEstimate() {
       })
     });
     var data = await response.json();
-    console.log('Server response:', JSON.stringify(data));
-var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
-    var cleaned = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+    var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
+    var cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
     var parsed;
     try {
       parsed = JSON.parse(cleaned);
     } catch(e) {
       var match = cleaned.match(/\{[\s\S]*\}/);
       if (match) { parsed = JSON.parse(match[0]); }
-      else { throw new Error('Could not parse estimate response.'); }
+      else { throw new Error('Could not parse estimate response. Raw: ' + cleaned.substring(0, 200)); }
     }
     currentEstimate = parsed;
     renderEstimate(parsed);
   } catch(err) {
-    document.getElementById('errorBox').textContent = '⚠ ' + (err.message || 'Failed to generate estimate. Please try again.');
+    document.getElementById('errorBox').textContent = 'Error: ' + (err.message || 'Failed to generate estimate. Please try again.');
     document.getElementById('errorBox').style.display = 'block';
   } finally {
     btn.disabled = false;
-    btn.textContent = '▸ RUN ESTIMATE';
+    btn.textContent = 'RUN ESTIMATE';
     btn.classList.remove('loading');
     document.getElementById('loadingPanel').style.display = 'none';
   }
 }
 
-function renderEstimate(e) {
-  var grid = document.getElementById('costGrid');
-  grid.innerHTML =
-    '<div class="cost-card"><div class="cost-label">Raw Material Cost</div><div class="cost-value">' + fmt(e.rawMaterialCost) + '</div><div class="cost-sub">Before markup</div></div>' +
-    '<div class="cost-card"><div class="cost-label">Material w/ Markup</div><div class="cost-value">' + fmt(e.markedUpMaterialCost) + '</div><div class="cost-sub">Raw x 1.35</div></div>' +
-    '<div class="cost-card"><div class="cost-label">Labor Cost</div><div class="cost-value">' + fmt(e.laborCost) + '</div><div class="cost-sub">' + e.laborHours + ' hrs @ $100/hr</div></div>' +
-    '<div class="cost-card total"><div class="cost-label">Total Estimate</div><div class="cost-value">' + fmt(e.totalEstimate) + '</div><div class="cost-sub">Materials + Labor</div></div>';
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('jobInput').addEventListener('input', updateCharCount);
+  document.getElementById('runBtn').addEventListener('click', runEstimate);
+  document.getElementById('clearBtn').addEventListener('click', clearAll);
+  document.getElementById('fabBtn').addEventListener('click', runEstimate);
 
-  var ps = e.projectSummary || {};
-  document.getElementById('tab-summary').innerHTML =
-    '<div class="section-label">▸ PROJECT SUMMARY</div>' +
-    '<div class="summary-grid">' +
-    '<div class="summary-card"><div class="summary-card-label">Job Type</div><div class="summary-card-value">' + (ps.jobType||'—') + '</div></div>' +
-    '<div class="summary-card"><div class="summary-card-label">Customer Request</div><div class="summary-card-value">' + (ps.customerRequest||'—') + '</div></div>' +
-    '<div class="summary-card"><div class="summary-card-label">Observed Conditions</div><div class="summary-card-value">' + (ps.observedConditions||'—') + '</div></div>' +
-    '<div class="summary-card"><div class="summary-card-label">Assumed Conditions</div><div class="summary-card-value">' + (ps.assumedConditions||'—') + '</div></div>' +
-    '</div>';
+  document.getElementById('qf1').addEventListener('click', function() { document.getElementById('jobInput').value = '50A EV charger in attached garage, approximately 60 feet from main panel. Panel is in the basement.'; updateCharCount(); });
+  document.getElementById('qf2').addEventListener('click', function() { document.getElementById('jobInput').value = '200A service upgrade to replace existing 100A panel. House is 1970s construction, currently have 20 circuits.'; updateCharCount(); });
+  document.getElementById('qf3').addEventListener('click', function() { document.getElementById('jobInput').value = 'Add a dedicated 20A circuit for a new refrigerator in the garage. About 40 feet from the panel.'; updateCharCount(); });
+  document.getElementById('qf4').addEventListener('click', function() { document.getElementById('jobInput').value = 'Install a 60A subpanel in the detached garage. Garage is 80 feet from the main house panel.'; updateCharCount(); });
+  document.getElementById('qf5').addEventListener('click', function() { document.getElementById('jobInput').value = '240V circuit for a new hot tub on the back deck. Need GFCI disconnect. About 50 feet from panel.'; updateCharCount(); });
+  document.getElementById('qf6').addEventListener('click', function() { document.getElementById('jobInput').value = 'Add 4 recessed lights and a ceiling fan in the living room. Currently no overhead lighting, finished ceiling.'; updateCharCount(); });
 
-  document.getElementById('tab-logic').innerHTML =
-    '<div class="section-label">▸ INSTALLATION LOGIC & NEC REASONING</div>' +
-    '<div class="logic-box">' + (e.installationLogic||'—') + '</div>';
+  document.getElementById('tab-btn-summary').addEventListener('click', function() { switchTab('summary'); });
+  document.getElementById('tab-btn-logic').addEventListener('click', function() { switchTab('logic'); });
+  document.getElementById('tab-btn-materials').addEventListener('click', function() { switchTab('materials'); });
+  document.getElementById('tab-btn-labor').addEventListener('click', function() { switchTab('labor'); });
+  document.getElementById('tab-btn-proposal').addEventListener('click', function() { switchTab('proposal'); });
 
-  var rows = (e.materialTakeoff||[]).map(function(r) {
-    return '<tr><td>' + (r.item||'—') + '</td><td class="dim right">' + (r.qty||'—') + '</td><td class="dim right">' + fmt(r.unitCost) + '</td><td class="right">' + fmt(r.totalCost) + '</td></tr>';
-  }).join('');
-
-  document.getElementById('tab-materials').innerHTML =
-    '<div class="section-label">▸ MATERIAL TAKEOFF — ' + (e.materialTakeoff||[]).length + ' LINE ITEMS</div>' +
-    '<table class="materials-table"><thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Unit Cost</th><th class="right">Total</th></tr></thead>' +
-    '<tbody>' + rows + '</tbody>' +
-    '<tfoot><tr><td colspan="3" class="tfoot-raw">Raw Material Total</td><td class="tfoot-raw-val">' + fmt(e.rawMaterialCost) + '</td></tr>' +
-    '<tr><td colspan="3" class="tfoot-markup">Marked-Up (x1.35)</td><td class="tfoot-markup-val">' + fmt(e.markedUpMaterialCost) + '</td></tr></tfoot></table>';
-
-  document.getElementById('tab-labor').innerHTML =
-    '<div class="section-label">▸ LABOR & COST BREAKDOWN</div>' +
-    '<div class="labor-grid">' +
-    '<div>' +
-    '<div class="breakdown-row"><span class="breakdown-label">Raw Material Cost</span><span class="breakdown-val">' + fmt(e.rawMaterialCost) + '</span></div>' +
-    '<div class="breakdown-row"><span class="breakdown-label">Markup Factor</span><span class="breakdown-val">x 1.35</span></div>' +
-    '<div class="breakdown-row"><span class="breakdown-label">Marked-Up Materials</span><span class="breakdown-val">' + fmt(e.markedUpMaterialCost) + '</span></div>' +
-    '<div class="breakdown-row"><span class="breakdown-label">Labor Rate</span><span class="breakdown-val">$100.00 / hr</span></div>' +
-    '<div class="breakdown-row"><span class="breakdown-label">Labor Cost</span><span class="breakdown-val">' + fmt(e.laborCost) + '</span></div>' +
-    '<div class="total-row"><span class="total-row-label">Total Estimate</span><span class="total-row-val">' + fmt(e.totalEstimate) + '</span></div>' +
-    '</div>' +
-    '<div class="hours-display"><div style="font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:2px;margin-bottom:12px;">ESTIMATED LABOR</div><div class="hours-big">' + e.laborHours + '</div><div class="hours-unit">HOURS ON-SITE</div><div class="hours-rate">@ $100.00 / HOUR = ' + fmt(e.laborCost) + '</div></div>' +
-    '</div>';
-
-  document.getElementById('tab-proposal').innerHTML =
-    '<div class="section-label">▸ CUSTOMER PROPOSAL</div>' +
-    '<div class="proposal-box" id="proposalText">' + (e.customerProposal||'—') + '</div>' +
-    '<div class="proposal-actions">' +
-    '<button class="btn-action" id="copyBtn" onclick="copyProposal()">⎘ COPY PROPOSAL</button>' +
-    '<button class="btn-action" onclick="printProposal()">⎙ PRINT</button>' +
-    '</div>' +
-    '<div class="exclusions">STANDARD EXCLUSIONS: Drywall patching or painting · Trenching or boring · Permit fees · Utility coordination · Unforeseen concealed conditions</div>';
-
-  document.getElementById('results').style.display = 'block';
-  switchTab('summary', document.querySelector('.tab-btn'));
-  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function switchTab(name, btn) {
-  ['summary','logic','materials','labor','proposal'].forEach(function(t) {
-    var el = document.getElementById('tab-' + t);
-    if (el) el.style.display = 'none';
+  document.getElementById('jobInput').addEventListener('focus', function() {
+    var fab = document.getElementById('mobileFab');
+    if (fab) { fab.style.opacity = '0'; fab.style.pointerEvents = 'none'; }
   });
-  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-  var pane = document.getElementById('tab-' + name);
-  if (pane) pane.style.display = 'block';
-  if (btn) btn.classList.add('active');
-}
-
-function copyProposal() {
-  if (!currentEstimate) return;
-  navigator.clipboard.writeText(currentEstimate.customerProposal || '').then(function() {
-    var btn = document.getElementById('copyBtn');
-    if (btn) { btn.textContent = '✓ COPIED'; btn.classList.add('copied'); setTimeout(function(){ btn.textContent = '⎘ COPY PROPOSAL'; btn.classList.remove('copied'); }, 2000); }
+  document.getElementById('jobInput').addEventListener('blur', function() {
+    var fab = document.getElementById('mobileFab');
+    if (fab) { fab.style.opacity = '1'; fab.style.pointerEvents = 'auto'; }
   });
-}
-
-function printProposal() {
-  if (!currentEstimate) return;
-  var win = window.open('', '_blank');
-  win.document.write('<html><head><title>Electrical Estimate</title><style>body{font-family:Georgia,serif;font-size:14px;line-height:1.8;padding:60px;color:#222;max-width:800px;margin:0 auto;}pre{white-space:pre-wrap;font-family:Georgia,serif;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #ddd;font-size:12px;}</style></head><body>');
-  win.document.write('<h2>Electrical Estimate</h2><p style="color:#888;font-size:12px;margin-bottom:40px;">Generated by Foreman Brain</p>');
-  win.document.write('<pre>' + (currentEstimate.customerProposal||'') + '</pre>');
-  win.document.write('<table style="margin-top:30px;"><tr><th>Materials (with markup)</th><td>' + fmt(currentEstimate.markedUpMaterialCost) + '</td></tr><tr><th>Labor (' + currentEstimate.laborHours + ' hrs)</th><td>' + fmt(currentEstimate.laborCost) + '</td></tr><tr><th>Total Estimate</th><td><strong>' + fmt(currentEstimate.totalEstimate) + '</strong></td></tr></table>');
-  win.document.write('</body></html>');
-  win.document.close();
-  win.print();
-}
-
-document.getElementById('jobInput').addEventListener('keydown', function(e) {
-  if (e.ctrlKey && e.key === 'Enter') runEstimate();
-});
-
-document.getElementById('jobInput').addEventListener('focus', function() {
-  var fab = document.getElementById('mobileFab');
-  if (fab) { fab.style.opacity='0'; fab.style.pointerEvents='none'; }
-});
-
-document.getElementById('jobInput').addEventListener('blur', function() {
-  var fab = document.getElementById('mobileFab');
-  if (fab) { fab.style.opacity='1'; fab.style.pointerEvents='auto'; }
+  document.getElementById('jobInput').addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'Enter') runEstimate();
+  });
 });
 </script>
 </body>
 </html>
-
-
