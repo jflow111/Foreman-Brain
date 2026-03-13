@@ -9,6 +9,24 @@
 <meta name="apple-mobile-web-app-title" content="Foreman Brain" />
 <meta name="theme-color" content="#080b0e" />
 <title>Foreman Brain — AI Electrical Estimating</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(async function() {
+  var SUPABASE_URL = 'https://xrfzqeoigqtgdqlimpoj.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyZnpxZW9pZ3F0Z2RxbGltcG9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNzE5MjksImV4cCI6MjA4ODk0NzkyOX0.PCS_-awnCZwonwYYkAE_-jbSXfqbyrfOU6J6E3KqSZ0';
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  var session = await sb.auth.getSession();
+  if (!session.data.session) { window.location.href = 'auth.html'; return; }
+  var uid = session.data.session.user.id;
+  var profile = await sb.from('profiles').select('subscription_status,is_admin,email').eq('id', uid).single();
+  if (!profile.data || (profile.data.subscription_status !== 'active' && !profile.data.is_admin)) {
+    await sb.auth.signOut(); window.location.href = 'auth.html'; return;
+  }
+  window._supabase = sb;
+  window._userProfile = profile.data;
+  window._userEmail = session.data.session.user.email;
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet" />
 <style>
@@ -186,6 +204,10 @@
     <div class="status-dot"></div>
     <span>MASTER ELECTRICIAN MODE ACTIVE</span>
   </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-left:auto;">
+    <span id="userEmailDisplay" style="font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:1px;"></span>
+    <button id="logoutBtn" style="font-family:var(--mono);font-size:10px;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:2px;padding:6px 12px;cursor:pointer;letter-spacing:1px;transition:all 0.15s;" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">LOGOUT</button>
+  </div>
   <div style="display:flex;gap:8px;margin-left:16px;">
     <button class="btn-nav active" id="navEstimate">&#9658; ESTIMATOR</button>
     <button class="btn-nav" id="navHistory">&#9776; JOB HISTORY <span id="historyBadge" style="display:none;background:var(--amber);color:#080b0e;font-size:9px;padding:2px 6px;border-radius:2px;margin-left:4px;"></span></button>
@@ -309,8 +331,7 @@ function clearAll() {
   document.getElementById('results').style.display = 'none';
   document.getElementById('loadingPanel').style.display = 'none';
   document.getElementById('charCount').textContent = '';
-  currentEstimate = null;
-  editableMaterials = [];
+  currentEstimate = null; editableMaterials = [];
 }
 
 function switchTab(name) {
@@ -323,9 +344,7 @@ function switchTab(name) {
   }
 }
 
-function roundTo10(n) {
-  return Math.round(n / 10) * 10;
-}
+function roundTo10(n) { return Math.round(n / 10) * 10; }
 
 function calcTotals() {
   var rawTotal = 0;
@@ -354,8 +373,7 @@ function updateMaterialFooter() {
   if (rawEl) rawEl.textContent = fmt(t.raw);
   if (markupEl) markupEl.textContent = fmt(t.markedUp);
   if (markupLabelEl) markupLabelEl.textContent = 'Marked-Up (x' + getMarkup() + ')';
-  updateCostCards();
-  updateLaborTab();
+  updateCostCards(); updateLaborTab();
 }
 
 function deleteRow(idx) { editableMaterials.splice(idx, 1); renderMaterialsTab(); }
@@ -434,8 +452,7 @@ function updateLaborTab() {
     '</div></div>';
   document.getElementById('labor-hours-input').addEventListener('input', function() {
     editableLaborHours = parseFloat(this.value) || 0;
-    var lR = getLaborRate();
-    var t2 = calcTotals();
+    var lR = getLaborRate(); var t2 = calcTotals();
     document.getElementById('lb-labor').textContent = fmt(editableLaborHours * lR);
     document.getElementById('lb-total').textContent = fmt(roundTo10(t2.markedUp + editableLaborHours * lR));
     document.getElementById('lb-hours-display').textContent = editableLaborHours;
@@ -459,8 +476,7 @@ function renderEstimate(e) {
     '<div class="summary-card"><div class="summary-card-label">Assumed Conditions</div><div class="summary-card-value">' + (ps.assumedConditions || '---') + '</div></div></div>';
   document.getElementById('tab-logic').innerHTML =
     '<div class="section-label">INSTALLATION LOGIC AND NEC REASONING</div><div class="logic-box">' + (e.installationLogic || '---') + '</div>';
-  renderMaterialsTab();
-  updateLaborTab();
+  renderMaterialsTab(); updateLaborTab();
   document.getElementById('tab-proposal').innerHTML =
     '<div class="section-label">CUSTOMER PROPOSAL</div>' +
     '<div class="proposal-box" id="proposalText">' + (e.customerProposal || '---') + '</div>' +
@@ -493,8 +509,7 @@ async function runEstimate() {
     var parsed;
     try { parsed = JSON.parse(cleaned); }
     catch(e) { var match = cleaned.match(/\{[\s\S]*\}/); if (match) { parsed = JSON.parse(match[0]); } else { throw new Error('Could not parse estimate response.'); } }
-    currentEstimate = parsed;
-    renderEstimate(parsed);
+    currentEstimate = parsed; renderEstimate(parsed);
   } catch(err) {
     document.getElementById('errorBox').textContent = 'Error: ' + (err.message || 'Failed to generate estimate. Please try again.');
     document.getElementById('errorBox').style.display = 'block';
@@ -627,6 +642,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (confirm('Delete all saved jobs? This cannot be undone.')) { localStorage.removeItem('foremanBrainJobs'); renderHistoryList(); updateHistoryBadge(); }
   });
   updateHistoryBadge();
+  setTimeout(function() {
+    if (window._userEmail) { var el = document.getElementById('userEmailDisplay'); if (el) el.textContent = window._userEmail; }
+  }, 800);
+  document.getElementById('logoutBtn').addEventListener('click', async function() {
+    if (window._supabase) await window._supabase.auth.signOut();
+    window.location.href = 'auth.html';
+  });
   document.getElementById('jobInput').addEventListener('focus', function() { var fab = document.getElementById('mobileFab'); if (fab) { fab.style.opacity='0'; fab.style.pointerEvents='none'; } });
   document.getElementById('jobInput').addEventListener('blur', function() { var fab = document.getElementById('mobileFab'); if (fab) { fab.style.opacity='1'; fab.style.pointerEvents='auto'; } });
   document.getElementById('jobInput').addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 'Enter') runEstimate(); });
