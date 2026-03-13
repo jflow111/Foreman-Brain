@@ -7,33 +7,23 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Foreman Brain" />
-<meta name="application-name" content="Foreman Brain" />
 <meta name="theme-color" content="#080b0e" />
-<meta name="description" content="AI Electrical Estimating System — Master Electrician Mode" />
 <title>Foreman Brain — AI Electrical Estimating</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #080b0e;
-    --surface: #0e1318;
-    --surface2: #131920;
-    --border: #1e2830;
-    --border2: #253040;
-    --amber: #f0a500;
-    --amber-dim: #a37010;
-    --amber-glow: rgba(240,165,0,0.12);
-    --red: #e05050;
-    --green: #3db87a;
-    --text: #c8d4dc;
-    --text-dim: #6a7d8a;
-    --text-muted: #3a4a55;
-    --mono: 'Share Tech Mono', monospace;
-    --display: 'Barlow Condensed', sans-serif;
-    --body: 'Barlow', sans-serif;
+    --bg:#080b0e; --surface:#0e1318; --surface2:#131920;
+    --border:#1e2830; --border2:#253040;
+    --amber:#f0a500; --amber-dim:#a37010; --amber-glow:rgba(240,165,0,0.12);
+    --red:#e05050; --green:#3db87a;
+    --text:#c8d4dc; --text-dim:#6a7d8a; --text-muted:#3a4a55;
+    --mono:'Share Tech Mono',monospace;
+    --display:'Barlow Condensed',sans-serif;
+    --body:'Barlow',sans-serif;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--body); min-height: 100vh; overflow-x: hidden; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:var(--body); min-height:100vh; overflow-x:hidden; }
   body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px); pointer-events:none; z-index:9999; }
   .header { background:var(--surface); border-bottom:2px solid var(--amber); padding:0 32px; height:64px; display:flex; align-items:center; gap:20px; position:sticky; top:0; z-index:100; box-shadow:0 4px 40px rgba(240,165,0,0.08); }
   .header-logo { width:40px; height:40px; background:var(--amber); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; animation:pulse-logo 3s ease-in-out infinite; }
@@ -44,6 +34,13 @@
   .status-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:blink 2s ease-in-out infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
   .main { max-width:1200px; margin:0 auto; padding:36px 24px 80px; }
+  .settings-bar { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:16px 20px; margin-bottom:20px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+  .setting-group { display:flex; align-items:center; gap:10px; }
+  .setting-label { font-family:var(--mono); font-size:10px; color:var(--amber); letter-spacing:1.5px; text-transform:uppercase; white-space:nowrap; }
+  .setting-input { background:var(--bg); border:1px solid var(--border); border-radius:2px; color:var(--text); font-family:var(--mono); font-size:13px; padding:6px 10px; width:90px; outline:none; transition:border-color 0.2s; }
+  .setting-input:focus { border-color:var(--amber); }
+  .setting-prefix { font-family:var(--mono); font-size:12px; color:var(--text-dim); }
+  .settings-title { font-family:var(--mono); font-size:9px; color:var(--text-muted); letter-spacing:2px; margin-right:8px; }
   .input-panel { background:var(--surface); border:1px solid var(--border); border-radius:2px; overflow:hidden; margin-bottom:28px; position:relative; }
   .input-panel::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,var(--amber),transparent); }
   .panel-header { background:var(--surface2); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; gap:10px; }
@@ -97,21 +94,32 @@
   .summary-card-label { font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:2px; margin-bottom:8px; text-transform:uppercase; }
   .summary-card-value { font-size:13px; color:var(--text); line-height:1.7; font-family:var(--body); font-weight:300; }
   .logic-box { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:22px; font-family:var(--body); font-size:13px; font-weight:300; color:var(--text); line-height:1.9; white-space:pre-wrap; }
+  .materials-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+  .materials-hint { font-family:var(--mono); font-size:10px; color:var(--text-muted); letter-spacing:1px; }
+  .btn-add-row { font-family:var(--mono); font-size:10px; color:var(--green); background:transparent; border:1px solid var(--green); border-radius:2px; padding:6px 14px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
+  .btn-add-row:hover { background:rgba(61,184,122,0.1); }
   .materials-table { width:100%; border-collapse:collapse; font-size:12px; }
   .materials-table thead tr { border-bottom:1px solid var(--amber); }
   .materials-table th { font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:2px; padding:8px 12px; text-align:left; font-weight:normal; }
   .materials-table th.right { text-align:right; }
+  .materials-table th.center { text-align:center; }
   .materials-table tbody tr { border-bottom:1px solid var(--border); transition:background 0.1s; }
   .materials-table tbody tr:hover { background:var(--surface2); }
-  .materials-table td { padding:10px 12px; font-family:var(--body); font-weight:300; color:var(--text); }
-  .materials-table td.dim { color:var(--text-dim); font-family:var(--mono); font-size:11px; }
+  .materials-table td { padding:6px 8px; font-family:var(--body); font-weight:300; color:var(--text); }
   .materials-table td.right { text-align:right; }
+  .materials-table td.center { text-align:center; }
   .materials-table tfoot tr { border-top:1px solid var(--amber); }
   .materials-table tfoot td { padding:12px 12px; font-family:var(--mono); font-size:10px; }
   .tfoot-raw { color:var(--amber); font-size:11px; letter-spacing:1px; text-transform:uppercase; }
   .tfoot-raw-val { text-align:right; color:var(--amber); font-size:16px; font-family:var(--display); font-weight:700; }
   .tfoot-markup { color:var(--text-dim); font-size:9px; }
   .tfoot-markup-val { text-align:right; color:var(--text); font-family:var(--mono); font-size:12px; }
+  .cell-input { background:transparent; border:none; border-bottom:1px solid transparent; color:var(--text); font-family:var(--body); font-size:12px; font-weight:300; padding:3px 4px; width:100%; outline:none; transition:border-color 0.15s; }
+  .cell-input:focus { border-bottom-color:var(--amber); background:rgba(240,165,0,0.05); }
+  .cell-input.right { text-align:right; }
+  .cell-input.cost { text-align:right; font-family:var(--mono); font-size:11px; }
+  .btn-delete-row { background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:4px 8px; border-radius:2px; transition:all 0.15s; line-height:1; }
+  .btn-delete-row:hover { color:var(--red); background:rgba(224,80,80,0.1); }
   .labor-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
   .breakdown-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
   .breakdown-label { font-family:var(--body); font-size:13px; color:var(--text-dim); font-weight:300; }
@@ -123,8 +131,11 @@
   .hours-big { font-family:var(--display); font-size:72px; font-weight:900; color:var(--amber); line-height:1; }
   .hours-unit { font-family:var(--mono); font-size:11px; color:var(--text-dim); letter-spacing:2px; margin-top:8px; }
   .hours-rate { font-family:var(--mono); font-size:10px; color:var(--text-muted); margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .labor-edit-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
+  .labor-edit-input { background:var(--bg); border:1px solid var(--border); border-radius:2px; color:var(--text); font-family:var(--mono); font-size:13px; padding:6px 10px; width:100px; outline:none; text-align:right; transition:border-color 0.2s; }
+  .labor-edit-input:focus { border-color:var(--amber); }
   .proposal-box { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:32px; font-family:var(--body); font-size:14px; color:var(--text); line-height:2; font-weight:300; white-space:pre-wrap; min-height:200px; }
-  .proposal-actions { display:flex; gap:10px; margin-top:16px; }
+  .proposal-actions { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
   .btn-action { font-family:var(--mono); font-size:10px; color:var(--text-dim); background:transparent; border:1px solid var(--border); border-radius:2px; padding:9px 18px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
   .btn-action:hover { color:var(--amber); border-color:var(--amber); }
   .btn-action.copied { color:var(--green); border-color:var(--green); }
@@ -134,14 +145,14 @@
   .fab-btn:active { transform:scale(0.91); }
   button { -webkit-tap-highlight-color:transparent; user-select:none; }
   html { scroll-behavior:smooth; }
-  @media (max-width:800px) { .cost-grid{grid-template-columns:1fr 1fr} .summary-grid{grid-template-columns:1fr} .labor-grid{grid-template-columns:1fr} .header-title{font-size:20px} .tab-btn{padding:10px 12px;font-size:9px} }
+  @media (max-width:800px) { .cost-grid{grid-template-columns:1fr 1fr} .summary-grid{grid-template-columns:1fr} .labor-grid{grid-template-columns:1fr} .header-title{font-size:20px} .tab-btn{padding:10px 12px;font-size:9px} .settings-bar{gap:14px} }
   @media (max-width:600px) { .tab-btn{padding:13px 10px;font-size:8px;letter-spacing:1px} .btn-estimate{padding:15px 24px;font-size:14px;width:100%} .btn-clear{padding:14px 16px;width:100%} .input-actions{flex-direction:column} .header{height:auto;padding-top:14px;padding-bottom:14px} .header-status{display:none} .cost-grid{grid-template-columns:1fr 1fr} .tab-content{padding:18px} .hours-big{font-size:56px} .mobile-fab{display:flex} }
 </style>
 </head>
 <body>
 
 <header class="header">
-  <div class="header-logo">⚡</div>
+  <div class="header-logo">&#9889;</div>
   <div>
     <div class="header-title">Foreman Brain</div>
     <div class="header-sub">AI ELECTRICAL ESTIMATING SYSTEM</div>
@@ -153,6 +164,22 @@
 </header>
 
 <div class="main">
+
+  <div class="settings-bar">
+    <span class="settings-title">&#9658; JOB SETTINGS</span>
+    <div class="setting-group">
+      <span class="setting-label">Labor Rate</span>
+      <span class="setting-prefix">$</span>
+      <input class="setting-input" id="laborRate" type="number" value="100" min="1" step="1" />
+      <span class="setting-prefix">/ hr</span>
+    </div>
+    <div class="setting-group">
+      <span class="setting-label">Markup</span>
+      <span class="setting-prefix">x</span>
+      <input class="setting-input" id="markupRate" type="number" value="1.35" min="1" step="0.01" />
+    </div>
+  </div>
+
   <div class="input-panel">
     <div class="panel-header">
       <span class="panel-label">&#9658; JOB INPUT</span>
@@ -216,9 +243,14 @@
 </div>
 
 <script>
-var SYSTEM_PROMPT = "You are Foreman Brain, an AI electrical estimating system designed to think and operate like a licensed master electrician and experienced electrical contractor. Your purpose is to convert job descriptions into a realistic electrical estimate package. You must reason internally like a master electrician planning a job before producing the final estimate. CORE IDENTITY: Master electrician, 20+ years experience, residential and light commercial. WORKFLOW: Step 1 - Job Intake: Determine job type, scope, assumptions. Step 2 - Code Logic: Circuit size, conductor, breaker, NEC requirements. Step 3 - Material Takeoff: COMPLETE list, every part including small parts. Never skip small parts. Step 4 - Pricing: Raw Material Total x 1.35 = Marked-Up Cost. Step 5 - Labor: Hours x $100 per hr. Adjust for difficulty. Step 6 - Proposal: Professional, customer-ready. CONDUCTOR SIZING: 15A=14AWG, 20A=12AWG, 30A=10AWG, 40A=8AWG, 50A=6AWG. CIRCUIT SELECTION RULES: General living room, bedroom, dining room receptacles = 15A circuit, 14/2 NM-B wire. Kitchen small appliance circuits = 20A, 12/2 NM-B. Bathroom receptacles = 20A, 12/2 NM-B with GFCI. Garage receptacles = 20A, 12/2 NM-B with GFCI. Outdoor receptacles = 20A, 12/2 NM-B with GFCI. Dedicated appliance circuits = size per appliance nameplate. Lighting circuits = 15A, 14/2 NM-B. Laundry receptacle = 20A, 12/2 NM-B dedicated. Refrigerator = 20A dedicated, 12/2 NM-B. Dishwasher = 20A dedicated, 12/2 NM-B. Microwave = 20A dedicated, 12/2 NM-B. Do NOT default everything to 20A. Use 15A for general receptacles and lighting unless NEC requires 20A. ASSUMPTIONS when unknown: Residential wood-frame, standard drywall, normal access, short run=25-50ft, medium=50-100ft, long=100-150ft. FORMULAS: rawMaterialCost = sum of all materialTakeoff totalCost values. markedUpMaterialCost = rawMaterialCost x 1.35. laborCost = laborHours x 100. totalEstimate = markedUpMaterialCost + laborCost. EXCLUSIONS: drywall patching, painting, trenching, permit fees, utility coordination. CRITICAL: Return ONLY raw JSON. No markdown. No backticks. No explanation. Just the JSON object: {\"projectSummary\":{\"jobType\":\"string\",\"customerRequest\":\"string\",\"observedConditions\":\"string\",\"assumedConditions\":\"string\"},\"installationLogic\":\"string\",\"materialTakeoff\":[{\"item\":\"string\",\"qty\":\"string\",\"unitCost\":0,\"totalCost\":0}],\"laborHours\":0,\"rawMaterialCost\":0,\"markedUpMaterialCost\":0,\"laborCost\":0,\"totalEstimate\":0,\"customerProposal\":\"string\"}";
+var SYSTEM_PROMPT = "You are Foreman Brain, an AI electrical estimating system designed to think and operate like a licensed master electrician and experienced electrical contractor. Your purpose is to convert job descriptions into a realistic electrical estimate package. You must reason internally like a master electrician planning a job before producing the final estimate. CORE IDENTITY: Master electrician, 20+ years experience, residential and light commercial. WORKFLOW: Step 1 - Job Intake: Determine job type, scope, assumptions. Step 2 - Code Logic: Circuit size, conductor, breaker, NEC requirements. Step 3 - Material Takeoff: COMPLETE list, every part including small parts. Never skip small parts. Step 4 - Pricing: Raw Material Total x 1.35 = Marked-Up Cost. Step 5 - Labor: Hours x $100 per hr. Adjust for difficulty. Step 6 - Proposal: Professional, customer-ready. CONDUCTOR SIZING: 15A=14AWG, 20A=12AWG, 30A=10AWG, 40A=8AWG, 50A=6AWG. CIRCUIT SELECTION RULES: General living room bedroom dining room receptacles = 15A circuit 14/2 NM-B wire. Kitchen small appliance circuits = 20A 12/2 NM-B. Bathroom receptacles = 20A 12/2 NM-B with GFCI. Garage receptacles = 20A 12/2 NM-B with GFCI. Outdoor receptacles = 20A 12/2 NM-B with GFCI. Dedicated appliance circuits = size per appliance nameplate. Lighting circuits = 15A 14/2 NM-B. Laundry receptacle = 20A 12/2 NM-B dedicated. Refrigerator = 20A dedicated 12/2 NM-B. Dishwasher = 20A dedicated 12/2 NM-B. Microwave = 20A dedicated 12/2 NM-B. Do NOT default everything to 20A. Use 15A for general receptacles and lighting unless NEC requires 20A. ASSUMPTIONS when unknown: Residential wood-frame standard drywall normal access short run=25-50ft medium=50-100ft long=100-150ft. FORMULAS: rawMaterialCost = sum of all materialTakeoff totalCost values. markedUpMaterialCost = rawMaterialCost x 1.35. laborCost = laborHours x 100. totalEstimate = markedUpMaterialCost + laborCost. EXCLUSIONS: drywall patching painting trenching permit fees utility coordination. CRITICAL: Return ONLY raw JSON. No markdown. No backticks. No explanation. Just the JSON object: {\"projectSummary\":{\"jobType\":\"string\",\"customerRequest\":\"string\",\"observedConditions\":\"string\",\"assumedConditions\":\"string\"},\"installationLogic\":\"string\",\"materialTakeoff\":[{\"item\":\"string\",\"qty\":\"string\",\"unitCost\":0,\"totalCost\":0}],\"laborHours\":0,\"rawMaterialCost\":0,\"markedUpMaterialCost\":0,\"laborCost\":0,\"totalEstimate\":0,\"customerProposal\":\"string\"}";
 
 var currentEstimate = null;
+var editableMaterials = [];
+var editableLaborHours = 0;
+
+function getLaborRate() { return parseFloat(document.getElementById('laborRate').value) || 100; }
+function getMarkup() { return parseFloat(document.getElementById('markupRate').value) || 1.35; }
 
 function fmt(n) {
   if (typeof n !== 'number') return '$0.00';
@@ -237,6 +269,7 @@ function clearAll() {
   document.getElementById('loadingPanel').style.display = 'none';
   document.getElementById('charCount').textContent = '';
   currentEstimate = null;
+  editableMaterials = [];
 }
 
 function switchTab(name) {
@@ -249,37 +282,162 @@ function switchTab(name) {
   }
 }
 
-function copyProposal() {
-  if (!currentEstimate) return;
-  navigator.clipboard.writeText(currentEstimate.customerProposal || '').then(function() {
-    var btn = document.getElementById('copyBtn');
-    if (btn) {
-      btn.textContent = 'COPIED';
-      btn.classList.add('copied');
-      setTimeout(function() { btn.textContent = 'COPY PROPOSAL'; btn.classList.remove('copied'); }, 2000);
-    }
+function calcTotals() {
+  var rawTotal = 0;
+  editableMaterials.forEach(function(row) { rawTotal += (parseFloat(row.totalCost) || 0); });
+  var markup = getMarkup();
+  var lRate = getLaborRate();
+  return {
+    raw: rawTotal,
+    markedUp: rawTotal * markup,
+    labor: editableLaborHours * lRate,
+    total: (rawTotal * markup) + (editableLaborHours * lRate)
+  };
+}
+
+function updateCostCards() {
+  var t = calcTotals();
+  var grid = document.getElementById('costGrid');
+  if (!grid) return;
+  grid.innerHTML =
+    '<div class="cost-card"><div class="cost-label">Raw Material Cost</div><div class="cost-value">' + fmt(t.raw) + '</div><div class="cost-sub">Before markup</div></div>' +
+    '<div class="cost-card"><div class="cost-label">Material w/ Markup</div><div class="cost-value">' + fmt(t.markedUp) + '</div><div class="cost-sub">Raw x ' + getMarkup() + '</div></div>' +
+    '<div class="cost-card"><div class="cost-label">Labor Cost</div><div class="cost-value">' + fmt(t.labor) + '</div><div class="cost-sub">' + editableLaborHours + ' hrs @ $' + getLaborRate() + '/hr</div></div>' +
+    '<div class="cost-card total"><div class="cost-label">Total Estimate</div><div class="cost-value">' + fmt(t.total) + '</div><div class="cost-sub">Materials + Labor</div></div>';
+}
+
+function updateMaterialFooter() {
+  var t = calcTotals();
+  var rawEl = document.getElementById('mat-raw-val');
+  var markupEl = document.getElementById('mat-markup-val');
+  var markupLabelEl = document.getElementById('mat-markup-label');
+  if (rawEl) rawEl.textContent = fmt(t.raw);
+  if (markupEl) markupEl.textContent = fmt(t.markedUp);
+  if (markupLabelEl) markupLabelEl.textContent = 'Marked-Up (x' + getMarkup() + ')';
+  updateCostCards();
+  updateLaborTab();
+}
+
+function deleteRow(idx) {
+  editableMaterials.splice(idx, 1);
+  renderMaterialsTab();
+}
+
+function addRow() {
+  editableMaterials.push({ item: 'New Item', qty: '1', unitCost: 0, totalCost: 0 });
+  renderMaterialsTab();
+  setTimeout(function() {
+    var inputs = document.querySelectorAll('.cell-input-item');
+    if (inputs.length > 0) inputs[inputs.length - 1].focus();
+  }, 50);
+}
+
+function onCellChange(idx, field, value) {
+  if (field === 'unitCost' || field === 'totalCost') {
+    editableMaterials[idx][field] = parseFloat(value) || 0;
+  } else {
+    editableMaterials[idx][field] = value;
+  }
+  if (field === 'unitCost' || field === 'qty') {
+    var qty = parseFloat(editableMaterials[idx].qty) || 1;
+    var unit = parseFloat(editableMaterials[idx].unitCost) || 0;
+    editableMaterials[idx].totalCost = qty * unit;
+    var totalInputs = document.querySelectorAll('.cell-input-total');
+    if (totalInputs[idx]) totalInputs[idx].value = editableMaterials[idx].totalCost.toFixed(2);
+  }
+  updateMaterialFooter();
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderMaterialsTab() {
+  var rows = editableMaterials.map(function(r, i) {
+    return '<tr>' +
+      '<td><input class="cell-input cell-input-item" value="' + escHtml(r.item || '') + '" data-idx="' + i + '" data-field="item" /></td>' +
+      '<td><input class="cell-input right cell-input-qty" value="' + escHtml(r.qty || '') + '" data-idx="' + i + '" data-field="qty" style="width:60px;" /></td>' +
+      '<td><input class="cell-input cost cell-input-unit" value="' + (parseFloat(r.unitCost)||0).toFixed(2) + '" data-idx="' + i + '" data-field="unitCost" style="width:80px;" /></td>' +
+      '<td><input class="cell-input cost cell-input-total" value="' + (parseFloat(r.totalCost)||0).toFixed(2) + '" data-idx="' + i + '" data-field="totalCost" style="width:80px;" /></td>' +
+      '<td class="center"><button class="btn-delete-row" data-idx="' + i + '">&#10005;</button></td>' +
+      '</tr>';
+  }).join('');
+
+  var t = calcTotals();
+
+  document.getElementById('tab-materials').innerHTML =
+    '<div class="section-label">MATERIAL TAKEOFF</div>' +
+    '<div class="materials-toolbar">' +
+    '<span class="materials-hint">Edit any cell directly. Changes update totals instantly.</span>' +
+    '<button class="btn-add-row" id="addRowBtn">+ ADD LINE ITEM</button>' +
+    '</div>' +
+    '<table class="materials-table">' +
+    '<thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Unit Cost</th><th class="right">Total</th><th class="center">Del</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody>' +
+    '<tfoot>' +
+    '<tr><td colspan="3" class="tfoot-raw">Raw Material Total</td><td class="tfoot-raw-val" id="mat-raw-val">' + fmt(t.raw) + '</td><td></td></tr>' +
+    '<tr><td colspan="3" class="tfoot-markup" id="mat-markup-label">Marked-Up (x' + getMarkup() + ')</td><td class="tfoot-markup-val" id="mat-markup-val">' + fmt(t.markedUp) + '</td><td></td></tr>' +
+    '</tfoot></table>';
+
+  document.getElementById('addRowBtn').addEventListener('click', addRow);
+
+  document.querySelectorAll('.cell-input').forEach(function(input) {
+    input.addEventListener('input', function() {
+      var idx = parseInt(this.getAttribute('data-idx'));
+      var field = this.getAttribute('data-field');
+      onCellChange(idx, field, this.value);
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-row').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      deleteRow(parseInt(this.getAttribute('data-idx')));
+    });
   });
 }
 
-function printProposal() {
-  if (!currentEstimate) return;
-  var win = window.open('', '_blank');
-  win.document.write('<html><head><title>Electrical Estimate</title><style>body{font-family:Georgia,serif;font-size:14px;line-height:1.8;padding:60px;color:#222;max-width:800px;margin:0 auto;}pre{white-space:pre-wrap;font-family:Georgia,serif;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #ddd;font-size:12px;}</style></head><body>');
-  win.document.write('<h2>Electrical Estimate</h2><p style="color:#888;font-size:12px;margin-bottom:40px;">Generated by Foreman Brain</p>');
-  win.document.write('<pre>' + (currentEstimate.customerProposal || '') + '</pre>');
-  win.document.write('<table><tr><th>Materials (with markup)</th><td>' + fmt(currentEstimate.markedUpMaterialCost) + '</td></tr><tr><th>Labor (' + currentEstimate.laborHours + ' hrs)</th><td>' + fmt(currentEstimate.laborCost) + '</td></tr><tr><th>Total Estimate</th><td><strong>' + fmt(currentEstimate.totalEstimate) + '</strong></td></tr></table>');
-  win.document.write('</body></html>');
-  win.document.close();
-  win.print();
+function updateLaborTab() {
+  var t = calcTotals();
+  var lRate = getLaborRate();
+
+  document.getElementById('tab-labor').innerHTML =
+    '<div class="section-label">LABOR AND COST BREAKDOWN</div>' +
+    '<div class="labor-grid">' +
+    '<div>' +
+    '<div class="labor-edit-row"><span class="breakdown-label">Labor Hours</span><input class="labor-edit-input" id="labor-hours-input" type="number" value="' + editableLaborHours + '" min="0" step="0.5" /></div>' +
+    '<div class="labor-edit-row"><span class="breakdown-label">Labor Rate</span><span style="font-family:var(--mono);font-size:13px;color:var(--text);">$' + lRate + ' / hr</span></div>' +
+    '<div class="breakdown-row"><span class="breakdown-label">Raw Material Cost</span><span class="breakdown-val">' + fmt(t.raw) + '</span></div>' +
+    '<div class="breakdown-row"><span class="breakdown-label">Markup (x' + getMarkup() + ')</span><span class="breakdown-val">' + fmt(t.markedUp) + '</span></div>' +
+    '<div class="breakdown-row"><span class="breakdown-label">Labor Cost</span><span class="breakdown-val" id="lb-labor">' + fmt(editableLaborHours * lRate) + '</span></div>' +
+    '<div class="total-row"><span class="total-row-label">Total Estimate</span><span class="total-row-val" id="lb-total">' + fmt(t.markedUp + editableLaborHours * lRate) + '</span></div>' +
+    '</div>' +
+    '<div class="hours-display">' +
+    '<div style="font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:2px;margin-bottom:12px;">ESTIMATED LABOR</div>' +
+    '<div class="hours-big" id="lb-hours-display">' + editableLaborHours + '</div>' +
+    '<div class="hours-unit">HOURS ON-SITE</div>' +
+    '<div class="hours-rate">@ $' + lRate + ' / HOUR = <span id="lb-labor-display">' + fmt(editableLaborHours * lRate) + '</span></div>' +
+    '</div>' +
+    '</div>';
+
+  document.getElementById('labor-hours-input').addEventListener('input', function() {
+    editableLaborHours = parseFloat(this.value) || 0;
+    var lR = getLaborRate();
+    var t2 = calcTotals();
+    document.getElementById('lb-labor').textContent = fmt(editableLaborHours * lR);
+    document.getElementById('lb-total').textContent = fmt(t2.markedUp + editableLaborHours * lR);
+    document.getElementById('lb-hours-display').textContent = editableLaborHours;
+    document.getElementById('lb-labor-display').textContent = fmt(editableLaborHours * lR);
+    updateCostCards();
+  });
 }
 
 function renderEstimate(e) {
-  var grid = document.getElementById('costGrid');
-  grid.innerHTML =
-    '<div class="cost-card"><div class="cost-label">Raw Material Cost</div><div class="cost-value">' + fmt(e.rawMaterialCost) + '</div><div class="cost-sub">Before markup</div></div>' +
-    '<div class="cost-card"><div class="cost-label">Material w/ Markup</div><div class="cost-value">' + fmt(e.markedUpMaterialCost) + '</div><div class="cost-sub">Raw x 1.35</div></div>' +
-    '<div class="cost-card"><div class="cost-label">Labor Cost</div><div class="cost-value">' + fmt(e.laborCost) + '</div><div class="cost-sub">' + e.laborHours + ' hrs @ $100/hr</div></div>' +
-    '<div class="cost-card total"><div class="cost-label">Total Estimate</div><div class="cost-value">' + fmt(e.totalEstimate) + '</div><div class="cost-sub">Materials + Labor</div></div>';
+  editableMaterials = (e.materialTakeoff || []).map(function(r) {
+    return { item: r.item || '', qty: r.qty || '1', unitCost: parseFloat(r.unitCost) || 0, totalCost: parseFloat(r.totalCost) || 0 };
+  });
+  editableLaborHours = parseFloat(e.laborHours) || 0;
+
+  updateCostCards();
 
   var ps = e.projectSummary || {};
   document.getElementById('tab-summary').innerHTML =
@@ -295,30 +453,8 @@ function renderEstimate(e) {
     '<div class="section-label">INSTALLATION LOGIC AND NEC REASONING</div>' +
     '<div class="logic-box">' + (e.installationLogic || '---') + '</div>';
 
-  var rows = (e.materialTakeoff || []).map(function(r) {
-    return '<tr><td>' + (r.item || '---') + '</td><td class="dim right">' + (r.qty || '---') + '</td><td class="dim right">' + fmt(r.unitCost) + '</td><td class="right">' + fmt(r.totalCost) + '</td></tr>';
-  }).join('');
-
-  document.getElementById('tab-materials').innerHTML =
-    '<div class="section-label">MATERIAL TAKEOFF - ' + (e.materialTakeoff || []).length + ' LINE ITEMS</div>' +
-    '<table class="materials-table"><thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Unit Cost</th><th class="right">Total</th></tr></thead>' +
-    '<tbody>' + rows + '</tbody>' +
-    '<tfoot><tr><td colspan="3" class="tfoot-raw">Raw Material Total</td><td class="tfoot-raw-val">' + fmt(e.rawMaterialCost) + '</td></tr>' +
-    '<tr><td colspan="3" class="tfoot-markup">Marked-Up (x1.35)</td><td class="tfoot-markup-val">' + fmt(e.markedUpMaterialCost) + '</td></tr></tfoot></table>';
-
-  document.getElementById('tab-labor').innerHTML =
-    '<div class="section-label">LABOR AND COST BREAKDOWN</div>' +
-    '<div class="labor-grid">' +
-    '<div>' +
-    '<div class="breakdown-row"><span class="breakdown-label">Raw Material Cost</span><span class="breakdown-val">' + fmt(e.rawMaterialCost) + '</span></div>' +
-    '<div class="breakdown-row"><span class="breakdown-label">Markup Factor</span><span class="breakdown-val">x 1.35</span></div>' +
-    '<div class="breakdown-row"><span class="breakdown-label">Marked-Up Materials</span><span class="breakdown-val">' + fmt(e.markedUpMaterialCost) + '</span></div>' +
-    '<div class="breakdown-row"><span class="breakdown-label">Labor Rate</span><span class="breakdown-val">$100.00 / hr</span></div>' +
-    '<div class="breakdown-row"><span class="breakdown-label">Labor Cost</span><span class="breakdown-val">' + fmt(e.laborCost) + '</span></div>' +
-    '<div class="total-row"><span class="total-row-label">Total Estimate</span><span class="total-row-val">' + fmt(e.totalEstimate) + '</span></div>' +
-    '</div>' +
-    '<div class="hours-display"><div style="font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:2px;margin-bottom:12px;">ESTIMATED LABOR</div><div class="hours-big">' + e.laborHours + '</div><div class="hours-unit">HOURS ON-SITE</div><div class="hours-rate">@ $100.00 / HOUR = ' + fmt(e.laborCost) + '</div></div>' +
-    '</div>';
+  renderMaterialsTab();
+  updateLaborTab();
 
   document.getElementById('tab-proposal').innerHTML =
     '<div class="section-label">CUSTOMER PROPOSAL</div>' +
@@ -329,12 +465,12 @@ function renderEstimate(e) {
     '</div>' +
     '<div class="exclusions">STANDARD EXCLUSIONS: Drywall patching or painting, Trenching or boring, Permit fees, Utility coordination, Unforeseen concealed conditions</div>';
 
+  document.getElementById('copyBtn').addEventListener('click', copyProposal);
+  document.getElementById('printBtn').addEventListener('click', printProposal);
+
   document.getElementById('results').style.display = 'block';
   switchTab('summary');
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  document.getElementById('copyBtn').addEventListener('click', copyProposal);
-  document.getElementById('printBtn').addEventListener('click', printProposal);
 }
 
 async function runEstimate() {
@@ -367,7 +503,7 @@ async function runEstimate() {
     } catch(e) {
       var match = cleaned.match(/\{[\s\S]*\}/);
       if (match) { parsed = JSON.parse(match[0]); }
-      else { throw new Error('Could not parse estimate response. Raw: ' + cleaned.substring(0, 200)); }
+      else { throw new Error('Could not parse estimate response.'); }
     }
     currentEstimate = parsed;
     renderEstimate(parsed);
@@ -380,6 +516,32 @@ async function runEstimate() {
     btn.classList.remove('loading');
     document.getElementById('loadingPanel').style.display = 'none';
   }
+}
+
+function copyProposal() {
+  if (!currentEstimate) return;
+  var t = calcTotals();
+  var text = (currentEstimate.customerProposal || '') +
+    '\n\nESTIMATE SUMMARY\nMaterials: ' + fmt(t.markedUp) +
+    '\nLabor (' + editableLaborHours + ' hrs @ $' + getLaborRate() + '/hr): ' + fmt(t.labor) +
+    '\nTOTAL: ' + fmt(t.total);
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.getElementById('copyBtn');
+    if (btn) { btn.textContent = 'COPIED'; btn.classList.add('copied'); setTimeout(function() { btn.textContent = 'COPY PROPOSAL'; btn.classList.remove('copied'); }, 2000); }
+  });
+}
+
+function printProposal() {
+  if (!currentEstimate) return;
+  var t = calcTotals();
+  var win = window.open('', '_blank');
+  win.document.write('<html><head><title>Electrical Estimate</title><style>body{font-family:Georgia,serif;font-size:14px;line-height:1.8;padding:60px;color:#222;max-width:800px;margin:0 auto;}pre{white-space:pre-wrap;font-family:Georgia,serif;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #ddd;font-size:12px;}</style></head><body>');
+  win.document.write('<h2>Electrical Estimate</h2><p style="color:#888;font-size:12px;margin-bottom:40px;">Generated by Foreman Brain</p>');
+  win.document.write('<pre>' + (currentEstimate.customerProposal || '') + '</pre>');
+  win.document.write('<table style="margin-top:30px;"><tr><th>Materials (markup x' + getMarkup() + ')</th><td>' + fmt(t.markedUp) + '</td></tr><tr><th>Labor (' + editableLaborHours + ' hrs @ $' + getLaborRate() + '/hr)</th><td>' + fmt(t.labor) + '</td></tr><tr><th>Total Estimate</th><td><strong>' + fmt(t.total) + '</strong></td></tr></table>');
+  win.document.write('</body></html>');
+  win.document.close();
+  win.print();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -397,17 +559,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
   document.getElementById('tab-btn-summary').addEventListener('click', function() { switchTab('summary'); });
   document.getElementById('tab-btn-logic').addEventListener('click', function() { switchTab('logic'); });
-  document.getElementById('tab-btn-materials').addEventListener('click', function() { switchTab('materials'); });
-  document.getElementById('tab-btn-labor').addEventListener('click', function() { switchTab('labor'); });
+  document.getElementById('tab-btn-materials').addEventListener('click', function() { switchTab('materials'); renderMaterialsTab(); });
+  document.getElementById('tab-btn-labor').addEventListener('click', function() { switchTab('labor'); updateLaborTab(); });
   document.getElementById('tab-btn-proposal').addEventListener('click', function() { switchTab('proposal'); });
+
+  document.getElementById('laborRate').addEventListener('input', function() { updateCostCards(); updateLaborTab(); });
+  document.getElementById('markupRate').addEventListener('input', function() { updateCostCards(); updateMaterialFooter(); updateLaborTab(); });
 
   document.getElementById('jobInput').addEventListener('focus', function() {
     var fab = document.getElementById('mobileFab');
-    if (fab) { fab.style.opacity = '0'; fab.style.pointerEvents = 'none'; }
+    if (fab) { fab.style.opacity='0'; fab.style.pointerEvents='none'; }
   });
   document.getElementById('jobInput').addEventListener('blur', function() {
     var fab = document.getElementById('mobileFab');
-    if (fab) { fab.style.opacity = '1'; fab.style.pointerEvents = 'auto'; }
+    if (fab) { fab.style.opacity='1'; fab.style.pointerEvents='auto'; }
   });
   document.getElementById('jobInput').addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.key === 'Enter') runEstimate();
