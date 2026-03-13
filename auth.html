@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Foreman Brain" />
+<meta name="theme-color" content="#080b0e" />
+<title>Foreman Brain — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@300;400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b0e;--surface:#0e1318;--surface2:#131920;
+  --border:#1e2830;--amber:#f0a500;--amber-glow:rgba(240,165,0,0.12);
+  --red:#e05050;--green:#3db87a;
+  --text:#c8d4dc;--text-dim:#6a7d8a;--text-muted:#3a4a55;
+  --mono:'Share Tech Mono',monospace;
+  --display:'Barlow Condensed',sans-serif;
+  --body:'Barlow',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);pointer-events:none;z-index:0;}
+.wrap{width:100%;max-width:420px;position:relative;z-index:1;}
+.logo-row{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:40px;}
+.logo-hex{width:44px;height:44px;background:var(--amber);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:20px;animation:pulse 3s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,165,0,0.4)}50%{box-shadow:0 0 0 8px rgba(240,165,0,0)}}
+.logo-text{font-family:var(--display);font-size:28px;font-weight:900;color:var(--amber);letter-spacing:4px;text-transform:uppercase;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:36px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--amber),transparent);}
+.card-title{font-family:var(--display);font-size:22px;font-weight:700;color:var(--amber);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.card-sub{font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:2px;margin-bottom:28px;}
+.tabs{display:flex;gap:2px;margin-bottom:28px;border-bottom:1px solid var(--border);}
+.tab{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--text-muted);background:transparent;border:none;padding:10px 20px;cursor:pointer;text-transform:uppercase;transition:all 0.15s;position:relative;top:1px;}
+.tab.active{color:var(--amber);border-bottom:2px solid var(--amber);}
+.form-group{margin-bottom:16px;}
+.form-label{font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:6px;}
+.form-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:var(--body);font-size:14px;padding:12px 14px;outline:none;transition:border-color 0.2s;}
+.form-input:focus{border-color:var(--amber);}
+.form-input::placeholder{color:var(--text-muted);}
+.btn-submit{width:100%;font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;background:var(--amber);color:#080b0e;border:none;border-radius:2px;padding:14px;cursor:pointer;transition:all 0.2s;margin-top:8px;}
+.btn-submit:hover:not(:disabled){background:#ffbb20;box-shadow:0 0 24px rgba(240,165,0,0.3);}
+.btn-submit:disabled{background:var(--border);color:var(--text-muted);cursor:not-allowed;}
+.msg{font-family:var(--mono);font-size:11px;padding:10px 14px;border-radius:2px;margin-top:14px;display:none;letter-spacing:1px;}
+.msg.error{background:rgba(224,80,80,0.1);border:1px solid var(--red);color:var(--red);}
+.msg.success{background:rgba(61,184,122,0.1);border:1px solid var(--green);color:var(--green);}
+.forgot{font-family:var(--mono);font-size:10px;color:var(--text-muted);text-align:right;margin-top:6px;cursor:pointer;letter-spacing:1px;background:none;border:none;display:block;width:100%;transition:color 0.15s;}
+.forgot:hover{color:var(--amber);}
+.signup-note{font-family:var(--mono);font-size:10px;color:var(--text-muted);text-align:center;margin-top:20px;letter-spacing:1px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo-row">
+    <div class="logo-hex">&#9889;</div>
+    <div class="logo-text">Foreman Brain</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Welcome Back</div>
+    <div class="card-sub">AI ELECTRICAL ESTIMATING SYSTEM</div>
+    <div class="tabs">
+      <button class="tab active" id="tabLogin">LOGIN</button>
+      <button class="tab" id="tabSignup">CREATE ACCOUNT</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="loginEmail" type="email" placeholder="you@company.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="loginPassword" type="password" placeholder="••••••••" />
+      </div>
+      <button class="forgot" id="forgotBtn">Forgot password?</button>
+      <button class="btn-submit" id="loginBtn">&#9658; SIGN IN</button>
+      <div class="msg" id="loginMsg"></div>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signupForm" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="signupEmail" type="email" placeholder="you@company.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="signupPassword" type="password" placeholder="Min 8 characters" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        <input class="form-input" id="signupConfirm" type="password" placeholder="Repeat password" />
+      </div>
+      <button class="btn-submit" id="signupBtn">&#9658; CREATE ACCOUNT & SUBSCRIBE</button>
+      <div class="msg" id="signupMsg"></div>
+      <div class="signup-note">After creating your account you'll be taken to<br/>secure checkout — <strong>$60/month</strong>, cancel anytime.</div>
+    </div>
+
+    <!-- RESET FORM -->
+    <div id="resetForm" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="resetEmail" type="email" placeholder="you@company.com" />
+      </div>
+      <button class="btn-submit" id="resetBtn">&#9658; SEND RESET LINK</button>
+      <div class="msg" id="resetMsg"></div>
+      <button class="forgot" id="backToLogin" style="margin-top:12px;">&#8592; Back to login</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = 'https://xrfzqeoigqtgdqlimpoj.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyZnpxZW9pZ3F0Z2RxbGltcG9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNzE5MjksImV4cCI6MjA4ODk0NzkyOX0.PCS_-awnCZwonwYYkAE_-jbSXfqbyrfOU6J6E3KqSZ0';
+
+var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Check for activation/cancellation params
+var params = new URLSearchParams(window.location.search);
+if (params.get('activated') === '1') {
+  setTimeout(function() {
+    var msg = document.getElementById('loginMsg');
+    msg.textContent = '✓ Subscription activated! Please log in.';
+    msg.className = 'msg success'; msg.style.display = 'block';
+  }, 300);
+}
+if (params.get('cancelled') === '1') {
+  setTimeout(function() {
+    var msg = document.getElementById('loginMsg');
+    msg.textContent = 'Payment cancelled. Try again when ready.';
+    msg.className = 'msg error'; msg.style.display = 'block';
+  }, 300);
+}
+
+function showMsg(id, text, type) {
+  var el = document.getElementById(id);
+  el.textContent = text; el.className = 'msg ' + type; el.style.display = 'block';
+}
+function hideMsg(id) { document.getElementById(id).style.display = 'none'; }
+
+document.getElementById('tabLogin').addEventListener('click', function() {
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('signupForm').style.display = 'none';
+  document.getElementById('resetForm').style.display = 'none';
+  this.classList.add('active'); document.getElementById('tabSignup').classList.remove('active');
+});
+document.getElementById('tabSignup').addEventListener('click', function() {
+  document.getElementById('signupForm').style.display = 'block';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('resetForm').style.display = 'none';
+  this.classList.add('active'); document.getElementById('tabLogin').classList.remove('active');
+});
+document.getElementById('forgotBtn').addEventListener('click', function() {
+  document.getElementById('resetForm').style.display = 'block';
+  document.getElementById('loginForm').style.display = 'none';
+});
+document.getElementById('backToLogin').addEventListener('click', function() {
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('resetForm').style.display = 'none';
+});
+
+document.getElementById('loginBtn').addEventListener('click', async function() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var pass = document.getElementById('loginPassword').value;
+  if (!email || !pass) { showMsg('loginMsg', 'Please enter your email and password.', 'error'); return; }
+  this.disabled = true; this.textContent = 'SIGNING IN...';
+  hideMsg('loginMsg');
+  var result = await supabase.auth.signInWithPassword({ email: email, password: pass });
+  if (result.error) {
+    showMsg('loginMsg', result.error.message, 'error');
+    this.disabled = false; this.textContent = '▶ SIGN IN'; return;
+  }
+  var uid = result.data.user.id;
+  var profile = await supabase.from('profiles').select('subscription_status,is_admin').eq('id', uid).single();
+  if (profile.data && (profile.data.subscription_status === 'active' || profile.data.is_admin)) {
+    window.location.href = 'index.html';
+  } else {
+    showMsg('loginMsg', 'No active subscription. Please subscribe to access Foreman Brain.', 'error');
+    await supabase.auth.signOut();
+    this.disabled = false; this.textContent = '▶ SIGN IN';
+  }
+});
+
+document.getElementById('signupBtn').addEventListener('click', async function() {
+  var email = document.getElementById('signupEmail').value.trim();
+  var pass = document.getElementById('signupPassword').value;
+  var confirm = document.getElementById('signupConfirm').value;
+  if (!email || !pass) { showMsg('signupMsg', 'Please fill in all fields.', 'error'); return; }
+  if (pass.length < 8) { showMsg('signupMsg', 'Password must be at least 8 characters.', 'error'); return; }
+  if (pass !== confirm) { showMsg('signupMsg', 'Passwords do not match.', 'error'); return; }
+  this.disabled = true; this.textContent = 'CREATING ACCOUNT...';
+  hideMsg('signupMsg');
+  var result = await supabase.auth.signUp({ email: email, password: pass });
+  if (result.error) {
+    showMsg('signupMsg', result.error.message, 'error');
+    this.disabled = false; this.textContent = '▶ CREATE ACCOUNT & SUBSCRIBE'; return;
+  }
+  showMsg('signupMsg', 'Account created! Redirecting to payment...', 'success');
+  setTimeout(function() {
+    window.location.href = 'https://foreman-brain.onrender.com/checkout?email=' + encodeURIComponent(email) + '&uid=' + result.data.user.id;
+  }, 1200);
+});
+
+document.getElementById('resetBtn').addEventListener('click', async function() {
+  var email = document.getElementById('resetEmail').value.trim();
+  if (!email) { showMsg('resetMsg', 'Please enter your email.', 'error'); return; }
+  this.disabled = true; this.textContent = 'SENDING...';
+  var result = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/auth.html' });
+  if (result.error) { showMsg('resetMsg', result.error.message, 'error'); }
+  else { showMsg('resetMsg', '✓ Reset link sent — check your email.', 'success'); }
+  this.disabled = false; this.textContent = '▶ SEND RESET LINK';
+});
+
+(async function() {
+  var session = await supabase.auth.getSession();
+  if (session.data.session) {
+    var uid = session.data.session.user.id;
+    var profile = await supabase.from('profiles').select('subscription_status,is_admin').eq('id', uid).single();
+    if (profile.data && (profile.data.subscription_status === 'active' || profile.data.is_admin)) {
+      window.location.href = 'index.html';
+    }
+  }
+})();
+</script>
+</body>
+</html>
