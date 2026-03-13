@@ -51,8 +51,8 @@ app.get('/checkout', async (req, res) => {
       mode: 'subscription',
       customer_email: email,
       line_items: [{ price: PRICE_ID, quantity: 1 }],
-      success_url: FRONTEND_URL + '/auth.html?activated=1',
-      cancel_url: FRONTEND_URL + '/auth.html?cancelled=1',
+     success_url: FRONTEND_URL + '/auth.html',
+     cancel_url: FRONTEND_URL + '/auth.html',,
       metadata: { supabase_uid: uid }
     });
 
