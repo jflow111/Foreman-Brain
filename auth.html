@@ -64,7 +64,6 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <button class="tab" id="tabSignup">CREATE ACCOUNT</button>
     </div>
 
-    <!-- LOGIN FORM -->
     <div id="loginForm">
       <div class="form-group">
         <label class="form-label">Email Address</label>
@@ -79,7 +78,6 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <div class="msg" id="loginMsg"></div>
     </div>
 
-    <!-- SIGNUP FORM -->
     <div id="signupForm" style="display:none;">
       <div class="form-group">
         <label class="form-label">Email Address</label>
@@ -98,7 +96,6 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <div class="signup-note">After creating your account you'll be taken to<br/>secure checkout — <strong>$60/month</strong>, cancel anytime.</div>
     </div>
 
-    <!-- RESET FORM -->
     <div id="resetForm" style="display:none;">
       <div class="form-group">
         <label class="form-label">Email Address</label>
@@ -117,27 +114,7 @@ var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 
 var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Check for activation/cancellation params
-var params = new URLSearchParams(window.location.search);
-if (params.get('activated') === '1') {
-  setTimeout(function() {
-    var msg = document.getElementById('loginMsg');
-    msg.textContent = '✓ Subscription activated! Please log in.';
-    msg.className = 'msg success'; msg.style.display = 'block';
-  }, 300);
-}
-if (params.get('cancelled') === '1') {
-  setTimeout(function() {
-    var msg = document.getElementById('loginMsg');
-    msg.textContent = 'Payment cancelled. Try again when ready.';
-    msg.className = 'msg error'; msg.style.display = 'block';
-  }, 300);
-}
-
-function showMsg(id, text, type) {
-  var el = document.getElementById(id);
-  el.textContent = text; el.className = 'msg ' + type; el.style.display = 'block';
-}
+function showMsg(id, text, type) { var el = document.getElementById(id); el.textContent = text; el.className = 'msg ' + type; el.style.display = 'block'; }
 function hideMsg(id) { document.getElementById(id).style.display = 'none'; }
 
 document.getElementById('tabLogin').addEventListener('click', function() {
@@ -168,14 +145,11 @@ document.getElementById('loginBtn').addEventListener('click', async function() {
   this.disabled = true; this.textContent = 'SIGNING IN...';
   hideMsg('loginMsg');
   var result = await supabase.auth.signInWithPassword({ email: email, password: pass });
-  if (result.error) {
-    showMsg('loginMsg', result.error.message, 'error');
-    this.disabled = false; this.textContent = '▶ SIGN IN'; return;
-  }
+  if (result.error) { showMsg('loginMsg', result.error.message, 'error'); this.disabled = false; this.textContent = '▶ SIGN IN'; return; }
   var uid = result.data.user.id;
   var profile = await supabase.from('profiles').select('subscription_status,is_admin').eq('id', uid).single();
   if (profile.data && (profile.data.subscription_status === 'active' || profile.data.is_admin)) {
-    window.location.href = 'index.html';
+    window.location.href = 'app.html';
   } else {
     showMsg('loginMsg', 'No active subscription. Please subscribe to access Foreman Brain.', 'error');
     await supabase.auth.signOut();
@@ -193,10 +167,7 @@ document.getElementById('signupBtn').addEventListener('click', async function() 
   this.disabled = true; this.textContent = 'CREATING ACCOUNT...';
   hideMsg('signupMsg');
   var result = await supabase.auth.signUp({ email: email, password: pass });
-  if (result.error) {
-    showMsg('signupMsg', result.error.message, 'error');
-    this.disabled = false; this.textContent = '▶ CREATE ACCOUNT & SUBSCRIBE'; return;
-  }
+  if (result.error) { showMsg('signupMsg', result.error.message, 'error'); this.disabled = false; this.textContent = '▶ CREATE ACCOUNT & SUBSCRIBE'; return; }
   showMsg('signupMsg', 'Account created! Redirecting to payment...', 'success');
   setTimeout(function() {
     window.location.href = 'https://foreman-brain.onrender.com/checkout?email=' + encodeURIComponent(email) + '&uid=' + result.data.user.id;
@@ -219,7 +190,7 @@ document.getElementById('resetBtn').addEventListener('click', async function() {
     var uid = session.data.session.user.id;
     var profile = await supabase.from('profiles').select('subscription_status,is_admin').eq('id', uid).single();
     if (profile.data && (profile.data.subscription_status === 'active' || profile.data.is_admin)) {
-      window.location.href = 'index.html';
+      window.location.href = 'app.html';
     }
   }
 })();
