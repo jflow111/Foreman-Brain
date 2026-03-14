@@ -51,7 +51,7 @@ app.get('/checkout', async (req, res) => {
       mode: 'subscription',
       customer_email: email,
       line_items: [{ price: PRICE_ID, quantity: 1 }],
-     success_url: 'https://jflow111.github.io/foreman-brain/',
+    success_url: 'https://jflow111.github.io/foreman-brain/auth.html',
      cancel_url: 'https://jflow111.github.io/foreman-brain/auth.html',
       metadata: { supabase_uid: uid }
     });
