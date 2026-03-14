@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Foreman Brain" />
+<meta name="theme-color" content="#080b0e" />
+<title>Foreman Brain — AI Electrical Estimating</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(async function() {
+  var SUPABASE_URL = 'https://xrfzqeoigqtgdqlimpoj.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyZnpxZW9pZ3F0Z2RxbGltcG9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNzE5MjksImV4cCI6MjA4ODk0NzkyOX0.PCS_-awnCZwonwYYkAE_-jbSXfqbyrfOU6J6E3KqSZ0';
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  var session = await sb.auth.getSession();
+  if (!session.data.session) { window.location.href = 'auth.html'; return; }
+  var uid = session.data.session.user.id;
+  var profile = await sb.from('profiles').select('subscription_status,is_admin,email').eq('id', uid).single();
+  if (!profile.data || (profile.data.subscription_status !== 'active' && !profile.data.is_admin)) {
+    await sb.auth.signOut(); window.location.href = 'auth.html'; return;
+  }
+  window._supabase = sb;
+  window._userProfile = profile.data;
+  window._userEmail = session.data.session.user.email;
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:#080b0e; --surface:#0e1318; --surface2:#131920;
+    --border:#1e2830; --border2:#253040;
+    --amber:#f0a500; --amber-dim:#a37010; --amber-glow:rgba(240,165,0,0.12);
+    --red:#e05050; --green:#3db87a;
+    --text:#c8d4dc; --text-dim:#6a7d8a; --text-muted:#3a4a55;
+    --mono:'Share Tech Mono',monospace;
+    --display:'Barlow Condensed',sans-serif;
+    --body:'Barlow',sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:var(--body); min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px); pointer-events:none; z-index:9999; }
+  .header { background:var(--surface); border-bottom:2px solid var(--amber); padding:0 32px; height:64px; display:flex; align-items:center; gap:20px; position:sticky; top:0; z-index:100; box-shadow:0 4px 40px rgba(240,165,0,0.08); }
+  .header-logo { width:40px; height:40px; background:var(--amber); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; animation:pulse-logo 3s ease-in-out infinite; }
+  @keyframes pulse-logo { 0%,100%{box-shadow:0 0 0 0 rgba(240,165,0,0.4)} 50%{box-shadow:0 0 0 8px rgba(240,165,0,0)} }
+  .header-title { font-family:var(--display); font-size:26px; font-weight:900; letter-spacing:4px; color:var(--amber); text-transform:uppercase; }
+  .header-sub { font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:2px; }
+  .header-status { margin-left:auto; display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:10px; color:var(--text-dim); }
+  .status-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:blink 2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .main { max-width:1200px; margin:0 auto; padding:36px 24px 80px; }
+  .settings-bar { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:16px 20px; margin-bottom:20px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+  .setting-group { display:flex; align-items:center; gap:10px; }
+  .setting-label { font-family:var(--mono); font-size:10px; color:var(--amber); letter-spacing:1.5px; text-transform:uppercase; white-space:nowrap; }
+  .setting-input { background:var(--bg); border:1px solid var(--border); border-radius:2px; color:var(--text); font-family:var(--mono); font-size:13px; padding:6px 10px; width:90px; outline:none; transition:border-color 0.2s; }
+  .setting-input:focus { border-color:var(--amber); }
+  .setting-prefix { font-family:var(--mono); font-size:12px; color:var(--text-dim); }
+  .settings-title { font-family:var(--mono); font-size:9px; color:var(--text-muted); letter-spacing:2px; margin-right:8px; }
+  .input-panel { background:var(--surface); border:1px solid var(--border); border-radius:2px; overflow:hidden; margin-bottom:28px; position:relative; }
+  .input-panel::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,var(--amber),transparent); }
+  .panel-header { background:var(--surface2); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; gap:10px; }
+  .panel-label { font-family:var(--mono); font-size:10px; color:var(--amber); letter-spacing:2px; text-transform:uppercase; }
+  .panel-badge { font-family:var(--mono); font-size:9px; color:var(--text-muted); border:1px solid var(--border); padding:2px 8px; border-radius:2px; }
+  .input-body { padding:20px; }
+  .job-textarea { width:100%; min-height:130px; background:var(--bg); border:1px solid var(--border); border-radius:2px; color:var(--text); font-family:var(--mono); font-size:13px; line-height:1.7; padding:16px; resize:vertical; outline:none; transition:border-color 0.2s; }
+  .job-textarea:focus { border-color:var(--amber); }
+  .job-textarea::placeholder { color:var(--text-muted); }
+  .quick-fills { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; margin-bottom:16px; }
+  .qf-btn { font-family:var(--mono); font-size:10px; color:var(--text-dim); background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:5px 12px; cursor:pointer; transition:all 0.15s; letter-spacing:1px; }
+  .qf-btn:hover { border-color:var(--amber-dim); color:var(--amber); }
+  .input-actions { display:flex; gap:12px; align-items:center; }
+  .btn-estimate { font-family:var(--display); font-size:15px; font-weight:700; letter-spacing:3px; color:var(--bg); background:var(--amber); border:none; border-radius:2px; padding:12px 32px; cursor:pointer; text-transform:uppercase; transition:all 0.2s; position:relative; overflow:hidden; }
+  .btn-estimate:hover:not(:disabled) { background:#ffbb20; box-shadow:0 0 30px rgba(240,165,0,0.3); }
+  .btn-estimate:disabled { background:var(--border2); color:var(--text-muted); cursor:not-allowed; }
+  .btn-estimate.loading::after { content:''; position:absolute; bottom:0; left:-100%; width:100%; height:2px; background:rgba(255,255,255,0.5); animation:slide-loading 1.2s linear infinite; }
+  @keyframes slide-loading { to{left:100%} }
+  .btn-clear { font-family:var(--mono); font-size:11px; color:var(--text-muted); background:transparent; border:1px solid var(--border); border-radius:2px; padding:11px 20px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
+  .btn-clear:hover { color:var(--red); border-color:var(--red); }
+  .loading-panel { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:60px 32px; text-align:center; margin-bottom:28px; }
+  .loading-hex { width:72px; height:72px; background:var(--amber-glow); border:2px solid var(--amber); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 24px; animation:spin 2s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .loading-title { font-family:var(--display); font-size:20px; font-weight:700; letter-spacing:3px; color:var(--amber); margin-bottom:10px; }
+  .loading-steps { display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-top:20px; }
+  .loading-step { font-family:var(--mono); font-size:10px; color:var(--text-muted); letter-spacing:1px; animation:step-fade 2.4s ease-in-out infinite; }
+  .loading-step:nth-child(2){animation-delay:0.4s} .loading-step:nth-child(3){animation-delay:0.8s} .loading-step:nth-child(4){animation-delay:1.2s} .loading-step:nth-child(5){animation-delay:1.6s} .loading-step:nth-child(6){animation-delay:2.0s}
+  @keyframes step-fade { 0%,100%{color:var(--text-muted)} 50%{color:var(--amber)} }
+  .error-box { background:rgba(224,80,80,0.08); border:1px solid var(--red); border-radius:2px; padding:14px 20px; font-family:var(--mono); font-size:12px; color:var(--red); margin-bottom:24px; }
+  .cost-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1.4fr; gap:12px; margin-bottom:24px; }
+  .cost-card { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:16px 18px; position:relative; overflow:hidden; animation:card-in 0.4s ease both; }
+  .cost-card:nth-child(1){animation-delay:0.05s} .cost-card:nth-child(2){animation-delay:0.1s} .cost-card:nth-child(3){animation-delay:0.15s} .cost-card:nth-child(4){animation-delay:0.2s}
+  @keyframes card-in { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .cost-card.total { background:linear-gradient(135deg,var(--amber-glow),rgba(240,165,0,0.04)); border-color:var(--amber); }
+  .cost-card::after { content:''; position:absolute; top:0; left:0; width:3px; height:100%; background:var(--border2); }
+  .cost-card.total::after { background:var(--amber); }
+  .cost-label { font-family:var(--mono); font-size:9px; color:var(--text-muted); letter-spacing:2px; margin-bottom:10px; text-transform:uppercase; }
+  .cost-value { font-family:var(--display); font-size:26px; font-weight:700; color:var(--text); letter-spacing:1px; }
+  .cost-card.total .cost-value { font-size:30px; color:var(--amber); }
+  .cost-sub { font-family:var(--mono); font-size:9px; color:var(--text-muted); margin-top:6px; }
+  .tabs-bar { display:flex; gap:2px; border-bottom:2px solid var(--border); }
+  .tab-btn { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--text-muted); background:transparent; border:1px solid transparent; border-bottom:none; padding:10px 20px; cursor:pointer; text-transform:uppercase; transition:all 0.15s; border-radius:2px 2px 0 0; position:relative; top:2px; }
+  .tab-btn:hover { color:var(--text-dim); }
+  .tab-btn.active { color:var(--amber); background:var(--surface); border-color:var(--border); border-bottom:2px solid var(--surface); }
+  .tab-content { background:var(--surface); border:1px solid var(--border); border-top:none; border-radius:0 0 2px 2px; padding:28px; min-height:320px; animation:fade-in 0.2s ease; }
+  @keyframes fade-in { from{opacity:0} to{opacity:1} }
+  .section-label { font-family:var(--mono); font-size:10px; color:var(--amber); letter-spacing:2px; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+  .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+  .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .summary-card { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:16px; }
+  .summary-card-label { font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:2px; margin-bottom:8px; text-transform:uppercase; }
+  .summary-card-value { font-size:13px; color:var(--text); line-height:1.7; font-family:var(--body); font-weight:300; }
+  .logic-box { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:22px; font-family:var(--body); font-size:13px; font-weight:300; color:var(--text); line-height:1.9; white-space:pre-wrap; }
+  .materials-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+  .materials-hint { font-family:var(--mono); font-size:10px; color:var(--text-muted); letter-spacing:1px; }
+  .btn-add-row { font-family:var(--mono); font-size:10px; color:var(--green); background:transparent; border:1px solid var(--green); border-radius:2px; padding:6px 14px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
+  .btn-add-row:hover { background:rgba(61,184,122,0.1); }
+  .materials-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .materials-table thead tr { border-bottom:1px solid var(--amber); }
+  .materials-table th { font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:2px; padding:8px 12px; text-align:left; font-weight:normal; }
+  .materials-table th.right { text-align:right; }
+  .materials-table th.center { text-align:center; }
+  .materials-table tbody tr { border-bottom:1px solid var(--border); transition:background 0.1s; }
+  .materials-table tbody tr:hover { background:var(--surface2); }
+  .materials-table td { padding:6px 8px; font-family:var(--body); font-weight:300; color:var(--text); }
+  .materials-table td.right { text-align:right; }
+  .materials-table td.center { text-align:center; }
+  .materials-table tfoot tr { border-top:1px solid var(--amber); }
+  .materials-table tfoot td { padding:12px 12px; font-family:var(--mono); font-size:10px; }
+  .tfoot-raw { color:var(--amber); font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+  .tfoot-raw-val { text-align:right; color:var(--amber); font-size:16px; font-family:var(--display); font-weight:700; }
+  .tfoot-markup { color:var(--text-dim); font-size:9px; }
+  .tfoot-markup-val { text-align:right; color:var(--text); font-family:var(--mono); font-size:12px; }
+  .cell-input { background:transparent; border:none; border-bottom:1px solid transparent; color:var(--text); font-family:var(--body); font-size:12px; font-weight:300; padding:3px 4px; width:100%; outline:none; transition:border-color 0.15s; }
+  .cell-input:focus { border-bottom-color:var(--amber); background:rgba(240,165,0,0.05); }
+  .cell-input.right { text-align:right; }
+  .cell-input.cost { text-align:right; font-family:var(--mono); font-size:11px; }
+  .btn-delete-row { background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:4px 8px; border-radius:2px; transition:all 0.15s; line-height:1; }
+  .btn-delete-row:hover { color:var(--red); background:rgba(224,80,80,0.1); }
+  .labor-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .breakdown-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
+  .breakdown-label { font-family:var(--body); font-size:13px; color:var(--text-dim); font-weight:300; }
+  .breakdown-val { font-family:var(--mono); font-size:13px; color:var(--text); }
+  .total-row { display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,var(--amber-glow),transparent); border:1px solid var(--amber); border-radius:2px; padding:16px 18px; margin-top:14px; }
+  .total-row-label { font-family:var(--display); font-size:14px; font-weight:700; letter-spacing:2px; color:var(--amber); text-transform:uppercase; }
+  .total-row-val { font-family:var(--display); font-size:28px; font-weight:700; color:var(--amber); }
+  .hours-display { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:24px; text-align:center; }
+  .hours-big { font-family:var(--display); font-size:72px; font-weight:900; color:var(--amber); line-height:1; }
+  .hours-unit { font-family:var(--mono); font-size:11px; color:var(--text-dim); letter-spacing:2px; margin-top:8px; }
+  .hours-rate { font-family:var(--mono); font-size:10px; color:var(--text-muted); margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .labor-edit-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
+  .labor-edit-input { background:var(--bg); border:1px solid var(--border); border-radius:2px; color:var(--text); font-family:var(--mono); font-size:13px; padding:6px 10px; width:100px; outline:none; text-align:right; transition:border-color 0.2s; }
+  .labor-edit-input:focus { border-color:var(--amber); }
+  .proposal-box { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:32px; font-family:var(--body); font-size:14px; color:var(--text); line-height:2; font-weight:300; white-space:pre-wrap; min-height:200px; }
+  .proposal-actions { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  .btn-action { font-family:var(--mono); font-size:10px; color:var(--text-dim); background:transparent; border:1px solid var(--border); border-radius:2px; padding:9px 18px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
+  .btn-action:hover { color:var(--amber); border-color:var(--amber); }
+  .btn-action.copied { color:var(--green); border-color:var(--green); }
+  .exclusions { margin-top:24px; padding:14px 18px; background:var(--surface2); border-left:3px solid var(--border2); font-family:var(--mono); font-size:10px; color:var(--text-muted); line-height:1.8; }
+  .mobile-fab { display:none; position:fixed; bottom:24px; right:20px; z-index:200; }
+  .fab-btn { width:64px; height:64px; border-radius:50%; background:var(--amber); border:none; font-size:26px; cursor:pointer; box-shadow:0 4px 28px rgba(240,165,0,0.55); display:flex; align-items:center; justify-content:center; transition:transform 0.15s; color:#080b0e; }
+  .fab-btn:active { transform:scale(0.91); }
+  button { -webkit-tap-highlight-color:transparent; user-select:none; }
+  html { scroll-behavior:smooth; }
+  .history-page { display:none; }
+  .history-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  .history-title { font-family:var(--display); font-size:28px; font-weight:700; color:var(--amber); letter-spacing:2px; text-transform:uppercase; }
+  .history-count { font-family:var(--mono); font-size:10px; color:var(--text-muted); letter-spacing:2px; }
+  .history-empty { text-align:center; padding:80px 32px; font-family:var(--mono); font-size:12px; color:var(--text-muted); letter-spacing:1px; }
+  .history-empty-icon { font-size:40px; margin-bottom:16px; opacity:0.3; }
+  .job-card { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:20px 24px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:16px; cursor:pointer; transition:all 0.15s; position:relative; overflow:hidden; }
+  .job-card::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; background:var(--border2); transition:background 0.15s; }
+  .job-card:hover { border-color:var(--amber-dim); }
+  .job-card:hover::before { background:var(--amber); }
+  .job-card-left { flex:1; min-width:0; }
+  .job-card-type { font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+  .job-card-desc { font-size:14px; color:var(--text); font-weight:400; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:6px; }
+  .job-card-meta { font-family:var(--mono); font-size:10px; color:var(--text-muted); }
+  .job-card-right { text-align:right; flex-shrink:0; }
+  .job-card-total { font-family:var(--display); font-size:24px; font-weight:700; color:var(--text); letter-spacing:1px; }
+  .job-card-actions { display:flex; gap:8px; margin-top:8px; justify-content:flex-end; }
+  .job-card-btn { font-family:var(--mono); font-size:9px; color:var(--text-muted); background:transparent; border:1px solid var(--border); border-radius:2px; padding:4px 10px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
+  .job-card-btn:hover { color:var(--amber); border-color:var(--amber); }
+  .job-card-btn.del:hover { color:var(--red); border-color:var(--red); }
+  .btn-nav { font-family:var(--mono); font-size:10px; color:var(--text-dim); background:transparent; border:1px solid var(--border); border-radius:2px; padding:8px 16px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; display:flex; align-items:center; gap:6px; }
+  .btn-nav:hover { color:var(--amber); border-color:var(--amber); }
+  .btn-nav.active { color:var(--amber); border-color:var(--amber); background:var(--amber-glow); }
+  .save-toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--green); color:#fff; font-family:var(--mono); font-size:11px; letter-spacing:1px; padding:10px 24px; border-radius:2px; transition:transform 0.3s ease; z-index:300; pointer-events:none; }
+  .save-toast.show { transform:translateX(-50%) translateY(0); }
+  @media (max-width:800px) { .cost-grid{grid-template-columns:1fr 1fr} .summary-grid{grid-template-columns:1fr} .labor-grid{grid-template-columns:1fr} .header-title{font-size:20px} .tab-btn{padding:10px 12px;font-size:9px} .settings-bar{gap:14px} }
+  @media (max-width:600px) { .tab-btn{padding:13px 10px;font-size:8px;letter-spacing:1px} .btn-estimate{padding:15px 24px;font-size:14px;width:100%} .btn-clear{padding:14px 16px;width:100%} .input-actions{flex-direction:column} .header{height:auto;padding-top:14px;padding-bottom:14px} .header-status{display:none} .cost-grid{grid-template-columns:1fr 1fr} .tab-content{padding:18px} .hours-big{font-size:56px} .mobile-fab{display:flex} }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">&#9889;</div>
+  <div>
+    <div class="header-title">Foreman Brain</div>
+    <div class="header-sub">AI ELECTRICAL ESTIMATING SYSTEM</div>
+  </div>
+  <div class="header-status">
+    <div class="status-dot"></div>
+    <span>MASTER ELECTRICIAN MODE ACTIVE</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-left:auto;">
+    <span id="userEmailDisplay" style="font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:1px;"></span>
+    <button id="logoutBtn" style="font-family:var(--mono);font-size:10px;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:2px;padding:6px 12px;cursor:pointer;letter-spacing:1px;transition:all 0.15s;" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">LOGOUT</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-left:16px;">
+    <button class="btn-nav active" id="navEstimate">&#9658; ESTIMATOR</button>
+    <button class="btn-nav" id="navHistory">&#9776; JOB HISTORY <span id="historyBadge" style="display:none;background:var(--amber);color:#080b0e;font-size:9px;padding:2px 6px;border-radius:2px;margin-left:4px;"></span></button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="settings-bar">
+    <span class="settings-title">&#9658; JOB SETTINGS</span>
+    <div class="setting-group">
+      <span class="setting-label">Labor Rate</span>
+      <span class="setting-prefix">$</span>
+      <input class="setting-input" id="laborRate" type="number" value="100" min="1" step="1" />
+      <span class="setting-prefix">/ hr</span>
+    </div>
+    <div class="setting-group">
+      <span class="setting-label">Markup</span>
+      <span class="setting-prefix">x</span>
+      <input class="setting-input" id="markupRate" type="number" value="1.35" min="1" step="0.01" />
+    </div>
+  </div>
+
+  <div class="input-panel">
+    <div class="panel-header">
+      <span class="panel-label">&#9658; JOB INPUT</span>
+      <span class="panel-badge">FIELD NOTES / DESCRIPTION / SCOPE</span>
+    </div>
+    <div class="input-body">
+      <textarea class="job-textarea" id="jobInput" placeholder="Describe the job. Be as specific or vague as needed.&#10;&#10;Examples: 50A EV charger in garage, 80ft from panel | replace 100A panel with 200A service | add dedicated circuit for welder"></textarea>
+      <div class="quick-fills">
+        <button class="qf-btn" id="qf1">&#9658; EV Charger</button>
+        <button class="qf-btn" id="qf2">&#9658; Panel Upgrade</button>
+        <button class="qf-btn" id="qf3">&#9658; Dedicated Circuit</button>
+        <button class="qf-btn" id="qf4">&#9658; Subpanel</button>
+        <button class="qf-btn" id="qf5">&#9658; Hot Tub Circuit</button>
+        <button class="qf-btn" id="qf6">&#9658; Lighting Install</button>
+      </div>
+      <div class="input-actions">
+        <button class="btn-estimate" id="runBtn">&#9658; RUN ESTIMATE</button>
+        <button class="btn-clear" id="clearBtn">CLEAR</button>
+        <span id="charCount" style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-left:8px;"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-box" id="errorBox" style="display:none;"></div>
+
+  <div class="loading-panel" id="loadingPanel" style="display:none;">
+    <div class="loading-hex">&#9889;</div>
+    <div class="loading-title">FOREMAN BRAIN PROCESSING</div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);">Analyzing job scope and running code logic...</div>
+    <div class="loading-steps">
+      <span class="loading-step">&#9658; JOB INTAKE</span>
+      <span class="loading-step">&#9658; CODE LOGIC</span>
+      <span class="loading-step">&#9658; MATERIAL TAKEOFF</span>
+      <span class="loading-step">&#9658; LABOR ESTIMATE</span>
+      <span class="loading-step">&#9658; PRICING</span>
+      <span class="loading-step">&#9658; PROPOSAL</span>
+    </div>
+  </div>
+
+  <div id="results" style="display:none;">
+    <div class="cost-grid" id="costGrid"></div>
+    <div class="tabs-bar">
+      <button class="tab-btn active" id="tab-btn-summary">SUMMARY</button>
+      <button class="tab-btn" id="tab-btn-logic">INSTALL LOGIC</button>
+      <button class="tab-btn" id="tab-btn-materials">TAKEOFF</button>
+      <button class="tab-btn" id="tab-btn-labor">LABOR & COST</button>
+      <button class="tab-btn" id="tab-btn-proposal">PROPOSAL</button>
+    </div>
+    <div class="tab-content">
+      <div id="tab-summary"></div>
+      <div id="tab-logic" style="display:none;"></div>
+      <div id="tab-materials" style="display:none;"></div>
+      <div id="tab-labor" style="display:none;"></div>
+      <div id="tab-proposal" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="mobile-fab" id="mobileFab">
+  <button class="fab-btn" id="fabBtn">&#9889;</button>
+</div>
+
+<div class="save-toast" id="saveToast">&#10003; JOB SAVED</div>
+
+<div class="main history-page" id="historyPage">
+  <div class="history-header">
+    <div>
+      <div class="history-title">&#9776; Job History</div>
+      <div class="history-count" id="historyCount">0 JOBS SAVED</div>
+    </div>
+    <button class="btn-clear" id="clearHistoryBtn" style="font-size:10px;padding:8px 16px;">CLEAR ALL</button>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<script>
+var SYSTEM_PROMPT = "You are Foreman Brain, an AI electrical estimating system designed to think and operate like a licensed master electrician and experienced electrical contractor. Your purpose is to convert job descriptions into a realistic electrical estimate package. You must reason internally like a master electrician planning a job before producing the final estimate. CORE IDENTITY: Master electrician, 20+ years experience, residential and light commercial. WORKFLOW: Step 1 - Job Intake: Determine job type, scope, assumptions. Step 2 - Code Logic: Circuit size, conductor, breaker, NEC requirements. Step 3 - Material Takeoff: COMPLETE list, every part including small parts. Never skip small parts. Step 4 - Pricing: Raw Material Total x 1.35 = Marked-Up Cost. Step 5 - Labor: Hours x $100 per hr. Adjust for difficulty. Step 6 - Proposal: Professional, customer-ready. CONDUCTOR SIZING: 15A=14AWG, 20A=12AWG, 30A=10AWG, 40A=8AWG, 50A=6AWG. CIRCUIT SELECTION RULES: General living room bedroom dining room receptacles = 15A circuit 14/2 NM-B wire. Kitchen small appliance circuits = 20A 12/2 NM-B. Bathroom receptacles = 20A 12/2 NM-B with GFCI. Garage receptacles = 20A 12/2 NM-B with GFCI. Outdoor receptacles = 20A 12/2 NM-B with GFCI. Dedicated appliance circuits = size per appliance nameplate. Lighting circuits = 15A 14/2 NM-B. Laundry receptacle = 20A 12/2 NM-B dedicated. Refrigerator = 20A dedicated 12/2 NM-B. Dishwasher = 20A dedicated 12/2 NM-B. Microwave = 20A dedicated 12/2 NM-B. Do NOT default everything to 20A. Use 15A for general receptacles and lighting unless NEC requires 20A. ASSUMPTIONS when unknown: Residential wood-frame standard drywall normal access short run=25-50ft medium=50-100ft long=100-150ft. FORMULAS: rawMaterialCost = sum of all materialTakeoff totalCost values. markedUpMaterialCost = rawMaterialCost x 1.35. laborCost = laborHours x 100. totalEstimate = markedUpMaterialCost + laborCost. EXCLUSIONS: drywall patching painting trenching permit fees utility coordination. CRITICAL: Return ONLY raw JSON. No markdown. No backticks. No explanation. Just the JSON object: {\"projectSummary\":{\"jobType\":\"string\",\"customerRequest\":\"string\",\"observedConditions\":\"string\",\"assumedConditions\":\"string\"},\"installationLogic\":\"string\",\"materialTakeoff\":[{\"item\":\"string\",\"qty\":\"string\",\"unitCost\":0,\"totalCost\":0}],\"laborHours\":0,\"rawMaterialCost\":0,\"markedUpMaterialCost\":0,\"laborCost\":0,\"totalEstimate\":0,\"customerProposal\":\"string\"}";
+
+var currentEstimate = null;
+var editableMaterials = [];
+var editableLaborHours = 0;
+
+function getLaborRate() { return parseFloat(document.getElementById('laborRate').value) || 100; }
+function getMarkup() { return parseFloat(document.getElementById('markupRate').value) || 1.35; }
+function fmt(n) { if (typeof n !== 'number') return '$0.00'; return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }
+function updateCharCount() { var v = document.getElementById('jobInput').value; document.getElementById('charCount').textContent = v.length > 0 ? v.length + ' chars' : ''; }
+function clearAll() { document.getElementById('jobInput').value = ''; document.getElementById('errorBox').style.display = 'none'; document.getElementById('results').style.display = 'none'; document.getElementById('loadingPanel').style.display = 'none'; document.getElementById('charCount').textContent = ''; currentEstimate = null; editableMaterials = []; }
+function switchTab(name) { var tabs = ['summary','logic','materials','labor','proposal']; for (var i = 0; i < tabs.length; i++) { var pane = document.getElementById('tab-' + tabs[i]); var btn = document.getElementById('tab-btn-' + tabs[i]); if (pane) pane.style.display = tabs[i] === name ? 'block' : 'none'; if (btn) btn.classList[tabs[i] === name ? 'add' : 'remove']('active'); } }
+function roundTo10(n) { return Math.round(n / 10) * 10; }
+function calcTotals() { var rawTotal = 0; editableMaterials.forEach(function(row) { rawTotal += (parseFloat(row.totalCost) || 0); }); var markedUp = rawTotal * getMarkup(); var labor = editableLaborHours * getLaborRate(); return { raw: rawTotal, markedUp: markedUp, labor: labor, total: roundTo10(markedUp + labor) }; }
+function updateCostCards() { var t = calcTotals(); var grid = document.getElementById('costGrid'); if (!grid) return; grid.innerHTML = '<div class="cost-card"><div class="cost-label">Raw Material Cost</div><div class="cost-value">' + fmt(t.raw) + '</div><div class="cost-sub">Before markup</div></div>' + '<div class="cost-card"><div class="cost-label">Material w/ Markup</div><div class="cost-value">' + fmt(t.markedUp) + '</div><div class="cost-sub">Raw x ' + getMarkup() + '</div></div>' + '<div class="cost-card"><div class="cost-label">Labor Cost</div><div class="cost-value">' + fmt(t.labor) + '</div><div class="cost-sub">' + editableLaborHours + ' hrs @ $' + getLaborRate() + '/hr</div></div>' + '<div class="cost-card total"><div class="cost-label">Total Estimate</div><div class="cost-value">' + fmt(t.total) + '</div><div class="cost-sub">Materials + Labor</div></div>'; }
+function updateMaterialFooter() { var t = calcTotals(); var rawEl = document.getElementById('mat-raw-val'); var markupEl = document.getElementById('mat-markup-val'); var markupLabelEl = document.getElementById('mat-markup-label'); if (rawEl) rawEl.textContent = fmt(t.raw); if (markupEl) markupEl.textContent = fmt(t.markedUp); if (markupLabelEl) markupLabelEl.textContent = 'Marked-Up (x' + getMarkup() + ')'; updateCostCards(); updateLaborTab(); }
+function deleteRow(idx) { editableMaterials.splice(idx, 1); renderMaterialsTab(); }
+function addRow() { editableMaterials.push({ item: 'New Item', qty: '1', unitCost: 0, totalCost: 0 }); renderMaterialsTab(); setTimeout(function() { var inputs = document.querySelectorAll('.cell-input-item'); if (inputs.length > 0) inputs[inputs.length - 1].focus(); }, 50); }
+function onCellChange(idx, field, value) { if (field === 'unitCost' || field === 'totalCost') { editableMaterials[idx][field] = parseFloat(value) || 0; } else { editableMaterials[idx][field] = value; } if (field === 'unitCost' || field === 'qty') { var qty = parseFloat(editableMaterials[idx].qty) || 1; var unit = parseFloat(editableMaterials[idx].unitCost) || 0; editableMaterials[idx].totalCost = qty * unit; var totalInputs = document.querySelectorAll('.cell-input-total'); if (totalInputs[idx]) totalInputs[idx].value = editableMaterials[idx].totalCost.toFixed(2); } updateMaterialFooter(); }
+function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function renderMaterialsTab() { var rows = editableMaterials.map(function(r, i) { return '<tr><td><input class="cell-input cell-input-item" value="' + escHtml(r.item || '') + '" data-idx="' + i + '" data-field="item" /></td><td><input class="cell-input right cell-input-qty" value="' + escHtml(r.qty || '') + '" data-idx="' + i + '" data-field="qty" style="width:60px;" /></td><td><input class="cell-input cost cell-input-unit" value="' + (parseFloat(r.unitCost)||0).toFixed(2) + '" data-idx="' + i + '" data-field="unitCost" style="width:80px;" /></td><td><input class="cell-input cost cell-input-total" value="' + (parseFloat(r.totalCost)||0).toFixed(2) + '" data-idx="' + i + '" data-field="totalCost" style="width:80px;" /></td><td class="center"><button class="btn-delete-row" data-idx="' + i + '">&#10005;</button></td></tr>'; }).join(''); var t = calcTotals(); document.getElementById('tab-materials').innerHTML = '<div class="section-label">MATERIAL TAKEOFF</div><div class="materials-toolbar"><span class="materials-hint">Edit any cell directly. Changes update totals instantly.</span><button class="btn-add-row" id="addRowBtn">+ ADD LINE ITEM</button></div><table class="materials-table"><thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Unit Cost</th><th class="right">Total</th><th class="center">Del</th></tr></thead><tbody>' + rows + '</tbody><tfoot><tr><td colspan="3" class="tfoot-raw">Raw Material Total</td><td class="tfoot-raw-val" id="mat-raw-val">' + fmt(t.raw) + '</td><td></td></tr><tr><td colspan="3" class="tfoot-markup" id="mat-markup-label">Marked-Up (x' + getMarkup() + ')</td><td class="tfoot-markup-val" id="mat-markup-val">' + fmt(t.markedUp) + '</td><td></td></tr></tfoot></table>'; document.getElementById('addRowBtn').addEventListener('click', addRow); document.querySelectorAll('.cell-input').forEach(function(input) { input.addEventListener('input', function() { onCellChange(parseInt(this.getAttribute('data-idx')), this.getAttribute('data-field'), this.value); }); }); document.querySelectorAll('.btn-delete-row').forEach(function(btn) { btn.addEventListener('click', function() { deleteRow(parseInt(this.getAttribute('data-idx'))); }); }); }
+function updateLaborTab() { var t = calcTotals(); var laborEl = document.getElementById('labor-hours-input'); var currentHours = laborEl ? (parseFloat(laborEl.value) || editableLaborHours) : editableLaborHours; var lRate = getLaborRate(); document.getElementById('tab-labor').innerHTML = '<div class="section-label">LABOR AND COST BREAKDOWN</div><div class="labor-grid"><div><div class="labor-edit-row"><span class="breakdown-label">Labor Hours</span><input class="labor-edit-input" id="labor-hours-input" type="number" value="' + currentHours + '" min="0" step="0.5" /></div><div class="labor-edit-row"><span class="breakdown-label">Labor Rate ($/hr)</span><span style="font-family:var(--mono);font-size:13px;color:var(--text);">$' + lRate + '</span></div><div class="breakdown-row"><span class="breakdown-label">Raw Material Cost</span><span class="breakdown-val">' + fmt(t.raw) + '</span></div><div class="breakdown-row"><span class="breakdown-label">Markup (x' + getMarkup() + ')</span><span class="breakdown-val">' + fmt(t.markedUp) + '</span></div><div class="breakdown-row"><span class="breakdown-label">Labor Cost</span><span class="breakdown-val" id="lb-labor">' + fmt(currentHours * lRate) + '</span></div><div class="total-row"><span class="total-row-label">Total Estimate</span><span class="total-row-val" id="lb-total">' + fmt(roundTo10(t.markedUp + currentHours * lRate)) + '</span></div></div><div class="hours-display"><div style="font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:2px;margin-bottom:12px;">ESTIMATED LABOR</div><div class="hours-big" id="lb-hours-display">' + currentHours + '</div><div class="hours-unit">HOURS ON-SITE</div><div class="hours-rate">@ $' + lRate + ' / HOUR = <span id="lb-labor-display">' + fmt(currentHours * lRate) + '</span></div></div></div>'; document.getElementById('labor-hours-input').addEventListener('input', function() { editableLaborHours = parseFloat(this.value) || 0; var lR = getLaborRate(); var t2 = calcTotals(); document.getElementById('lb-labor').textContent = fmt(editableLaborHours * lR); document.getElementById('lb-total').textContent = fmt(roundTo10(t2.markedUp + editableLaborHours * lR)); document.getElementById('lb-hours-display').textContent = editableLaborHours; document.getElementById('lb-labor-display').textContent = fmt(editableLaborHours * lR); updateCostCards(); }); }
+function renderEstimate(e) { editableMaterials = (e.materialTakeoff || []).map(function(r) { return { item: r.item || '', qty: r.qty || '1', unitCost: parseFloat(r.unitCost) || 0, totalCost: parseFloat(r.totalCost) || 0 }; }); editableLaborHours = parseFloat(e.laborHours) || 0; updateCostCards(); var ps = e.projectSummary || {}; document.getElementById('tab-summary').innerHTML = '<div class="section-label">PROJECT SUMMARY</div><div class="summary-grid"><div class="summary-card"><div class="summary-card-label">Job Type</div><div class="summary-card-value">' + (ps.jobType || '---') + '</div></div><div class="summary-card"><div class="summary-card-label">Customer Request</div><div class="summary-card-value">' + (ps.customerRequest || '---') + '</div></div><div class="summary-card"><div class="summary-card-label">Observed Conditions</div><div class="summary-card-value">' + (ps.observedConditions || '---') + '</div></div><div class="summary-card"><div class="summary-card-label">Assumed Conditions</div><div class="summary-card-value">' + (ps.assumedConditions || '---') + '</div></div></div>'; document.getElementById('tab-logic').innerHTML = '<div class="section-label">INSTALLATION LOGIC AND NEC REASONING</div><div class="logic-box">' + (e.installationLogic || '---') + '</div>'; renderMaterialsTab(); updateLaborTab(); document.getElementById('tab-proposal').innerHTML = '<div class="section-label">CUSTOMER PROPOSAL</div><div class="proposal-box" id="proposalText">' + (e.customerProposal || '---') + '</div><div class="proposal-actions"><button class="btn-action" id="copyBtn">COPY PROPOSAL</button><button class="btn-action" id="printBtn">PRINT</button></div><div class="exclusions">STANDARD EXCLUSIONS: Drywall patching or painting, Trenching or boring, Permit fees, Utility coordination, Unforeseen concealed conditions</div>'; document.getElementById('copyBtn').addEventListener('click', copyProposal); document.getElementById('printBtn').addEventListener('click', printProposal); document.getElementById('results').style.display = 'block'; switchTab('summary'); document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }); saveJob(e, document.getElementById('jobInput').value.trim()); }
+async function runEstimate() { var input = document.getElementById('jobInput').value.trim(); if (!input) return; var btn = document.getElementById('runBtn'); btn.disabled = true; btn.textContent = 'ESTIMATING...'; btn.classList.add('loading'); document.getElementById('errorBox').style.display = 'none'; document.getElementById('results').style.display = 'none'; document.getElementById('loadingPanel').style.display = 'block'; try { var response = await fetch('https://foreman-brain.onrender.com/estimate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: input }] }) }); var data = await response.json(); var raw = (data.content || []).map(function(b) { return b.text || ''; }).join(''); var cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim(); var parsed; try { parsed = JSON.parse(cleaned); } catch(e) { var match = cleaned.match(/\{[\s\S]*\}/); if (match) { parsed = JSON.parse(match[0]); } else { throw new Error('Could not parse estimate response.'); } } currentEstimate = parsed; renderEstimate(parsed); } catch(err) { document.getElementById('errorBox').textContent = 'Error: ' + (err.message || 'Failed to generate estimate. Please try again.'); document.getElementById('errorBox').style.display = 'block'; } finally { btn.disabled = false; btn.textContent = 'RUN ESTIMATE'; btn.classList.remove('loading'); document.getElementById('loadingPanel').style.display = 'none'; } }
+function copyProposal() { if (!currentEstimate) return; var t = calcTotals(); var text = (currentEstimate.customerProposal || '') + '\n\nESTIMATE SUMMARY\nMaterials: ' + fmt(t.markedUp) + '\nLabor (' + editableLaborHours + ' hrs @ $' + getLaborRate() + '/hr): ' + fmt(t.labor) + '\nTOTAL: ' + fmt(t.total); navigator.clipboard.writeText(text).then(function() { var btn = document.getElementById('copyBtn'); if (btn) { btn.textContent = 'COPIED'; btn.classList.add('copied'); setTimeout(function() { btn.textContent = 'COPY PROPOSAL'; btn.classList.remove('copied'); }, 2000); } }); }
+function printProposal() { if (!currentEstimate) return; var t = calcTotals(); var win = window.open('', '_blank'); win.document.write('<html><head><title>Electrical Estimate</title><style>body{font-family:Georgia,serif;font-size:14px;line-height:1.8;padding:60px;color:#222;max-width:800px;margin:0 auto;}pre{white-space:pre-wrap;font-family:Georgia,serif;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #ddd;font-size:12px;}</style></head><body>'); win.document.write('<h2>Electrical Estimate</h2><p style="color:#888;font-size:12px;margin-bottom:40px;">Generated by Foreman Brain</p>'); win.document.write('<pre>' + (currentEstimate.customerProposal || '') + '</pre>'); win.document.write('<table style="margin-top:30px;"><tr><th>Materials (markup x' + getMarkup() + ')</th><td>' + fmt(t.markedUp) + '</td></tr><tr><th>Labor (' + editableLaborHours + ' hrs @ $' + getLaborRate() + '/hr)</th><td>' + fmt(t.labor) + '</td></tr><tr><th>Total Estimate</th><td><strong>' + fmt(t.total) + '</strong></td></tr></table>'); win.document.write('</body></html>'); win.document.close(); win.print(); }
+var HISTORY_KEY = 'foremanBrainJobs';
+function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
+function saveHistory(jobs) { localStorage.setItem(HISTORY_KEY, JSON.stringify(jobs)); }
+function saveJob(estimate, inputText) { var jobs = loadHistory(); var t = calcTotals(); jobs.unshift({ id: Date.now(), date: new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}), time: new Date().toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'}), input: inputText, jobType: (estimate.projectSummary || {}).jobType || 'Electrical Job', total: t.total, laborHours: editableLaborHours, laborRate: getLaborRate(), markup: getMarkup(), estimate: estimate, materials: JSON.parse(JSON.stringify(editableMaterials)) }); if (jobs.length > 100) jobs = jobs.slice(0, 100); saveHistory(jobs); updateHistoryBadge(); showSaveToast(); }
+function showSaveToast() { var t = document.getElementById('saveToast'); t.classList.add('show'); setTimeout(function() { t.classList.remove('show'); }, 2200); }
+function updateHistoryBadge() { var jobs = loadHistory(); var badge = document.getElementById('historyBadge'); if (jobs.length > 0) { badge.textContent = jobs.length; badge.style.display = 'inline'; } else { badge.style.display = 'none'; } var countEl = document.getElementById('historyCount'); if (countEl) countEl.textContent = jobs.length + (jobs.length === 1 ? ' JOB SAVED' : ' JOBS SAVED'); }
+function renderHistoryList() { var jobs = loadHistory(); var list = document.getElementById('historyList'); var countEl = document.getElementById('historyCount'); if (countEl) countEl.textContent = jobs.length + (jobs.length === 1 ? ' JOB SAVED' : ' JOBS SAVED'); if (!jobs.length) { list.innerHTML = '<div class="history-empty"><div class="history-empty-icon">&#128196;</div><div>No jobs saved yet.<br/>Run your first estimate to see it here.</div></div>'; return; } list.innerHTML = jobs.map(function(job) { return '<div class="job-card" id="jc-' + job.id + '"><div class="job-card-left"><div class="job-card-type">' + escHtml(job.jobType) + '</div><div class="job-card-desc">' + escHtml(job.input || '') + '</div><div class="job-card-meta">' + job.date + ' &bull; ' + job.time + ' &bull; ' + (job.laborHours || 0) + ' hrs @ $' + (job.laborRate || 100) + '/hr &bull; markup x' + (job.markup || 1.35) + '</div></div><div class="job-card-right"><div class="job-card-total">' + fmt(job.total || 0) + '</div><div class="job-card-actions"><button class="job-card-btn" data-id="' + job.id + '" data-action="load">LOAD</button><button class="job-card-btn del" data-id="' + job.id + '" data-action="delete">DELETE</button></div></div></div>'; }).join(''); list.querySelectorAll('.job-card-btn').forEach(function(btn) { btn.addEventListener('click', function(e) { e.stopPropagation(); var id = parseInt(this.getAttribute('data-id')); if (this.getAttribute('data-action') === 'load') loadJobFromHistory(id); else deleteJobFromHistory(id); }); }); list.querySelectorAll('.job-card').forEach(function(card) { card.addEventListener('click', function() { loadJobFromHistory(parseInt(this.id.replace('jc-',''))); }); }); }
+function loadJobFromHistory(id) { var job = loadHistory().find(function(j) { return j.id === id; }); if (!job) return; document.getElementById('jobInput').value = job.input || ''; document.getElementById('laborRate').value = job.laborRate || 100; document.getElementById('markupRate').value = job.markup || 1.35; editableMaterials = job.materials || []; editableLaborHours = job.laborHours || 0; currentEstimate = job.estimate; showEstimatorPage(); updateCostCards(); var ps = (job.estimate || {}).projectSummary || {}; document.getElementById('tab-summary').innerHTML = '<div class="section-label">PROJECT SUMMARY</div><div class="summary-grid"><div class="summary-card"><div class="summary-card-label">Job Type</div><div class="summary-card-value">' + (ps.jobType || '---') + '</div></div><div class="summary-card"><div class="summary-card-label">Customer Request</div><div class="summary-card-value">' + (ps.customerRequest || '---') + '</div></div><div class="summary-card"><div class="summary-card-label">Observed Conditions</div><div class="summary-card-value">' + (ps.observedConditions || '---') + '</div></div><div class="summary-card"><div class="summary-card-label">Assumed Conditions</div><div class="summary-card-value">' + (ps.assumedConditions || '---') + '</div></div></div>'; document.getElementById('tab-logic').innerHTML = '<div class="section-label">INSTALLATION LOGIC AND NEC REASONING</div><div class="logic-box">' + ((job.estimate || {}).installationLogic || '---') + '</div>'; renderMaterialsTab(); updateLaborTab(); document.getElementById('tab-proposal').innerHTML = '<div class="section-label">CUSTOMER PROPOSAL</div><div class="proposal-box" id="proposalText">' + ((job.estimate || {}).customerProposal || '---') + '</div><div class="proposal-actions"><button class="btn-action" id="copyBtn">COPY PROPOSAL</button><button class="btn-action" id="printBtn">PRINT</button></div><div class="exclusions">STANDARD EXCLUSIONS: Drywall patching or painting, Trenching or boring, Permit fees, Utility coordination, Unforeseen concealed conditions</div>'; document.getElementById('copyBtn').addEventListener('click', copyProposal); document.getElementById('printBtn').addEventListener('click', printProposal); document.getElementById('results').style.display = 'block'; switchTab('summary'); document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+function deleteJobFromHistory(id) { saveHistory(loadHistory().filter(function(j) { return j.id !== id; })); renderHistoryList(); updateHistoryBadge(); }
+function showEstimatorPage() { document.getElementById('historyPage').style.display = 'none'; document.querySelector('.main:not(#historyPage)').style.display = 'block'; document.getElementById('navEstimate').classList.add('active'); document.getElementById('navHistory').classList.remove('active'); }
+function showHistoryPage() { document.getElementById('historyPage').style.display = 'block'; document.querySelector('.main:not(#historyPage)').style.display = 'none'; document.getElementById('navHistory').classList.add('active'); document.getElementById('navEstimate').classList.remove('active'); renderHistoryList(); }
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('jobInput').addEventListener('input', updateCharCount);
+  document.getElementById('runBtn').addEventListener('click', runEstimate);
+  document.getElementById('clearBtn').addEventListener('click', clearAll);
+  document.getElementById('fabBtn').addEventListener('click', runEstimate);
+  document.getElementById('qf1').addEventListener('click', function() { document.getElementById('jobInput').value = '50A EV charger in attached garage, approximately 60 feet from main panel. Panel is in the basement.'; updateCharCount(); });
+  document.getElementById('qf2').addEventListener('click', function() { document.getElementById('jobInput').value = '200A service upgrade to replace existing 100A panel. House is 1970s construction, currently have 20 circuits.'; updateCharCount(); });
+  document.getElementById('qf3').addEventListener('click', function() { document.getElementById('jobInput').value = 'Add a dedicated 20A circuit for a new refrigerator in the garage. About 40 feet from the panel.'; updateCharCount(); });
+  document.getElementById('qf4').addEventListener('click', function() { document.getElementById('jobInput').value = 'Install a 60A subpanel in the detached garage. Garage is 80 feet from the main house panel.'; updateCharCount(); });
+  document.getElementById('qf5').addEventListener('click', function() { document.getElementById('jobInput').value = '240V circuit for a new hot tub on the back deck. Need GFCI disconnect. About 50 feet from panel.'; updateCharCount(); });
+  document.getElementById('qf6').addEventListener('click', function() { document.getElementById('jobInput').value = 'Add 4 recessed lights and a ceiling fan in the living room. Currently no overhead lighting, finished ceiling.'; updateCharCount(); });
+  document.getElementById('tab-btn-summary').addEventListener('click', function() { switchTab('summary'); });
+  document.getElementById('tab-btn-logic').addEventListener('click', function() { switchTab('logic'); });
+  document.getElementById('tab-btn-materials').addEventListener('click', function() { switchTab('materials'); renderMaterialsTab(); });
+  document.getElementById('tab-btn-labor').addEventListener('click', function() { switchTab('labor'); updateLaborTab(); });
+  document.getElementById('tab-btn-proposal').addEventListener('click', function() { switchTab('proposal'); });
+  document.getElementById('laborRate').addEventListener('input', function() { updateCostCards(); updateLaborTab(); });
+  document.getElementById('markupRate').addEventListener('input', function() { updateCostCards(); updateMaterialFooter(); updateLaborTab(); });
+  document.getElementById('navEstimate').addEventListener('click', showEstimatorPage);
+  document.getElementById('navHistory').addEventListener('click', showHistoryPage);
+  document.getElementById('clearHistoryBtn').addEventListener('click', function() { if (confirm('Delete all saved jobs? This cannot be undone.')) { localStorage.removeItem('foremanBrainJobs'); renderHistoryList(); updateHistoryBadge(); } });
+  updateHistoryBadge();
+  setTimeout(function() { if (window._userEmail) { var el = document.getElementById('userEmailDisplay'); if (el) el.textContent = window._userEmail; } }, 800);
+  document.getElementById('logoutBtn').addEventListener('click', async function() { if (window._supabase) await window._supabase.auth.signOut(); window.location.href = 'auth.html'; });
+  document.getElementById('jobInput').addEventListener('focus', function() { var fab = document.getElementById('mobileFab'); if (fab) { fab.style.opacity='0'; fab.style.pointerEvents='none'; } });
+  document.getElementById('jobInput').addEventListener('blur', function() { var fab = document.getElementById('mobileFab'); if (fab) { fab.style.opacity='1'; fab.style.pointerEvents='auto'; } });
+  document.getElementById('jobInput').addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 'Enter') runEstimate(); });
+});
+</script>
+</body>
+</html>
