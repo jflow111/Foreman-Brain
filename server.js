@@ -77,13 +77,13 @@ The materialTakeoff JSON structure MUST include all three store prices for every
       },
       body: JSON.stringify({
         model: model || 'claude-sonnet-4-20250514',
-        max_tokens: max_tokens || 12000,
+        max_tokens: max_tokens || 8000,
         system: livePricingSystem,
         tools: [
           {
             type: 'web_search_20250305',
             name: 'web_search',
-            max_uses: 60
+            max_uses: 20
           }
         ],
         messages: messages
