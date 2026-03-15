@@ -17,11 +17,102 @@ app.use(express.json());
 
 app.get('/', (req, res) => res.send('Foreman Brain server is running'));
 
-// ─── STEP 1: Generate estimate without prices ───
+// ─── DIRECT STORE PRICE LOOKUP ───
+async function searchHomeDepot(query) {
+  try {
+    const url = `https://www.homedepot.com/federation-gateway/graphql?opname=searchModel`;
+    const payload = {
+      operationName: 'searchModel',
+      variables: {
+        skipInstallServices: true,
+        skipSubscribeAndSave: true,
+        channel: 'DESKTOP',
+        additionalSearchParams: { deliveryZip: '90001' },
+        keyword: query,
+        navParam: '',
+        storefilter: 'ALL',
+        orderBy: { field: 'TOP_SELLERS', order: 'ASC' },
+        startIndex: 0,
+        pageSize: 1
+      },
+      query: `query searchModel($keyword: String, $pageSize: Int, $startIndex: Int) {
+        searchModel(keyword: $keyword, pageSize: $pageSize, startIndex: $startIndex) {
+          products { itemId pricing { value } description }
+        }
+      }`
+    };
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'application/json',
+        'x-experience-name': 'general-merchandise'
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    const products = data?.data?.searchModel?.products;
+    if (products && products.length > 0 && products[0].pricing?.value) {
+      return { price: products[0].pricing.value, found: true };
+    }
+    return { price: 0, found: false };
+  } catch(e) {
+    console.error('HD search error:', e.message);
+    return { price: 0, found: false };
+  }
+}
+
+async function searchLowes(query) {
+  try {
+    const encoded = encodeURIComponent(query);
+    const url = `https://www.lowes.com/pd/search?searchTerm=${encoded}&limit=1`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Accept-Language': 'en-US,en;q=0.9'
+      }
+    });
+    const text = await response.text();
+    // Parse price from response
+    const priceMatch = text.match(/"sellingPrice[^"]*":\s*([0-9.]+)/);
+    if (priceMatch) {
+      return { price: parseFloat(priceMatch[1]), found: true };
+    }
+    return { price: 0, found: false };
+  } catch(e) {
+    console.error('Lowes search error:', e.message);
+    return { price: 0, found: false };
+  }
+}
+
+async function searchPlatt(query) {
+  try {
+    const encoded = encodeURIComponent(query);
+    const url = `https://www.platt.com/platt-electric-search.aspx?query=${encoded}&format=json`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'application/json'
+      }
+    });
+    const data = await response.json();
+    if (data && data.products && data.products.length > 0) {
+      const price = data.products[0].price || data.products[0].listPrice;
+      if (price) return { price: parseFloat(price), found: true };
+    }
+    return { price: 0, found: false };
+  } catch(e) {
+    console.error('Platt search error:', e.message);
+    return { price: 0, found: false };
+  }
+}
+
+// ─── AI ESTIMATE ───
 app.post('/estimate', async (req, res) => {
   try {
     const { system, messages, model, max_tokens } = req.body;
-
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -36,74 +127,51 @@ app.post('/estimate', async (req, res) => {
         messages: messages
       })
     });
-
     const data = await response.json();
-    const textBlocks = (data.content || []).filter(b => b.type === 'text');
-    const finalText = textBlocks.map(b => b.text || '').join('');
-    console.log('Estimate response length:', finalText.length);
+    const finalText = (data.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('');
+    console.log('Estimate length:', finalText.length);
     res.json({ ...data, content: [{ type: 'text', text: finalText }] });
-
   } catch (err) {
     console.error('Estimate error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─── STEP 2: Price lookup for individual items ───
+// ─── DIRECT PRICE LOOKUP ───
 app.post('/price-lookup', async (req, res) => {
   try {
     const { items } = req.body;
+    console.log('Looking up prices for', items.length, 'items');
 
-    // Search for prices one batch at a time
-    const batchSize = 5;
-    const allPrices = [];
+    const prices = await Promise.all(items.map(async (item) => {
+      // Clean up item name for better search results
+      const searchQuery = item
+        .replace(/\d+\/\d+/g, match => match) // keep wire gauges like 12/2
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 80); // limit query length
 
-    for (let i = 0; i < items.length; i += batchSize) {
-      const batch = items.slice(i, i + batchSize);
+      const [hd, lw, pl] = await Promise.all([
+        searchHomeDepot(searchQuery),
+        searchLowes(searchQuery),
+        searchPlatt(searchQuery)
+      ]);
 
-      const pricePrompt = `Search for current 2026 prices for these electrical items at Home Depot, Lowe's, and Platt Electric. After searching, output ONLY a JSON array with no other text:\n\n${batch.map((item, j) => `${j+1}. ${item}`).join('\n')}\n\nJSON format:\n[{"item":"name","homedepot_unit":0,"homedepot_available":false,"lowes_unit":0,"lowes_available":false,"platt_unit":0,"platt_available":false}]\n\nONLY output the JSON array after searching.`;
+      console.log(`${item.substring(0,30)}: HD=${hd.price} LW=${lw.price} PL=${pl.price}`);
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'web-search-2025-03-05'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
-          tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 15 }],
-          messages: [{ role: 'user', content: pricePrompt }]
-        })
-      });
+      return {
+        item,
+        homedepot_unit: hd.price,
+        homedepot_available: hd.found,
+        lowes_unit: lw.price,
+        lowes_available: lw.found,
+        platt_unit: pl.price,
+        platt_available: pl.found
+      };
+    }));
 
-      const data = await response.json();
-      const textBlocks = (data.content || []).filter(b => b.type === 'text');
-      const text = textBlocks.map(b => b.text || '').join('');
-      console.log(`Batch ${i/batchSize + 1} response:`, text.substring(0, 200));
-
-      try {
-        const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const match = cleaned.match(/\[[\s\S]*\]/);
-        if (match) {
-          const batchPrices = JSON.parse(match[0]);
-          allPrices.push(...batchPrices);
-        }
-      } catch(e) {
-        console.error('Batch parse error:', e.message);
-        // Add empty prices for this batch so items still show
-        batch.forEach(item => allPrices.push({
-          item, homedepot_unit: 0, homedepot_available: false,
-          lowes_unit: 0, lowes_available: false,
-          platt_unit: 0, platt_available: false
-        }));
-      }
-    }
-
-    console.log('Total prices found:', allPrices.length);
-    res.json({ prices: allPrices });
+    console.log('Price lookup complete:', prices.length, 'items');
+    res.json({ prices });
 
   } catch (err) {
     console.error('Price lookup error:', err.message);
@@ -140,21 +208,17 @@ app.post('/webhook', async (req, res) => {
   } catch (err) {
     return res.status(400).send('Webhook error');
   }
-
   const supabaseHeaders = {
     'Content-Type': 'application/json',
     'apikey': SUPABASE_SERVICE_KEY,
     'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY
   };
-
   async function updateSubscription(uid, customerId, subscriptionId, status) {
     await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}`, {
-      method: 'PATCH',
-      headers: supabaseHeaders,
+      method: 'PATCH', headers: supabaseHeaders,
       body: JSON.stringify({ stripe_customer_id: customerId, stripe_subscription_id: subscriptionId, subscription_status: status })
     });
   }
-
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
