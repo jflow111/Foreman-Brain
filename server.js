@@ -94,9 +94,21 @@ The materialTakeoff JSON structure MUST include all three store prices for every
     const textBlocks = (data.content || []).filter(b => b.type === 'text');
     const finalText = textBlocks.map(b => b.text || '').join('');
 
+    // Try to extract valid JSON from the response
+    let cleanedText = finalText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    // Find the last complete JSON object (in case response was cut off mid-stream)
+    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanedText = jsonMatch[0];
+    }
+
+    console.log('Response length:', finalText.length);
+    console.log('First 200 chars:', finalText.substring(0, 200));
+
     res.json({
       ...data,
-      content: [{ type: 'text', text: finalText }]
+      content: [{ type: 'text', text: cleanedText }]
     });
 
   } catch (err) {
