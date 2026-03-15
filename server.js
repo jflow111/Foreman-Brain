@@ -72,20 +72,12 @@ The materialTakeoff JSON structure MUST include all three store prices for every
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'web-search-2025-03-05'
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
         model: model || 'claude-sonnet-4-20250514',
         max_tokens: max_tokens || 8000,
-        system: livePricingSystem,
-        tools: [
-          {
-            type: 'web_search_20250305',
-            name: 'web_search',
-            max_uses: 20
-          }
-        ],
+        system: system,
         messages: messages
       })
     });
