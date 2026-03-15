@@ -17,24 +17,87 @@ app.use(express.json());
 
 app.get('/', (req, res) => res.send('Foreman Brain server is running'));
 
+// ─── AI ESTIMATE WITH LIVE THREE-STORE PRICING ───
 app.post('/estimate', async (req, res) => {
   try {
+    const { system, messages, model, max_tokens } = req.body;
+
+    const livePricingSystem = system + `
+
+LIVE PRICING INSTRUCTIONS — THREE STORES:
+You have access to a web search tool. For EVERY item in the materialTakeoff array, you MUST search all three of these suppliers for current prices:
+1. Home Depot (homedepot.com)
+2. Lowe's (lowes.com)
+3. Platt Electric Supply (platt.com)
+
+For each item, search "[item name] price site:homedepot.com", "[item name] price site:lowes.com", and "[item name] price platt electric" separately.
+
+The materialTakeoff JSON structure MUST include all three store prices for every item:
+{
+  "item": "item name",
+  "qty": "1",
+  "unitCost": 0,
+  "totalCost": 0,
+  "homedepot_unit": 0,
+  "homedepot_total": 0,
+  "homedepot_available": true,
+  "lowes_unit": 0,
+  "lowes_total": 0,
+  "lowes_available": true,
+  "platt_unit": 0,
+  "platt_total": 0,
+  "platt_available": true
+}
+
+Rules:
+- If you find a price for a store, set the unit price and available=true
+- If you CANNOT find a price for a store, set that store's unit to 0 and available=false, and append " [unavailable at [store]]" note ONLY in the item name if ALL three stores fail
+- Set unitCost and totalCost to whichever store has the LOWEST price found (for initial default totals)
+- Calculate homedepot_total = qty x homedepot_unit, lowes_total = qty x lowes_unit, platt_total = qty x platt_unit
+- Recalculate rawMaterialCost using the lowest prices
+- Recalculate markedUpMaterialCost = rawMaterialCost x 1.35
+- Recalculate totalEstimate = markedUpMaterialCost + laborCost
+- Search EVERY item. Do not skip any.`;
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'web-search-2025-03-05'
       },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify({
+        model: model || 'claude-sonnet-4-20250514',
+        max_tokens: max_tokens || 12000,
+        system: livePricingSystem,
+        tools: [
+          {
+            type: 'web_search_20250305',
+            name: 'web_search',
+            max_uses: 60
+          }
+        ],
+        messages: messages
+      })
     });
+
     const data = await response.json();
-    res.json(data);
+    const textBlocks = (data.content || []).filter(b => b.type === 'text');
+    const finalText = textBlocks.map(b => b.text || '').join('');
+
+    res.json({
+      ...data,
+      content: [{ type: 'text', text: finalText }]
+    });
+
   } catch (err) {
+    console.error('Estimate error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
+// ─── STRIPE CHECKOUT ───
 app.get('/checkout', async (req, res) => {
   try {
     const { email, uid } = req.query;
@@ -55,6 +118,7 @@ app.get('/checkout', async (req, res) => {
   }
 });
 
+// ─── STRIPE WEBHOOK ───
 app.post('/webhook', async (req, res) => {
   let event;
   try {
@@ -109,6 +173,7 @@ app.post('/webhook', async (req, res) => {
   res.json({ received: true });
 });
 
+// ─── CANCEL SUBSCRIPTION ───
 app.post('/cancel-subscription', async (req, res) => {
   try {
     const { subscription_id } = req.body;
