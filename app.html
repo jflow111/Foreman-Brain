@@ -138,11 +138,16 @@
   .cell-input.cost { text-align:right; font-family:var(--mono); font-size:11px; }
   .btn-delete-row { background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:4px 8px; border-radius:2px; transition:all 0.15s; line-height:1; }
   .btn-delete-row:hover { color:var(--red); background:rgba(224,80,80,0.1); }
-  .store-selector { display:flex; gap:8px; margin-bottom:14px; align-items:center; flex-wrap:wrap; }
-  .store-selector-label { font-family:var(--mono); font-size:9px; color:var(--text-muted); letter-spacing:2px; text-transform:uppercase; margin-right:4px; white-space:nowrap; }
-  .store-btn { background:transparent; border:1px solid var(--border); color:var(--text-dim); cursor:pointer; font-family:var(--mono); font-size:10px; letter-spacing:1px; padding:5px 12px; border-radius:2px; transition:all 0.15s; text-transform:uppercase; }
-  .store-btn:hover { border-color:var(--amber); color:var(--amber); }
-  .store-btn.active { background:rgba(240,165,0,0.1); border-color:var(--amber); color:var(--amber); }
+  .store-selector { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+  .store-label { font-family:var(--mono); font-size:9px; color:var(--text-muted); letter-spacing:2px; text-transform:uppercase; margin-right:4px; }
+  .store-btn { font-family:var(--mono); font-size:10px; color:var(--text-dim); background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:7px 16px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
+  .store-btn:hover { border-color:var(--amber-dim); color:var(--amber); }
+  .store-btn.active { color:var(--bg); background:var(--amber); border-color:var(--amber); }
+  .store-btn .store-badge { font-size:8px; margin-left:6px; padding:1px 5px; border-radius:2px; background:var(--green); color:#fff; display:none; }
+  .store-btn.cheapest .store-badge { display:inline; }
+  .price-cell { font-family:var(--mono); font-size:11px; text-align:right; }
+  .price-unavail { color:var(--text-muted); font-size:10px; font-style:italic; }
+  .price-cheapest { color:var(--green); }
   .labor-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
   .breakdown-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
   .breakdown-label { font-family:var(--body); font-size:13px; color:var(--text-dim); font-weight:300; }
