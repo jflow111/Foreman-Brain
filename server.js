@@ -54,25 +54,17 @@ app.post('/price-lookup', async (req, res) => {
   try {
     const { items } = req.body; // array of item names
 
-    const pricePrompt = `You are a pricing assistant. For each electrical material item below, search Home Depot, Lowe's, and Platt Electric for the current 2026 retail price.
+    const pricePrompt = `Search Home Depot, Lowe's, and Platt Electric for current 2026 prices for each item below. DO NOT explain anything. DO NOT say what you are going to do. Just search and return the JSON immediately.
 
-Return ONLY a JSON array with this structure for each item:
+RETURN ONLY THIS JSON ARRAY — nothing else, no text before or after:
 [
-  {
-    "item": "original item name",
-    "homedepot_unit": 0,
-    "homedepot_available": true,
-    "lowes_unit": 0,
-    "lowes_available": true,
-    "platt_unit": 0,
-    "platt_available": true
-  }
+  {"item":"item name","homedepot_unit":0,"homedepot_available":true,"lowes_unit":0,"lowes_available":true,"platt_unit":0,"platt_available":true}
 ]
 
-Items to price:
-${items.map((item, i) => `${i+1}. ${item}`).join('\n')}
+If you cannot find a price set the unit to 0 and available to false. Search now and return JSON only.
 
-Return ONLY the JSON array. No markdown. No explanation.`;
+Items:
+${items.map((item, i) => `${i+1}. ${item}`).join('\n')}`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
