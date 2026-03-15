@@ -25,12 +25,25 @@ app.post('/estimate', async (req, res) => {
     const livePricingSystem = system + `
 
 LIVE PRICING INSTRUCTIONS — THREE STORES:
-You have access to a web search tool. For EVERY item in the materialTakeoff array, you MUST search all three of these suppliers for current prices:
-1. Home Depot (homedepot.com)
-2. Lowe's (lowes.com)
-3. Platt Electric Supply (platt.com)
+You have access to a web search tool. For EVERY item in the materialTakeoff array, search for the current retail price at Home Depot, Lowe's, and Platt Electric.
 
-For each item, search "[item name] price site:homedepot.com", "[item name] price site:lowes.com", and "[item name] price platt electric" separately.
+SEARCH STRATEGY — be very specific:
+- For wire/cable: include gauge, type, and length. Example: "Romex 12/2 NM-B wire 250ft Home Depot price 2026"
+- For breakers: include brand, amp rating, type. Example: "Square D 20 amp single pole breaker Home Depot price 2026"
+- For boxes/devices: include exact type and size. Example: "1-gang PVC electrical box Home Depot price 2026"
+- For conduit/fittings: include material and size. Example: "1/2 inch EMT conduit 10ft Home Depot price 2026"
+- Always add "price 2026" to get current pricing
+- Search site-specific when possible: add "site:homedepot.com" or "site:lowes.com" to the query
+- For Platt: search "platt electric [item name] price" — they specialize in electrical so most items will be found
+- Look for the UNIT price not bulk/case price unless qty is high
+- If you find a price range, use the middle value
+- If a search returns accessories or wrong items, try a more specific search before marking as unavailable
+
+ACCURACY RULES:
+- Only use prices from homedepot.com, lowes.com, or platt.com — not Amazon, eBay, or other sites
+- If the price seems too low (under $1 for wire) or too high (over $500 for a standard breaker), search again
+- Round prices to nearest cent
+- If you genuinely cannot find a price after 2 searches, set available=false
 
 The materialTakeoff JSON structure MUST include all three store prices for every item:
 {
@@ -49,14 +62,9 @@ The materialTakeoff JSON structure MUST include all three store prices for every
   "platt_available": true
 }
 
-Rules:
-- If you find a price for a store, set the unit price and available=true
-- If you CANNOT find a price for a store, set that store's unit to 0 and available=false, and append " [unavailable at [store]]" note ONLY in the item name if ALL three stores fail
-- Set unitCost and totalCost to whichever store has the LOWEST price found (for initial default totals)
-- Calculate homedepot_total = qty x homedepot_unit, lowes_total = qty x lowes_unit, platt_total = qty x platt_unit
-- Recalculate rawMaterialCost using the lowest prices
-- Recalculate markedUpMaterialCost = rawMaterialCost x 1.35
-- Recalculate totalEstimate = markedUpMaterialCost + laborCost
+- Set unitCost and totalCost to the LOWEST price found across all three stores
+- Calculate homedepot_total = qty x homedepot_unit, etc.
+- Recalculate rawMaterialCost, markedUpMaterialCost, and totalEstimate after pricing
 - Search EVERY item. Do not skip any.`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
