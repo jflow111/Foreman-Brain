@@ -22,51 +22,6 @@ app.post('/estimate', async (req, res) => {
   try {
     const { system, messages, model, max_tokens } = req.body;
 
-    const livePricingSystem = system + `
-
-LIVE PRICING INSTRUCTIONS — THREE STORES:
-You have access to a web search tool. For EVERY item in the materialTakeoff array, search for the current retail price at Home Depot, Lowe's, and Platt Electric.
-
-SEARCH STRATEGY — be very specific:
-- For wire/cable: include gauge, type, and length. Example: "Romex 12/2 NM-B wire 250ft Home Depot price 2026"
-- For breakers: include brand, amp rating, type. Example: "Square D 20 amp single pole breaker Home Depot price 2026"
-- For boxes/devices: include exact type and size. Example: "1-gang PVC electrical box Home Depot price 2026"
-- For conduit/fittings: include material and size. Example: "1/2 inch EMT conduit 10ft Home Depot price 2026"
-- Always add "price 2026" to get current pricing
-- Search site-specific when possible: add "site:homedepot.com" or "site:lowes.com" to the query
-- For Platt: search "platt electric [item name] price" — they specialize in electrical so most items will be found
-- Look for the UNIT price not bulk/case price unless qty is high
-- If you find a price range, use the middle value
-- If a search returns accessories or wrong items, try a more specific search before marking as unavailable
-
-ACCURACY RULES:
-- Only use prices from homedepot.com, lowes.com, or platt.com — not Amazon, eBay, or other sites
-- If the price seems too low (under $1 for wire) or too high (over $500 for a standard breaker), search again
-- Round prices to nearest cent
-- If you genuinely cannot find a price after 2 searches, set available=false
-
-The materialTakeoff JSON structure MUST include all three store prices for every item:
-{
-  "item": "item name",
-  "qty": "1",
-  "unitCost": 0,
-  "totalCost": 0,
-  "homedepot_unit": 0,
-  "homedepot_total": 0,
-  "homedepot_available": true,
-  "lowes_unit": 0,
-  "lowes_total": 0,
-  "lowes_available": true,
-  "platt_unit": 0,
-  "platt_total": 0,
-  "platt_available": true
-}
-
-- Set unitCost and totalCost to the LOWEST price found across all three stores
-- Calculate homedepot_total = qty x homedepot_unit, etc.
-- Recalculate rawMaterialCost, markedUpMaterialCost, and totalEstimate after pricing
-- Search EVERY item. Do not skip any.`;
-
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -76,32 +31,24 @@ The materialTakeoff JSON structure MUST include all three store prices for every
       },
       body: JSON.stringify({
         model: model || 'claude-sonnet-4-20250514',
-        max_tokens: max_tokens || 8000,
+        max_tokens: max_tokens || 4000,
         system: system,
         messages: messages
       })
     });
 
     const data = await response.json();
+    console.log('Status:', response.status);
+    console.log('Error:', JSON.stringify(data.error));
+    console.log('Content count:', data.content ? data.content.length : 0);
+    console.log('Content types:', data.content ? data.content.map(b => b.type).join(',') : 'none');
+
     const textBlocks = (data.content || []).filter(b => b.type === 'text');
     const finalText = textBlocks.map(b => b.text || '').join('');
-
-    // Try to extract valid JSON from the response
-    let cleanedText = finalText.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    // Find the last complete JSON object (in case response was cut off mid-stream)
-    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      cleanedText = jsonMatch[0];
-    }
-
     console.log('Response length:', finalText.length);
     console.log('First 200 chars:', finalText.substring(0, 200));
 
-    res.json({
-      ...data,
-      content: [{ type: 'text', text: cleanedText }]
-    });
+    res.json({ ...data, content: [{ type: 'text', text: finalText }] });
 
   } catch (err) {
     console.error('Estimate error:', err.message);
