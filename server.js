@@ -52,64 +52,58 @@ app.post('/estimate', async (req, res) => {
 // ─── STEP 2: Price lookup for individual items ───
 app.post('/price-lookup', async (req, res) => {
   try {
-    const { items } = req.body; // array of item names
+    const { items } = req.body;
 
-    const pricePrompt = `Search Home Depot, Lowe's, and Platt Electric for current 2026 prices for each item below. DO NOT explain anything. DO NOT say what you are going to do. Just search and return the JSON immediately.
+    // Search for prices one batch at a time
+    const batchSize = 5;
+    const allPrices = [];
 
-RETURN ONLY THIS JSON ARRAY — nothing else, no text before or after:
-[
-  {"item":"item name","homedepot_unit":0,"homedepot_available":true,"lowes_unit":0,"lowes_available":true,"platt_unit":0,"platt_available":true}
-]
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
 
-If you cannot find a price set the unit to 0 and available to false. Search now and return JSON only.
+      const pricePrompt = `Search for current 2026 prices for these electrical items at Home Depot, Lowe's, and Platt Electric. After searching, output ONLY a JSON array with no other text:\n\n${batch.map((item, j) => `${j+1}. ${item}`).join('\n')}\n\nJSON format:\n[{"item":"name","homedepot_unit":0,"homedepot_available":false,"lowes_unit":0,"lowes_available":false,"platt_unit":0,"platt_available":false}]\n\nONLY output the JSON array after searching.`;
 
-Items:
-${items.map((item, i) => `${i+1}. ${item}`).join('\n')}`;
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-beta': 'web-search-2025-03-05'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 15 }],
+          messages: [{ role: 'user', content: pricePrompt }]
+        })
+      });
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'web-search-2025-03-05'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        tools: [{
-          type: 'web_search_20250305',
-          name: 'web_search',
-          max_uses: 40
-        }],
-        messages: [{ role: 'user', content: pricePrompt }]
-      })
-    });
+      const data = await response.json();
+      const textBlocks = (data.content || []).filter(b => b.type === 'text');
+      const text = textBlocks.map(b => b.text || '').join('');
+      console.log(`Batch ${i/batchSize + 1} response:`, text.substring(0, 200));
 
-    const data = await response.json();
-    console.log('Price lookup status:', response.status);
-    console.log('Price lookup error:', data.error ? JSON.stringify(data.error) : 'none');
-    console.log('Stop reason:', data.stop_reason);
-
-    if (data.error || !data.content) {
-      return res.json({ prices: [] });
+      try {
+        const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const match = cleaned.match(/\[[\s\S]*\]/);
+        if (match) {
+          const batchPrices = JSON.parse(match[0]);
+          allPrices.push(...batchPrices);
+        }
+      } catch(e) {
+        console.error('Batch parse error:', e.message);
+        // Add empty prices for this batch so items still show
+        batch.forEach(item => allPrices.push({
+          item, homedepot_unit: 0, homedepot_available: false,
+          lowes_unit: 0, lowes_available: false,
+          platt_unit: 0, platt_available: false
+        }));
+      }
     }
 
-    const textBlocks = (data.content || []).filter(b => b.type === 'text');
-    const finalText = textBlocks.map(b => b.text || '').join('');
-    console.log('Price response length:', finalText.length);
-    console.log('First 300 chars:', finalText.substring(0, 300));
-
-    let prices = [];
-    try {
-      const cleaned = finalText.replace(/```json/g, '').replace(/```/g, '').trim();
-      const match = cleaned.match(/\[[\s\S]*\]/);
-      if (match) prices = JSON.parse(match[0]);
-    } catch(e) {
-      console.error('Price parse error:', e.message);
-    }
-
-    res.json({ prices });
+    console.log('Total prices found:', allPrices.length);
+    res.json({ prices: allPrices });
 
   } catch (err) {
     console.error('Price lookup error:', err.message);
