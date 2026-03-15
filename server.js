@@ -17,43 +17,64 @@ app.use(express.json());
 
 app.get('/', (req, res) => res.send('Foreman Brain server is running'));
 
-// ─── AI ESTIMATE WITH LIVE THREE-STORE PRICING ───
+// ─── STEP 1: Generate estimate without prices ───
 app.post('/estimate', async (req, res) => {
   try {
     const { system, messages, model, max_tokens } = req.body;
 
-    const livePricingSystem = system + `
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: model || 'claude-sonnet-4-20250514',
+        max_tokens: max_tokens || 4000,
+        system: system,
+        messages: messages
+      })
+    });
 
-LIVE PRICING INSTRUCTIONS — THREE STORES:
-You have access to a web search tool. For EVERY item in the materialTakeoff array, search for the current retail price at Home Depot, Lowe's, and Platt Electric.
+    const data = await response.json();
+    const textBlocks = (data.content || []).filter(b => b.type === 'text');
+    const finalText = textBlocks.map(b => b.text || '').join('');
+    console.log('Estimate response length:', finalText.length);
+    res.json({ ...data, content: [{ type: 'text', text: finalText }] });
 
-SEARCH STRATEGY — be very specific:
-- For wire/cable: include gauge, type, and length. Example: "Romex 12/2 NM-B wire 250ft Home Depot price 2026"
-- For breakers: include brand, amp rating, type. Example: "Square D 20 amp single pole breaker Home Depot price 2026"
-- For boxes/devices: include exact type and size. Example: "1-gang PVC electrical box Home Depot price 2026"
-- For conduit/fittings: include material and size. Example: "1/2 inch EMT conduit 10ft Home Depot price 2026"
-- Always add "price 2026" to get current pricing
-- Search site-specific: add "site:homedepot.com" or "site:lowes.com" to queries
-- For Platt: search "platt electric [item name] price 2026"
-- Use UNIT price not bulk/case price
-- If price range found, use middle value
-- Try a second more specific search before marking unavailable
+  } catch (err) {
+    console.error('Estimate error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
-ACCURACY RULES:
-- Only use prices from homedepot.com, lowes.com, or platt.com
-- If price seems wrong, search again
-- Round to nearest cent
-- If cannot find after 2 searches, set available=false
+// ─── STEP 2: Price lookup for individual items ───
+app.post('/price-lookup', async (req, res) => {
+  try {
+    const { items } = req.body; // array of item names
 
-Return materialTakeoff where EVERY item has these extra fields:
-  homedepot_unit, homedepot_total, homedepot_available,
-  lowes_unit, lowes_total, lowes_available,
-  platt_unit, platt_total, platt_available
+    const pricePrompt = `You are a pricing assistant. For each electrical material item below, search Home Depot, Lowe's, and Platt Electric for the current 2026 retail price.
 
-Set unitCost = lowest price found. Search EVERY item.`;
+Return ONLY a JSON array with this structure for each item:
+[
+  {
+    "item": "original item name",
+    "homedepot_unit": 0,
+    "homedepot_available": true,
+    "lowes_unit": 0,
+    "lowes_available": true,
+    "platt_unit": 0,
+    "platt_available": true
+  }
+]
 
-    // First call: generate the estimate structure
-    const estimateResponse = await fetch('https://api.anthropic.com/v1/messages', {
+Items to price:
+${items.map((item, i) => `${i+1}. ${item}`).join('\n')}
+
+Return ONLY the JSON array. No markdown. No explanation.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,59 +83,45 @@ Set unitCost = lowest price found. Search EVERY item.`;
         'anthropic-beta': 'web-search-2025-03-05'
       },
       body: JSON.stringify({
-        model: model || 'claude-sonnet-4-20250514',
-        max_tokens: 8000,
-        system: livePricingSystem,
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
         tools: [{
           type: 'web_search_20250305',
           name: 'web_search',
-          max_uses: 30
+          max_uses: 40
         }],
-        messages: messages
+        messages: [{ role: 'user', content: pricePrompt }]
       })
     });
 
-    const data = await estimateResponse.json();
-
-    console.log('API status:', estimateResponse.status);
-    console.log('API error:', data.error ? JSON.stringify(data.error) : 'none');
+    const data = await response.json();
+    console.log('Price lookup status:', response.status);
+    console.log('Price lookup error:', data.error ? JSON.stringify(data.error) : 'none');
     console.log('Stop reason:', data.stop_reason);
-    console.log('Content blocks:', data.content ? data.content.length : 0);
-    console.log('Content types:', data.content ? data.content.map(b => b.type).join(',') : 'none');
 
-    // If web search beta fails, fall back to standard call
-    if (data.error || !data.content || data.content.length === 0) {
-      console.log('Web search failed, falling back to standard call');
-      const fallbackResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: model || 'claude-sonnet-4-20250514',
-          max_tokens: max_tokens || 4000,
-          system: system,
-          messages: messages
-        })
-      });
-      const fallbackData = await fallbackResponse.json();
-      const fallbackText = (fallbackData.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('');
-      console.log('Fallback response length:', fallbackText.length);
-      return res.json({ ...fallbackData, content: [{ type: 'text', text: fallbackText }] });
+    if (data.error || !data.content) {
+      return res.json({ prices: [] });
     }
 
     const textBlocks = (data.content || []).filter(b => b.type === 'text');
     const finalText = textBlocks.map(b => b.text || '').join('');
-    console.log('Response length:', finalText.length);
-    console.log('First 200 chars:', finalText.substring(0, 200));
+    console.log('Price response length:', finalText.length);
+    console.log('First 300 chars:', finalText.substring(0, 300));
 
-    res.json({ ...data, content: [{ type: 'text', text: finalText }] });
+    let prices = [];
+    try {
+      const cleaned = finalText.replace(/```json/g, '').replace(/```/g, '').trim();
+      const match = cleaned.match(/\[[\s\S]*\]/);
+      if (match) prices = JSON.parse(match[0]);
+    } catch(e) {
+      console.error('Price parse error:', e.message);
+    }
+
+    res.json({ prices });
 
   } catch (err) {
-    console.error('Estimate error:', err.message);
-    res.status(500).json({ error: err.message });
+    console.error('Price lookup error:', err.message);
+    res.json({ prices: [] });
   }
 });
 
@@ -145,7 +152,6 @@ app.post('/webhook', async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.error('Webhook error:', err.message);
     return res.status(400).send('Webhook error');
   }
 
@@ -167,7 +173,6 @@ app.post('/webhook', async (req, res) => {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       await updateSubscription(session.metadata.supabase_uid, session.customer, session.subscription, 'active');
-      console.log('Activated:', session.metadata.supabase_uid);
     }
     if (event.type === 'customer.subscription.deleted' || event.type === 'customer.subscription.paused') {
       const sub = event.data.object;
@@ -194,7 +199,6 @@ app.post('/webhook', async (req, res) => {
   res.json({ received: true });
 });
 
-// ─── CANCEL SUBSCRIPTION ───
 app.post('/cancel-subscription', async (req, res) => {
   try {
     const { subscription_id } = req.body;
