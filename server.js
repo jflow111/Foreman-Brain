@@ -186,6 +186,48 @@ app.post('/price-lookup', async (req, res) => {
   }
 });
 
+// ─── PHOTO ANALYSIS ───
+app.post('/analyze-photo', async (req, res) => {
+  try {
+    const { image, mediaType } = req.body;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: image }
+            },
+            {
+              type: 'text',
+              text: 'You are a master electrician reviewing a job site photo. Analyze this image and provide a brief technical assessment relevant to electrical estimating. Note: panel brand and condition, existing wiring type, service size if visible, potential code issues, access difficulty, and anything that would affect the estimate. Keep response under 100 words. Be specific and technical.'
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const analysis = (data.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('');
+    console.log('Photo analysis complete:', analysis.substring(0, 100));
+    res.json({ analysis });
+
+  } catch (err) {
+    console.error('Photo analysis error:', err.message);
+    res.json({ analysis: 'Could not analyze photo.' });
+  }
+});
+
 // ─── STRIPE CHECKOUT ───
 app.get('/checkout', async (req, res) => {
   try {
