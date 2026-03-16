@@ -185,13 +185,18 @@ document.getElementById('resetBtn').addEventListener('click', async function() {
 });
 
 (async function() {
-  var session = await supabase.auth.getSession();
-  if (session.data.session) {
-    var uid = session.data.session.user.id;
-    var profile = await supabase.from('profiles').select('subscription_status,is_admin').eq('id', uid).single();
-    if (profile.data && (profile.data.subscription_status === 'active' || profile.data.is_admin)) {
-      window.location.href = 'app.html';
+  try {
+    var session = await supabase.auth.getSession();
+    if (session.data.session) {
+      var uid = session.data.session.user.id;
+      var profile = await supabase.from('profiles').select('subscription_status,is_admin').eq('id', uid).single();
+      if (profile.data && (profile.data.subscription_status === 'active' || profile.data.is_admin)) {
+        window.location.href = 'app.html';
+        return;
+      }
     }
+  } catch(e) {
+    console.log('Session check error:', e.message);
   }
 })();
 </script>
