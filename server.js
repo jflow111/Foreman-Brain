@@ -99,8 +99,15 @@ app.post('/estimate', async (req, res) => {
       })
     });
     const data = await response.json();
+    console.log('HTTP status:', response.status);
+    console.log('API error:', JSON.stringify(data.error));
+    console.log('Stop reason:', data.stop_reason);
+    console.log('Content count:', data.content ? data.content.length : 0);
+    console.log('Content types:', data.content ? data.content.map(b=>b.type).join(',') : 'none');
+    console.log('Usage:', JSON.stringify(data.usage));
     const finalText = (data.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('');
     console.log('Estimate length:', finalText.length);
+    console.log('First 100 chars:', finalText.substring(0, 100));
     res.json({ ...data, content: [{ type: 'text', text: finalText }] });
   } catch (err) {
     console.error('Estimate error:', err.message);
