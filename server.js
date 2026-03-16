@@ -119,36 +119,51 @@ app.post('/estimate', async (req, res) => {
 app.post('/price-lookup', async (req, res) => {
   try {
     const { items } = req.body;
-    console.log('Price lookup for', items.length, 'items via Google Custom Search');
 
-    const prices = [];
-
-    // Process items sequentially to avoid rate limiting
-    for (const item of items) {
-      const [hd, lw, pl] = await Promise.all([
-        searchGooglePrice(item, 'Home Depot'),
-        searchGooglePrice(item, 'Lowes'),
-        searchGooglePrice(item, 'Platt Electric')
-      ]);
-
-      console.log(`${item.substring(0,40)}: HD=${hd.price} LW=${lw.price} PL=${pl.price}`);
-
-      prices.push({
-        item,
-        homedepot_unit: hd.price,
-        homedepot_available: hd.found,
-        lowes_unit: lw.price,
-        lowes_available: lw.found,
-        platt_unit: pl.price,
-        platt_available: pl.found
-      });
-
-      // Small delay to respect rate limits
-      await new Promise(r => setTimeout(r, 100));
+    // Load price list
+    const fs = require('fs');
+    let priceList = {};
+    try {
+      const priceData = JSON.parse(fs.readFileSync('./prices.json', 'utf8'));
+      priceList = priceData.prices || {};
+      console.log('Price list loaded:', Object.keys(priceList).length, 'items, updated:', priceData.updated);
+    } catch(e) {
+      console.error('Price list load error:', e.message);
     }
 
-    console.log('Price lookup complete:', prices.length, 'items');
-    res.json({ prices });
+    const prices = items.map(function(item) {
+      // Try to match item to price list
+      const itemLower = item.toLowerCase();
+      let matchedPrice = 0;
+      let matchedKey = null;
+
+      // Look for best match in price list
+      for (const [key, price] of Object.entries(priceList)) {
+        const keyLower = key.toLowerCase();
+        // Check if key words appear in item name
+        const keyWords = keyLower.split(' ').filter(w => w.length > 2);
+        const matchCount = keyWords.filter(w => itemLower.includes(w)).length;
+        if (matchCount >= 2 && matchCount > (matchedKey ? matchedKey.split(' ').length : 0)) {
+          matchedPrice = price;
+          matchedKey = key;
+        }
+      }
+
+      if (matchedKey) {
+        console.log(`Matched "${item}" to "${matchedKey}": ${matchedPrice}`);
+      } else {
+        console.log(`No match for "${item}" - using AI estimate`);
+      }
+
+      return {
+        item,
+        market_unit: matchedPrice,
+        market_available: matchedPrice > 0,
+        matched_key: matchedKey
+      };
+    });
+
+    res.json({ prices, updated: 'March 2026' });
 
   } catch (err) {
     console.error('Price lookup error:', err.message);
