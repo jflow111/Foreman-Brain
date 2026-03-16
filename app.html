@@ -79,6 +79,16 @@
   @keyframes slide-loading { to{left:100%} }
   .btn-clear { font-family:var(--mono); font-size:11px; color:var(--text-muted); background:transparent; border:1px solid var(--border); border-radius:2px; padding:11px 20px; cursor:pointer; letter-spacing:1px; transition:all 0.15s; }
   .btn-clear:hover { color:var(--red); border-color:var(--red); }
+  .btn-voice { font-family:var(--mono); font-size:16px; background:transparent; border:1px solid var(--border); border-radius:2px; padding:10px 14px; cursor:pointer; transition:all 0.15s; color:var(--text-dim); }
+  .btn-voice:hover { border-color:var(--amber); color:var(--amber); }
+  .btn-voice.recording { border-color:var(--red); color:var(--red); animation:blink 0.8s ease-in-out infinite; }
+  .btn-photo { font-family:var(--mono); font-size:16px; background:transparent; border:1px solid var(--border); border-radius:2px; padding:10px 14px; cursor:pointer; transition:all 0.15s; color:var(--text-dim); }
+  .btn-photo:hover { border-color:var(--amber); color:var(--amber); }
+  .btn-photo.analyzing { border-color:var(--amber); color:var(--amber); animation:blink 0.8s ease-in-out infinite; }
+  .photo-preview { position:relative; display:inline-block; margin-right:8px; margin-bottom:8px; }
+  .photo-preview img { width:80px; height:80px; object-fit:cover; border-radius:2px; border:1px solid var(--border); }
+  .photo-preview .remove-photo { position:absolute; top:-6px; right:-6px; background:var(--red); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .photo-analysis { background:var(--surface2); border:1px solid var(--border); border-left:3px solid var(--amber); border-radius:2px; padding:10px 14px; margin-top:10px; font-family:var(--mono); font-size:10px; color:var(--text-dim); line-height:1.6; }
   .loading-panel { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:60px 32px; text-align:center; margin-bottom:28px; }
   .loading-hex { width:72px; height:72px; background:var(--amber-glow); border:2px solid var(--amber); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 24px; animation:spin 2s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg)} }
@@ -258,8 +268,12 @@
       <div class="input-actions">
         <button class="btn-estimate" id="runBtn">&#9658; RUN ESTIMATE</button>
         <button class="btn-clear" id="clearBtn">CLEAR</button>
+        <button class="btn-voice" id="voiceBtn" title="Voice input">&#127908;</button>
+        <button class="btn-photo" id="photoBtn" title="Take photo">&#128247;</button>
+        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;" />
         <span id="charCount" style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-left:8px;"></span>
       </div>
+      <div id="photoPreviewArea" style="display:none;margin-top:12px;"></div>
     </div>
   </div>
 
@@ -408,7 +422,7 @@ async function runEstimate() {
   try {
     var response = await fetch('https://foreman-brain-612543858921.europe-west1.run.app/estimate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: input }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: capturedPhotos.length > 0 ? [{ type: 'text', text: input }, ...capturedPhotos.map(function(p) { return { type: 'image', source: { type: 'base64', media_type: p.type, data: p.base64 } }; })] : input }] })
     });
     var data = await response.json();
     var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
@@ -479,6 +493,137 @@ async function runEstimate() {
 }
 function copyProposal() { if (!currentEstimate) return; var t = calcTotals(); var text = (currentEstimate.customerProposal || '') + '\n\nESTIMATE SUMMARY\nMaterials: ' + fmt(t.markedUp) + '\nLabor (' + editableLaborHours + ' hrs @ $' + getLaborRate() + '/hr): ' + fmt(t.labor) + '\nTOTAL: ' + fmt(t.total); navigator.clipboard.writeText(text).then(function() { var btn = document.getElementById('copyBtn'); if (btn) { btn.textContent = 'COPIED'; btn.classList.add('copied'); setTimeout(function() { btn.textContent = 'COPY PROPOSAL'; btn.classList.remove('copied'); }, 2000); } }); }
 function printProposal() { if (!currentEstimate) return; var t = calcTotals(); var win = window.open('', '_blank'); win.document.write('<html><head><title>Electrical Estimate</title><style>body{font-family:Georgia,serif;font-size:14px;line-height:1.8;padding:60px;color:#222;max-width:800px;margin:0 auto;}pre{white-space:pre-wrap;font-family:Georgia,serif;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #ddd;font-size:12px;}</style></head><body>'); win.document.write('<h2>Electrical Estimate</h2><p style="color:#888;font-size:12px;margin-bottom:40px;">Generated by Foreman Brain</p>'); win.document.write('<pre>' + (currentEstimate.customerProposal || '') + '</pre>'); win.document.write('<table style="margin-top:30px;"><tr><th>Materials (markup x' + getMarkup() + ')</th><td>' + fmt(t.markedUp) + '</td></tr><tr><th>Labor (' + editableLaborHours + ' hrs @ $' + getLaborRate() + '/hr)</th><td>' + fmt(t.labor) + '</td></tr><tr><th>Total Estimate</th><td><strong>' + fmt(t.total) + '</strong></td></tr></table>'); win.document.write('</body></html>'); win.document.close(); win.print(); }
+var capturedPhotos = [];
+var photoAnalyses = [];
+
+function initVoice() {
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    document.getElementById('voiceBtn').style.display = 'none';
+    return;
+  }
+  var recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+  var isRecording = false;
+  document.getElementById('voiceBtn').addEventListener('click', function() {
+    if (isRecording) {
+      recognition.stop();
+      return;
+    }
+    recognition.start();
+    isRecording = true;
+    document.getElementById('voiceBtn').classList.add('recording');
+    document.getElementById('voiceBtn').textContent = '⏹';
+  });
+  recognition.onresult = function(event) {
+    var transcript = event.results[0][0].transcript;
+    var current = document.getElementById('jobInput').value;
+    document.getElementById('jobInput').value = current ? current + ' ' + transcript : transcript;
+    updateCharCount();
+  };
+  recognition.onend = function() {
+    isRecording = false;
+    document.getElementById('voiceBtn').classList.remove('recording');
+    document.getElementById('voiceBtn').textContent = '🎤';
+  };
+  recognition.onerror = function(e) {
+    isRecording = false;
+    document.getElementById('voiceBtn').classList.remove('recording');
+    document.getElementById('voiceBtn').textContent = '🎤';
+    console.log('Voice error:', e.error);
+  };
+}
+
+function initPhoto() {
+  document.getElementById('photoBtn').addEventListener('click', function() {
+    document.getElementById('photoInput').click();
+  });
+  document.getElementById('photoInput').addEventListener('change', async function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var photoBtn = document.getElementById('photoBtn');
+    photoBtn.classList.add('analyzing');
+    photoBtn.textContent = '⏳';
+    try {
+      var base64 = await fileToBase64(file);
+      capturedPhotos.push({ base64: base64, type: file.type });
+      renderPhotoPreview(base64, capturedPhotos.length - 1);
+      var analysis = await analyzePhoto(base64, file.type);
+      photoAnalyses.push(analysis);
+      showPhotoAnalysis(analysis);
+    } catch(err) {
+      console.error('Photo error:', err);
+    } finally {
+      photoBtn.classList.remove('analyzing');
+      photoBtn.textContent = '📷';
+      e.target.value = '';
+    }
+  });
+}
+
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function() { resolve(reader.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function analyzePhoto(base64, mediaType) {
+  try {
+    var response = await fetch('https://foreman-brain-612543858921.europe-west1.run.app/analyze-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64, mediaType: mediaType })
+    });
+    var data = await response.json();
+    return data.analysis || 'Could not analyze photo.';
+  } catch(err) {
+    return 'Photo analysis unavailable.';
+  }
+}
+
+function renderPhotoPreview(base64, idx) {
+  var area = document.getElementById('photoPreviewArea');
+  area.style.display = 'block';
+  var div = document.createElement('div');
+  div.className = 'photo-preview';
+  div.id = 'photo-' + idx;
+  div.innerHTML = '<img src="data:image/jpeg;base64,' + base64 + '" />' +
+    '<button class="remove-photo" onclick="removePhoto(' + idx + ')">&#10005;</button>';
+  area.appendChild(div);
+}
+
+function removePhoto(idx) {
+  capturedPhotos.splice(idx, 1);
+  photoAnalyses.splice(idx, 1);
+  var el = document.getElementById('photo-' + idx);
+  if (el) el.remove();
+  if (capturedPhotos.length === 0) {
+    document.getElementById('photoPreviewArea').style.display = 'none';
+    var analysisEl = document.getElementById('photoAnalysisBox');
+    if (analysisEl) analysisEl.remove();
+  }
+}
+
+function showPhotoAnalysis(analysis) {
+  var existing = document.getElementById('photoAnalysisBox');
+  if (existing) existing.remove();
+  var div = document.createElement('div');
+  div.id = 'photoAnalysisBox';
+  div.className = 'photo-analysis';
+  div.innerHTML = '&#9889; PHOTO ANALYSIS: ' + analysis;
+  document.getElementById('photoPreviewArea').appendChild(div);
+  var input = document.getElementById('jobInput');
+  if (input.value && !input.value.includes(analysis.substring(0,20))) {
+    input.value = input.value + '\n\nFrom photo: ' + analysis;
+    updateCharCount();
+  }
+}
+
 var HISTORY_KEY = 'foremanBrainJobs';
 function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
 function saveHistory(jobs) { localStorage.setItem(HISTORY_KEY, JSON.stringify(jobs)); }
@@ -518,6 +663,8 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('jobInput').addEventListener('focus', function() { var fab = document.getElementById('mobileFab'); if (fab) { fab.style.opacity='0'; fab.style.pointerEvents='none'; } });
   document.getElementById('jobInput').addEventListener('blur', function() { var fab = document.getElementById('mobileFab'); if (fab) { fab.style.opacity='1'; fab.style.pointerEvents='auto'; } });
   document.getElementById('jobInput').addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 'Enter') runEstimate(); });
+  initVoice();
+  initPhoto();
 });
 </script>
 </body>
