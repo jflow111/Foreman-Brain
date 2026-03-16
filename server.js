@@ -137,13 +137,28 @@ app.post('/price-lookup', async (req, res) => {
       let matchedPrice = 0;
       let matchedKey = null;
 
-      // Look for best match in price list
+      // Extract numbers from item name for exact matching
+      const itemNumbers = itemLower.match(/\d+\.?\d*/g) || [];
+
+      let bestScore = 0;
       for (const [key, price] of Object.entries(priceList)) {
         const keyLower = key.toLowerCase();
-        // Check if key words appear in item name
-        const keyWords = keyLower.split(' ').filter(w => w.length > 2);
+        const keyNumbers = keyLower.match(/\d+\.?\d*/g) || [];
+
+        // Check number match first - numbers must match exactly
+        let numberMatch = true;
+        if (keyNumbers.length > 0) {
+          numberMatch = keyNumbers.every(n => itemNumbers.includes(n));
+        }
+        if (!numberMatch) continue;
+
+        // Count word matches
+        const keyWords = keyLower.split(' ').filter(w => w.length > 2 && !/^\d+$/.test(w));
         const matchCount = keyWords.filter(w => itemLower.includes(w)).length;
-        if (matchCount >= 2 && matchCount > (matchedKey ? matchedKey.split(' ').length : 0)) {
+        const score = matchCount / keyWords.length;
+
+        if (matchCount >= 1 && score > bestScore) {
+          bestScore = score;
           matchedPrice = price;
           matchedKey = key;
         }
