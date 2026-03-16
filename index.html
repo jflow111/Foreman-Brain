@@ -44,13 +44,18 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,11,14,0.94
 .btn-hero{font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:3px;color:#080b0e;background:var(--amber);border:none;border-radius:2px;padding:16px 40px;cursor:pointer;text-transform:uppercase;text-decoration:none;transition:all 0.2s;display:inline-block;}
 .btn-hero:hover{background:#ffbb20;box-shadow:0 0 40px rgba(240,165,0,0.4);transform:translateY(-1px);}
 .hero-note{font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;}
+.hero-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;}
+.hero-badge{font-family:var(--mono);font-size:9px;color:var(--amber);border:1px solid var(--amber-dim);border-radius:2px;padding:4px 10px;letter-spacing:1px;background:var(--amber-glow);}
 .app-mockup{background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(240,165,0,0.1);transform:perspective(1000px) rotateY(-8deg) rotateX(4deg);transition:transform 0.3s ease;}
 .app-mockup:hover{transform:perspective(1000px) rotateY(-4deg) rotateX(2deg);}
 .mockup-bar{background:var(--surface2);border-bottom:1px solid var(--amber);padding:10px 16px;display:flex;align-items:center;gap:10px;}
 .mockup-hex{width:22px;height:22px;background:var(--amber);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);font-size:10px;display:flex;align-items:center;justify-content:center;}
 .mockup-title{font-family:var(--display);font-size:14px;font-weight:900;color:var(--amber);letter-spacing:3px;}
 .mockup-body{padding:16px;}
-.mockup-input{background:var(--bg);border:1px solid var(--border);border-radius:2px;padding:10px 12px;font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:12px;}
+.mockup-input-row{display:flex;gap:6px;margin-bottom:12px;align-items:center;}
+.mockup-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:2px;padding:10px 12px;font-family:var(--mono);font-size:10px;color:var(--text-dim);}
+.mockup-mic{background:var(--amber-glow);border:1px solid var(--amber-dim);border-radius:2px;padding:10px 12px;font-size:12px;}
+.mockup-cam{background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:10px 12px;font-size:12px;}
 .mockup-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .mockup-card{background:var(--bg);border:1px solid var(--border);border-radius:2px;padding:10px 12px;}
 .mockup-card-label{font-family:var(--mono);font-size:8px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;}
@@ -63,6 +68,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,11,14,0.94
 .mockup-total-row{display:flex;justify-content:space-between;padding:10px 12px;background:var(--amber-glow);border:1px solid var(--amber);border-radius:2px;margin-top:10px;}
 .mockup-total-label{font-family:var(--display);font-size:12px;font-weight:700;color:var(--amber);letter-spacing:2px;}
 .mockup-total-val{font-family:var(--display);font-size:20px;font-weight:700;color:var(--amber);}
+.mockup-photo-strip{display:flex;gap:6px;margin-bottom:12px;}
+.mockup-photo{width:48px;height:48px;background:var(--surface2);border:1px solid var(--border);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.mockup-analysis{background:var(--surface2);border-left:2px solid var(--amber);padding:8px 10px;font-family:var(--mono);font-size:8px;color:var(--text-dim);line-height:1.5;margin-bottom:12px;}
 .stats-bar{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:32px 40px;}
 .stats-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
 .stat{text-align:center;padding:0 20px;position:relative;}
@@ -92,6 +100,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,11,14,0.94
 .feature-icon{font-size:28px;margin-bottom:16px;}
 .feature-title{font-family:var(--display);font-size:20px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
 .feature-desc{font-size:13px;color:var(--text-dim);line-height:1.7;font-weight:300;}
+.feature-new{font-family:var(--mono);font-size:8px;color:var(--bg);background:var(--amber);padding:2px 6px;border-radius:2px;margin-left:8px;letter-spacing:1px;vertical-align:middle;}
 .pricing-card{max-width:480px;margin:60px auto 0;background:var(--surface);border:1px solid var(--amber);border-radius:4px;overflow:hidden;position:relative;}
 .pricing-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--amber);}
 .pricing-badge{background:var(--amber);color:#080b0e;font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:6px 16px;display:inline-block;margin:24px 24px 0;}
@@ -163,10 +172,16 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:40px
     <div class="hero-left">
       <div class="hero-eyebrow">AI-Powered Electrical Estimating</div>
       <h1 class="hero-headline">Stop<br/>Guessing.<br/>Start <span>Winning</span><br/>Bids.</h1>
-      <p class="hero-sub">Foreman Brain thinks like a master electrician. Describe any job and get a complete material takeoff, labor estimate, and customer-ready proposal in under 30 seconds.</p>
+      <p class="hero-sub">Foreman Brain thinks like a California master electrician. Speak a job description, snap a photo, and get a complete NEC + CEC compliant estimate with customer-ready proposal in under 30 seconds.</p>
       <div class="hero-actions">
         <a class="btn-hero" href="auth.html">&#9658; START TODAY</a>
         <span class="hero-note">$60/month &nbsp;·&nbsp; Cancel anytime</span>
+      </div>
+      <div class="hero-badges">
+        <span class="hero-badge">&#127908; VOICE INPUT</span>
+        <span class="hero-badge">&#128247; PHOTO ANALYSIS</span>
+        <span class="hero-badge">&#9889; CA CODE AWARE</span>
+        <span class="hero-badge">&#128241; INSTALLS ON PHONE</span>
       </div>
     </div>
     <div class="hero-right">
@@ -176,17 +191,25 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:40px
           <div class="mockup-title">FOREMAN BRAIN</div>
         </div>
         <div class="mockup-body">
-          <div class="mockup-input">50A EV charger in garage, 60ft from panel...</div>
+          <div class="mockup-photo-strip">
+            <div class="mockup-photo">&#128247;</div>
+            <div class="mockup-photo">&#9889;</div>
+          </div>
+          <div class="mockup-analysis">&#9889; PHOTO ANALYSIS: 200A Square D panel, 40 spaces, approx 60% loaded. Recommend AFCI on all bedroom circuits per CEC.</div>
+          <div class="mockup-input-row">
+            <div class="mockup-input">50A EV charger, 60ft from panel...</div>
+            <div class="mockup-mic">&#127908;</div>
+            <div class="mockup-cam">&#128247;</div>
+          </div>
           <div class="mockup-cards">
             <div class="mockup-card"><div class="mockup-card-label">RAW MATERIALS</div><div class="mockup-card-val">$487</div></div>
             <div class="mockup-card"><div class="mockup-card-label">LABOR</div><div class="mockup-card-val">$400</div></div>
             <div class="mockup-card"><div class="mockup-card-label">W/ MARKUP</div><div class="mockup-card-val">$657</div></div>
             <div class="mockup-card highlight"><div class="mockup-card-label">TOTAL</div><div class="mockup-card-val">$1,060</div></div>
           </div>
-          <div class="mockup-row"><span class="mockup-row-label">50A 2-pole breaker</span><span class="mockup-row-val">$28.00</span></div>
+          <div class="mockup-row"><span class="mockup-row-label">50A 2-pole breaker (AFCI)</span><span class="mockup-row-val">$42.00</span></div>
           <div class="mockup-row"><span class="mockup-row-label">6/3 NM-B cable 70ft</span><span class="mockup-row-val">$182.00</span></div>
           <div class="mockup-row"><span class="mockup-row-label">NEMA 14-50R outlet</span><span class="mockup-row-val">$18.00</span></div>
-          <div class="mockup-row"><span class="mockup-row-label">Metal box, staples, misc</span><span class="mockup-row-val">$24.00</span></div>
           <div class="mockup-total-row"><span class="mockup-total-label">ESTIMATE TOTAL</span><span class="mockup-total-val">$1,060</span></div>
         </div>
       </div>
@@ -197,7 +220,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:40px
 <div class="stats-bar">
   <div class="stats-inner">
     <div class="stat fade-up"><div class="stat-num">&lt;30s</div><div class="stat-label">Full Estimate Generated</div></div>
-    <div class="stat fade-up"><div class="stat-num">100%</div><div class="stat-label">NEC Code Aware</div></div>
+    <div class="stat fade-up"><div class="stat-num">100%</div><div class="stat-label">NEC + CEC Code Aware</div></div>
     <div class="stat fade-up"><div class="stat-num">20+</div><div class="stat-label">Years Experience Built In</div></div>
     <div class="stat fade-up"><div class="stat-num">$60</div><div class="stat-label">Per Month, Unlimited Jobs</div></div>
   </div>
@@ -210,18 +233,18 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:40px
     <div class="steps">
       <div class="step fade-up">
         <div class="step-num">01</div>
-        <div class="step-title">Describe the Job</div>
-        <div class="step-desc">Type a quick description in plain English. As detailed or as vague as you have it. "50A EV charger in garage" is all you need to get started.</div>
+        <div class="step-title">Describe or Show the Job</div>
+        <div class="step-desc">Type, speak, or snap a photo. Describe the job in plain English or let the AI analyze your job site photos. "50A EV charger in garage" is all you need — or just point your camera at the panel.</div>
       </div>
       <div class="step fade-up">
         <div class="step-num">02</div>
         <div class="step-title">AI Builds the Estimate</div>
-        <div class="step-desc">Foreman Brain applies master electrician logic — correct wire sizing, NEC code, every small part included. Full material takeoff and labor hours in seconds.</div>
+        <div class="step-desc">Foreman Brain applies California master electrician logic — correct wire sizing, NEC + CEC code compliance, AFCI/GFCI requirements, every small part included. Full material takeoff and labor hours in seconds.</div>
       </div>
       <div class="step fade-up">
         <div class="step-num">03</div>
         <div class="step-title">Send the Proposal</div>
-        <div class="step-desc">Get a professional customer-ready proposal you can copy and send immediately. Edit any line item, adjust your labor rate, print or copy in one click.</div>
+        <div class="step-desc">Get a professional customer-ready proposal you can copy and send immediately. Edit any line item, adjust your labor rate, print or copy in one click. Always includes California permit reminder.</div>
       </div>
     </div>
   </div>
@@ -229,38 +252,38 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:40px
 
 <section class="features-section" id="features">
   <div class="section-inner">
-    <div class="section-eyebrow">Built for Electricians</div>
-    <h2 class="section-title">Everything You Need to <span>Bid Fast</span></h2>
+    <div class="section-eyebrow">Built for California Electricians</div>
+    <h2 class="section-title">Every Feature You Need to <span>Bid Fast</span></h2>
     <div class="features-grid">
       <div class="feature fade-up">
-        <div class="feature-icon">⚡</div>
-        <div class="feature-title">NEC Code Logic</div>
-        <div class="feature-desc">Automatically selects correct wire gauge, breaker size, and GFCI requirements. 15A vs 20A circuits chosen correctly every time — no more guessing.</div>
+        <div class="feature-icon">&#127908;</div>
+        <div class="feature-title">Voice Input <span class="feature-new">NEW</span></div>
+        <div class="feature-desc">Tap the mic and speak your job description. Hands-free estimating on the job site. Works on iPhone and Android. No typing required.</div>
       </div>
       <div class="feature fade-up">
-        <div class="feature-icon">📋</div>
-        <div class="feature-title">Complete Takeoff</div>
-        <div class="feature-desc">Every item included — wire, breakers, boxes, staples, connectors, wire nuts. Nothing gets missed like it does when you're estimating in your head.</div>
+        <div class="feature-icon">&#128247;</div>
+        <div class="feature-title">Photo Analysis <span class="feature-new">NEW</span></div>
+        <div class="feature-desc">Snap a photo of the panel, existing wiring, or job site. AI analyzes it like a master electrician — identifies panel brand, condition, load, and code issues automatically.</div>
       </div>
       <div class="feature fade-up">
-        <div class="feature-icon">✏️</div>
-        <div class="feature-title">Fully Editable</div>
-        <div class="feature-desc">Click any line item to edit. Add or remove materials. Adjust labor hours. Change your markup. Everything recalculates instantly in real time.</div>
+        <div class="feature-icon">&#127968;</div>
+        <div class="feature-title">California Code <span class="feature-new">NEW</span></div>
+        <div class="feature-desc">Fully versed in California Title 24, CEC amendments, AFCI requirements, EV-ready conduit rules, seismic bracing, and all California-specific requirements on top of NEC.</div>
       </div>
       <div class="feature fade-up">
-        <div class="feature-icon">📄</div>
+        <div class="feature-icon">&#128203;</div>
         <div class="feature-title">Customer Proposals</div>
-        <div class="feature-desc">Professional customer-facing proposal generated automatically. Copy it straight into a text or email. No more writing proposals from scratch.</div>
+        <div class="feature-desc">Professional customer-facing proposal generated automatically. Always includes California permit reminder. Copy it straight into a text or email in one click.</div>
       </div>
       <div class="feature fade-up">
-        <div class="feature-icon">📱</div>
+        <div class="feature-icon">&#128241;</div>
         <div class="feature-title">Works on Any Device</div>
         <div class="feature-desc">Install on your phone like a real app. Use it on your tablet on the job site. Full desktop version for the office. One subscription, all devices.</div>
       </div>
       <div class="feature fade-up">
-        <div class="feature-icon">🗂️</div>
+        <div class="feature-icon">&#128196;</div>
         <div class="feature-title">Job History</div>
-        <div class="feature-desc">Every estimate saved automatically. Load any past job, adjust it for a similar project. Build your estimating library over time.</div>
+        <div class="feature-desc">Every estimate saved automatically with photos. Load any past job, adjust it for a similar project. Build your estimating library over time.</div>
       </div>
     </div>
   </div>
@@ -277,11 +300,13 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:40px
       <div class="pricing-divider"></div>
       <div class="pricing-features">
         <div class="pricing-feature">Unlimited estimates per month</div>
+        <div class="pricing-feature">Voice input — speak your job description</div>
+        <div class="pricing-feature">Photo analysis — AI reads job site photos</div>
+        <div class="pricing-feature">California NEC + CEC code compliance</div>
         <div class="pricing-feature">Full material takeoff on every job</div>
-        <div class="pricing-feature">NEC-aware circuit and wire sizing</div>
         <div class="pricing-feature">Editable line items and labor hours</div>
-        <div class="pricing-feature">Customer-ready proposal generator</div>
-        <div class="pricing-feature">Job history saved automatically</div>
+        <div class="pricing-feature">Customer-ready proposal with permit reminder</div>
+        <div class="pricing-feature">Job history with photos saved automatically</div>
         <div class="pricing-feature">Works on phone, tablet, and desktop</div>
         <div class="pricing-feature">Instant access after signup</div>
       </div>
@@ -296,22 +321,22 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:40px
 <section class="testimonials-section">
   <div class="section-inner">
     <div class="section-eyebrow">From the Field</div>
-    <h2 class="section-title">What <span>Contractors</span> Are Saying</h2>
+    <h2 class="section-title">What <span>California Contractors</span> Are Saying</h2>
     <div class="testimonials-grid">
       <div class="testimonial fade-up">
-        <div class="testimonial-text">I used to spend 45 minutes on every estimate. Now I have a complete takeoff in under a minute. The wire sizing and breaker selection is spot on — it thinks like I do.</div>
+        <div class="testimonial-text">The photo analysis is unreal. I snapped a pic of the panel, spoke my job description, and had a complete CEC-compliant estimate in under a minute. Nothing else comes close.</div>
         <div class="testimonial-author">Mike R.</div>
-        <div class="testimonial-role">Master Electrician · 18 Years</div>
+        <div class="testimonial-role">Master Electrician · Los Angeles, CA · 18 Years</div>
       </div>
       <div class="testimonial fade-up">
-        <div class="testimonial-text">The small parts are what got me. It actually includes wire nuts, staples, connectors — all the stuff I used to forget and eat the cost on. My margins are way better now.</div>
+        <div class="testimonial-text">It knows California code cold. AFCI requirements, Title 24, EV-ready conduit — it gets all of it right automatically. I used to have to double-check everything. Now I trust it.</div>
         <div class="testimonial-author">Dave T.</div>
-        <div class="testimonial-role">Electrical Contractor · Dallas TX</div>
+        <div class="testimonial-role">Electrical Contractor · San Diego, CA</div>
       </div>
       <div class="testimonial fade-up">
-        <div class="testimonial-text">I run a two-man shop. Being able to send a professional proposal the same day I look at a job has helped me close way more work. Clients love how fast I get back to them.</div>
+        <div class="testimonial-text">I run a two-man shop. Being able to send a professional proposal the same day I look at a job has helped me close way more work. The voice input means I never have to stop and type.</div>
         <div class="testimonial-author">Carlos M.</div>
-        <div class="testimonial-role">Owner · CM Electric</div>
+        <div class="testimonial-role">Owner · CM Electric · Sacramento, CA</div>
       </div>
     </div>
   </div>
@@ -321,7 +346,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:40px
   <div class="cta-bg"></div>
   <div class="cta-inner">
     <h2 class="cta-title">Ready to Bid <span>Faster?</span></h2>
-    <p class="cta-sub">Join contractors already using Foreman Brain to win more jobs.</p>
+    <p class="cta-sub">Join California contractors already using Foreman Brain to win more jobs.</p>
     <div class="cta-actions">
       <a class="btn-hero" href="auth.html">&#9658; START TODAY — $60/MO</a>
       <a class="btn-login" href="auth.html" style="padding:15px 20px;">Already have an account? Login</a>
@@ -331,7 +356,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:40px
 
 <footer>
   <div class="footer-brand">&#9889; Foreman Brain</div>
-  <div class="footer-copy">AI Electrical Estimating System &nbsp;·&nbsp; Built for contractors, by contractors &nbsp;·&nbsp; &copy; 2026</div>
+  <div class="footer-copy">AI Electrical Estimating System &nbsp;·&nbsp; Built for California contractors &nbsp;·&nbsp; &copy; 2026</div>
 </footer>
 
 <script>
