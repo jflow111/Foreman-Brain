@@ -7,6 +7,8 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const PRICE_ID = process.env.STRIPE_PRICE_ID;
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || 'AIzaSyB7xvp5BhwUlWPCUn9lrrM_GnGwRDgJrvI';
+const GOOGLE_CX = process.env.GOOGLE_CX || '96d6882a0f8c3463e';
 
 let stripe;
 try { stripe = require('stripe')(STRIPE_SECRET); } catch(e) {}
@@ -17,94 +19,63 @@ app.use(express.json());
 
 app.get('/', (req, res) => res.send('Foreman Brain server is running'));
 
-// ─── DIRECT STORE PRICE LOOKUP ───
-async function searchHomeDepot(query) {
+// ─── GOOGLE SHOPPING PRICE SEARCH ───
+async function searchGooglePrice(itemName, store) {
   try {
-    const url = `https://www.homedepot.com/federation-gateway/graphql?opname=searchModel`;
-    const payload = {
-      operationName: 'searchModel',
-      variables: {
-        skipInstallServices: true,
-        skipSubscribeAndSave: true,
-        channel: 'DESKTOP',
-        additionalSearchParams: { deliveryZip: '90001' },
-        keyword: query,
-        navParam: '',
-        storefilter: 'ALL',
-        orderBy: { field: 'TOP_SELLERS', order: 'ASC' },
-        startIndex: 0,
-        pageSize: 1
-      },
-      query: `query searchModel($keyword: String, $pageSize: Int, $startIndex: Int) {
-        searchModel(keyword: $keyword, pageSize: $pageSize, startIndex: $startIndex) {
-          products { itemId pricing { value } description }
+    const query = encodeURIComponent(`${itemName} ${store} price`);
+    const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_CX}&q=${query}&num=3`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.error) {
+      console.error(`Google API error for ${itemName}:`, data.error.message);
+      return { price: 0, found: false };
+    }
+
+    if (!data.items || data.items.length === 0) {
+      return { price: 0, found: false };
+    }
+
+    // Try to find price in search results
+    for (const item of data.items) {
+      // Check pagemap for structured price data
+      if (item.pagemap) {
+        // Check offer data
+        const offers = item.pagemap.offer || item.pagemap.aggregateoffer || [];
+        for (const offer of offers) {
+          const price = parseFloat(offer.price || offer.lowprice || offer.highprice);
+          if (price && price > 0 && price < 10000) {
+            console.log(`Found price for ${itemName} at ${store}: ${price}`);
+            return { price, found: true };
+          }
         }
-      }`
-    };
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json',
-        'x-experience-name': 'general-merchandise'
-      },
-      body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    const products = data?.data?.searchModel?.products;
-    if (products && products.length > 0 && products[0].pricing?.value) {
-      return { price: products[0].pricing.value, found: true };
-    }
-    return { price: 0, found: false };
-  } catch(e) {
-    console.error('HD search error:', e.message);
-    return { price: 0, found: false };
-  }
-}
 
-async function searchLowes(query) {
-  try {
-    const encoded = encodeURIComponent(query);
-    const url = `https://www.lowes.com/pd/search?searchTerm=${encoded}&limit=1`;
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-        'Accept-Language': 'en-US,en;q=0.9'
+        // Check product data
+        const products = item.pagemap.product || [];
+        for (const product of products) {
+          const price = parseFloat(product.price);
+          if (price && price > 0 && price < 10000) {
+            console.log(`Found product price for ${itemName} at ${store}: ${price}`);
+            return { price, found: true };
+          }
+        }
       }
-    });
-    const text = await response.text();
-    // Parse price from response
-    const priceMatch = text.match(/"sellingPrice[^"]*":\s*([0-9.]+)/);
-    if (priceMatch) {
-      return { price: parseFloat(priceMatch[1]), found: true };
-    }
-    return { price: 0, found: false };
-  } catch(e) {
-    console.error('Lowes search error:', e.message);
-    return { price: 0, found: false };
-  }
-}
 
-async function searchPlatt(query) {
-  try {
-    const encoded = encodeURIComponent(query);
-    const url = `https://www.platt.com/platt-electric-search.aspx?query=${encoded}&format=json`;
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json'
+      // Try to extract price from snippet text
+      const snippet = (item.snippet || '') + (item.title || '');
+      const priceMatches = snippet.match(/\$\s*(\d+(?:\.\d{2})?)/g);
+      if (priceMatches && priceMatches.length > 0) {
+        const price = parseFloat(priceMatches[0].replace('$', '').trim());
+        if (price && price > 0.50 && price < 10000) {
+          console.log(`Found snippet price for ${itemName} at ${store}: ${price}`);
+          return { price, found: true };
+        }
       }
-    });
-    const data = await response.json();
-    if (data && data.products && data.products.length > 0) {
-      const price = data.products[0].price || data.products[0].listPrice;
-      if (price) return { price: parseFloat(price), found: true };
     }
+
     return { price: 0, found: false };
   } catch(e) {
-    console.error('Platt search error:', e.message);
+    console.error(`Search error for ${itemName} at ${store}:`, e.message);
     return { price: 0, found: false };
   }
 }
@@ -137,29 +108,25 @@ app.post('/estimate', async (req, res) => {
   }
 });
 
-// ─── DIRECT PRICE LOOKUP ───
+// ─── PRICE LOOKUP VIA GOOGLE CUSTOM SEARCH ───
 app.post('/price-lookup', async (req, res) => {
   try {
     const { items } = req.body;
-    console.log('Looking up prices for', items.length, 'items');
+    console.log('Price lookup for', items.length, 'items via Google Custom Search');
 
-    const prices = await Promise.all(items.map(async (item) => {
-      // Clean up item name for better search results
-      const searchQuery = item
-        .replace(/\d+\/\d+/g, match => match) // keep wire gauges like 12/2
-        .replace(/\s+/g, ' ')
-        .trim()
-        .substring(0, 80); // limit query length
+    const prices = [];
 
+    // Process items sequentially to avoid rate limiting
+    for (const item of items) {
       const [hd, lw, pl] = await Promise.all([
-        searchHomeDepot(searchQuery),
-        searchLowes(searchQuery),
-        searchPlatt(searchQuery)
+        searchGooglePrice(item, 'Home Depot'),
+        searchGooglePrice(item, 'Lowes'),
+        searchGooglePrice(item, 'Platt Electric')
       ]);
 
-      console.log(`${item.substring(0,30)}: HD=${hd.price} LW=${lw.price} PL=${pl.price}`);
+      console.log(`${item.substring(0,40)}: HD=${hd.price} LW=${lw.price} PL=${pl.price}`);
 
-      return {
+      prices.push({
         item,
         homedepot_unit: hd.price,
         homedepot_available: hd.found,
@@ -167,8 +134,11 @@ app.post('/price-lookup', async (req, res) => {
         lowes_available: lw.found,
         platt_unit: pl.price,
         platt_available: pl.found
-      };
-    }));
+      });
+
+      // Small delay to respect rate limits
+      await new Promise(r => setTimeout(r, 100));
+    }
 
     console.log('Price lookup complete:', prices.length, 'items');
     res.json({ prices });
