@@ -371,66 +371,25 @@ function applyActiveStore() {
 }
 
 function renderMaterialsTab() {
-  var hasStorePrices = editableMaterials.length > 0 && editableMaterials[0].homedepot_unit !== undefined;
-  var storeSelector = '';
-  if (hasStorePrices) {
-    var storeTotals = { homedepot:0, lowes:0, platt:0 };
-    editableMaterials.forEach(function(r) {
-      var qty = parseFloat(r.qty)||1;
-      ['homedepot','lowes','platt'].forEach(function(s) {
-        var p = getStorePrice(r,s); if (p.avail) storeTotals[s] += p.unit * qty;
-      });
-    });
-    var cheapestStore = Object.keys(storeTotals).reduce(function(a,b) { return storeTotals[a]<storeTotals[b]?a:b; });
-    function storeBtn(key, label) {
-      return '<button class="store-btn' + (activeStore===key?' active':'') + (cheapestStore===key?' cheapest':'') + '" data-store="' + key + '">' + label + '<span class="store-badge">BEST</span></button>';
-    }
-    storeSelector = '<div class="store-selector"><span class="store-label">&#9658; PRICING SOURCE</span>' +
-      storeBtn('lowest','&#9660; Lowest Price') + storeBtn('homedepot','&#127968; Home Depot') +
-      storeBtn('lowes','&#128296; Lowe\'s') + storeBtn('platt','&#9889; Platt Electric') + '</div>';
-  }
   var rows = editableMaterials.map(function(r, i) {
-    var qty = parseFloat(r.qty)||1;
-    if (hasStorePrices) {
-      var hdp = getStorePrice(r,'homedepot'), lwp = getStorePrice(r,'lowes'), plp = getStorePrice(r,'platt');
-      var cheapest = getCheapestStore(r);
-      function priceCell(p, store) {
-        if (!p.avail) return '<td class="price-cell price-unavail right">N/A</td>';
-        return '<td class="price-cell right' + (store===cheapest?' price-cheapest':'') + '">' + fmt(p.unit) + '</td>';
-      }
-      return '<tr><td><input class="cell-input cell-input-item" value="' + escHtml(r.item||'') + '" data-idx="' + i + '" data-field="item" /></td>' +
-        '<td><input class="cell-input right cell-input-qty" value="' + escHtml(r.qty||'') + '" data-idx="' + i + '" data-field="qty" style="width:50px;" /></td>' +
-        priceCell(hdp,'homedepot') + priceCell(lwp,'lowes') + priceCell(plp,'platt') +
-        '<td class="price-cell right">' + fmt(r.totalCost||0) + '</td>' +
-        '<td class="center"><button class="btn-delete-row" data-idx="' + i + '">&#10005;</button></td></tr>';
-    } else {
-      return '<tr><td><input class="cell-input cell-input-item" value="' + escHtml(r.item||'') + '" data-idx="' + i + '" data-field="item" /></td>' +
-        '<td><input class="cell-input right cell-input-qty" value="' + escHtml(r.qty||'') + '" data-idx="' + i + '" data-field="qty" style="width:60px;" /></td>' +
-        '<td><input class="cell-input cost cell-input-unit" value="' + (parseFloat(r.unitCost)||0).toFixed(2) + '" data-idx="' + i + '" data-field="unitCost" style="width:80px;" /></td>' +
-        '<td><input class="cell-input cost cell-input-total" value="' + (parseFloat(r.totalCost)||0).toFixed(2) + '" data-idx="' + i + '" data-field="totalCost" style="width:80px;" /></td>' +
-        '<td class="center"><button class="btn-delete-row" data-idx="' + i + '">&#10005;</button></td></tr>';
-    }
+    return '<tr><td><input class="cell-input cell-input-item" value="' + escHtml(r.item||'') + '" data-idx="' + i + '" data-field="item" /></td>' +
+      '<td><input class="cell-input right cell-input-qty" value="' + escHtml(r.qty||'') + '" data-idx="' + i + '" data-field="qty" style="width:60px;" /></td>' +
+      '<td><input class="cell-input cost cell-input-unit" value="' + (parseFloat(r.unitCost)||0).toFixed(2) + '" data-idx="' + i + '" data-field="unitCost" style="width:80px;" /></td>' +
+      '<td><input class="cell-input cost cell-input-total" value="' + (parseFloat(r.totalCost)||0).toFixed(2) + '" data-idx="' + i + '" data-field="totalCost" style="width:80px;" /></td>' +
+      '<td class="center"><button class="btn-delete-row" data-idx="' + i + '">&#10005;</button></td></tr>';
   }).join('');
   var t = calcTotals();
-  var thead = hasStorePrices
-    ? '<thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Home Depot</th><th class="right">Lowe\'s</th><th class="right">Platt</th><th class="right">Total</th><th class="center">Del</th></tr></thead>'
-    : '<thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Unit Cost</th><th class="right">Total</th><th class="center">Del</th></tr></thead>';
-  var colspan = hasStorePrices ? '5' : '3';
-  var tfoot = '<tfoot><tr><td colspan="' + colspan + '" class="tfoot-raw">Raw Material Total</td><td class="tfoot-raw-val" id="mat-raw-val">' + fmt(t.raw) + '</td><td></td></tr>' +
-    '<tr><td colspan="' + colspan + '" class="tfoot-markup" id="mat-markup-label">Marked-Up (x' + getMarkup() + ')</td><td class="tfoot-markup-val" id="mat-markup-val">' + fmt(t.markedUp) + '</td><td></td></tr></tfoot>';
+  var thead = '<thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Unit Cost</th><th class="right">Total</th><th class="center">Del</th></tr></thead>';
+  var tfoot = '<tfoot><tr><td colspan="3" class="tfoot-raw">Raw Material Total</td><td class="tfoot-raw-val" id="mat-raw-val">' + fmt(t.raw) + '</td><td></td></tr>' +
+    '<tr><td colspan="3" class="tfoot-markup" id="mat-markup-label">Marked-Up (x' + getMarkup() + ')</td><td class="tfoot-markup-val" id="mat-markup-val">' + fmt(t.markedUp) + '</td><td></td></tr></tfoot>';
   document.getElementById('tab-materials').innerHTML =
-    '<div class="section-label">MATERIAL TAKEOFF</div>' + storeSelector +
-    '<div class="materials-toolbar"><span class="materials-hint">' + (hasStorePrices ? 'Live prices — green = cheapest. Click a store to use those prices.' : 'Edit any cell directly. Changes update totals instantly.') + '</span><button class="btn-add-row" id="addRowBtn">+ ADD LINE ITEM</button></div>' +
+    '<div class="section-label">MATERIAL TAKEOFF</div>' +
+    '<div class="materials-toolbar"><span class="materials-hint">Edit any cell directly. Changes update totals instantly.</span><button class="btn-add-row" id="addRowBtn">+ ADD LINE ITEM</button></div>' +
     '<table class="materials-table">' + thead + '<tbody>' + rows + '</tbody>' + tfoot + '</table>';
-  document.querySelectorAll('.store-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() { activeStore = this.getAttribute('data-store'); applyActiveStore(); renderMaterialsTab(); });
-  });
   document.getElementById('addRowBtn').addEventListener('click', addRow);
-  if (!hasStorePrices) {
-    document.querySelectorAll('.cell-input').forEach(function(input) {
-      input.addEventListener('input', function() { onCellChange(parseInt(this.getAttribute('data-idx')), this.getAttribute('data-field'), this.value); });
-    });
-  }
+  document.querySelectorAll('.cell-input').forEach(function(input) {
+    input.addEventListener('input', function() { onCellChange(parseInt(this.getAttribute('data-idx')), this.getAttribute('data-field'), this.value); });
+  });
   document.querySelectorAll('.btn-delete-row').forEach(function(btn) {
     btn.addEventListener('click', function() { deleteRow(parseInt(this.getAttribute('data-idx'))); });
   });
