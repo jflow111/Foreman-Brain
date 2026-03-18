@@ -230,6 +230,7 @@
   </div>
   <div style="display:flex;gap:8px;margin-left:16px;">
     <button class="btn-nav active" id="navEstimate">&#9658; ESTIMATOR</button>
+    <button class="btn-nav" id="navCatalog">&#128218; VENDOR CATALOG</button>
     <button class="btn-nav" id="navHistory">&#9776; JOB HISTORY <span id="historyBadge" style="display:none;background:var(--amber);color:#080b0e;font-size:9px;padding:2px 6px;border-radius:2px;margin-left:4px;"></span></button>
   </div>
 </header>
@@ -317,6 +318,51 @@
 </div>
 
 <div class="save-toast" id="saveToast">&#10003; JOB SAVED</div>
+
+<div class="main history-page" id="catalogPage">
+  <div class="history-header">
+    <div>
+      <div class="history-title">&#128218; Vendor Catalog</div>
+      <div class="history-count" id="catalogCount">0 PRICES SAVED</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-clear" id="clearCatalogBtn" style="font-size:10px;padding:8px 16px;">CLEAR ALL PRICES</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:24px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:2px;margin-bottom:16px;">&#9654; UPLOAD CATALOG PAGE</div>
+      <div style="font-family:var(--body);font-size:13px;color:var(--text-dim);font-weight:300;margin-bottom:16px;line-height:1.6;">Snap a photo or upload a page from your vendor catalog. AI will read all the prices automatically and add them to your price book.</div>
+      <div id="catalogUploadArea" style="border:2px dashed var(--border);border-radius:2px;padding:32px;text-align:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:32px;margin-bottom:8px;">&#128247;</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;">TAP TO UPLOAD CATALOG PAGE</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text-muted);margin-top:4px;">Photo or PDF page</div>
+      </div>
+      <input type="file" id="catalogFileInput" accept="image/*" style="display:none;" />
+      <div id="catalogUploadStatus" style="margin-top:12px;font-family:var(--mono);font-size:10px;color:var(--text-dim);display:none;"></div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:24px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:2px;margin-bottom:16px;">&#9654; ADD PRICE MANUALLY</div>
+      <div style="font-family:var(--body);font-size:13px;color:var(--text-dim);font-weight:300;margin-bottom:16px;line-height:1.6;">Add a single item price from your vendor quote or catalog. Prices save permanently and apply to all future estimates.</div>
+      <input id="manualItemName" placeholder="Item name (e.g. 12/2 NM-B per foot)" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 12px;outline:none;margin-bottom:10px;" onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'" />
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:6px;flex:1;">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim);">$</span>
+          <input id="manualItemPrice" type="number" placeholder="Unit price" step="0.01" min="0" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 8px;outline:none;" onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'" />
+        </div>
+        <input id="manualItemUnit" placeholder="Unit (each/ft/box)" style="width:120px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 8px;outline:none;" onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'" />
+      </div>
+      <button id="addManualPriceBtn" style="width:100%;font-family:var(--display);font-size:15px;font-weight:700;color:#080b0e;background:var(--amber);border:none;border-radius:2px;padding:12px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s;">ADD TO PRICE BOOK</button>
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:2px;overflow:hidden;">
+    <div style="background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 20px;font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:2px;">&#9654; YOUR VENDOR PRICE BOOK</div>
+    <div id="catalogPriceList" style="padding:20px;"></div>
+  </div>
+</div>
 
 <div class="main history-page" id="historyPage">
   <div class="history-header">
@@ -633,6 +679,116 @@ function updateHistoryBadge() { var jobs = loadHistory(); var badge = document.g
 function renderHistoryList() { var jobs = loadHistory(); var list = document.getElementById('historyList'); var countEl = document.getElementById('historyCount'); if (countEl) countEl.textContent = jobs.length + (jobs.length === 1 ? ' JOB SAVED' : ' JOBS SAVED'); if (!jobs.length) { list.innerHTML = '<div class="history-empty"><div class="history-empty-icon">&#128196;</div><div>No jobs saved yet.<br/>Run your first estimate to see it here.</div></div>'; return; } list.innerHTML = jobs.map(function(job) { return '<div class="job-card" id="jc-' + job.id + '"><div class="job-card-left"><div class="job-card-type">' + escHtml(job.jobType) + '</div><div class="job-card-desc">' + escHtml(job.input || '') + '</div><div class="job-card-meta">' + job.date + ' &bull; ' + job.time + ' &bull; ' + (job.laborHours || 0) + ' hrs @ $' + (job.laborRate || 100) + '/hr &bull; markup x' + (job.markup || 1.35) + '</div></div><div class="job-card-right"><div class="job-card-total">' + fmt(job.total || 0) + '</div><div class="job-card-actions"><button class="job-card-btn" data-id="' + job.id + '" data-action="load">LOAD</button><button class="job-card-btn del" data-id="' + job.id + '" data-action="delete">DELETE</button></div></div></div>'; }).join(''); list.querySelectorAll('.job-card-btn').forEach(function(btn) { btn.addEventListener('click', function(e) { e.stopPropagation(); var id = parseInt(this.getAttribute('data-id')); if (this.getAttribute('data-action') === 'load') loadJobFromHistory(id); else deleteJobFromHistory(id); }); }); list.querySelectorAll('.job-card').forEach(function(card) { card.addEventListener('click', function() { loadJobFromHistory(parseInt(this.id.replace('jc-',''))); }); }); }
 function loadJobFromHistory(id) { var job = loadHistory().find(function(j) { return j.id === id; }); if (!job) return; document.getElementById('jobInput').value = job.input || ''; document.getElementById('laborRate').value = job.laborRate || 100; document.getElementById('markupRate').value = job.markup || 1.35; editableMaterials = job.materials || []; editableLaborHours = job.laborHours || 0; currentEstimate = job.estimate; showEstimatorPage(); updateCostCards(); var ps = (job.estimate || {}).projectSummary || {}; document.getElementById('tab-summary').innerHTML = '<div class="section-label">PROJECT SUMMARY</div><div class="summary-grid"><div class="summary-card"><div class="summary-card-label">Job Type</div><div class="summary-card-value">' + (ps.jobType || '---') + '</div></div><div class="summary-card"><div class="summary-card-label">Customer Request</div><div class="summary-card-value">' + (ps.customerRequest || '---') + '</div></div><div class="summary-card"><div class="summary-card-label">Observed Conditions</div><div class="summary-card-value">' + (ps.observedConditions || '---') + '</div></div><div class="summary-card"><div class="summary-card-label">Assumed Conditions</div><div class="summary-card-value">' + (ps.assumedConditions || '---') + '</div></div></div>'; document.getElementById('tab-logic').innerHTML = '<div class="section-label">INSTALLATION LOGIC AND NEC REASONING</div><div class="logic-box">' + ((job.estimate || {}).installationLogic || '---') + '</div>'; renderMaterialsTab(); updateLaborTab(); document.getElementById('tab-proposal').innerHTML = '<div class="section-label">CUSTOMER PROPOSAL</div><div class="proposal-box" id="proposalText" contenteditable="true" spellcheck="true">' + ((job.estimate || {}).customerProposal || '---') + '</div><div class="proposal-actions"><button class="btn-action" id="copyBtn">COPY PROPOSAL</button><button class="btn-action" id="printBtn">PRINT</button></div><div class="exclusions">STANDARD EXCLUSIONS: Drywall patching or painting, Trenching or boring, Permit fees, Utility coordination, Unforeseen concealed conditions</div>' + '<div style="margin-top:20px;background:var(--bg);border:1px solid var(--amber);border-radius:2px;padding:20px 24px;">' + '<div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:2px;margin-bottom:16px;">ESTIMATE SUMMARY</div>' + '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;"><span style="color:var(--text-dim);">Materials (with markup)</span><span id="prop-materials" style="color:var(--text);"></span></div>' + '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;"><span style="color:var(--text-dim);">Labor</span><span id="prop-labor" style="color:var(--text);"></span></div>' + '<div style="display:flex;justify-content:space-between;padding:14px 0 0;font-family:var(--display);font-size:22px;font-weight:700;"><span style="color:var(--amber);">TOTAL INVESTMENT</span><span id="prop-total" style="color:var(--amber);"></span></div>' + '</div>'; document.getElementById('copyBtn').addEventListener('click', copyProposal); document.getElementById('printBtn').addEventListener('click', printProposal); document.getElementById('results').style.display = 'block'; switchTab('summary'); document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 function deleteJobFromHistory(id) { saveHistory(loadHistory().filter(function(j) { return j.id !== id; })); renderHistoryList(); updateHistoryBadge(); }
+function showCatalogPage() {
+  document.getElementById('catalogPage').style.display = 'block';
+  document.querySelector('.main:not(#historyPage):not(#catalogPage)').style.display = 'none';
+  document.getElementById('historyPage').style.display = 'none';
+  document.getElementById('navCatalog').classList.add('active');
+  document.getElementById('navEstimate').classList.remove('active');
+  document.getElementById('navHistory').classList.remove('active');
+  renderCatalogPriceList();
+}
+
+function getVendorPrices() {
+  try { return JSON.parse(localStorage.getItem('foremanBrainVendorPrices') || '{}'); }
+  catch(e) { return {}; }
+}
+
+function saveVendorPrices(prices) {
+  localStorage.setItem('foremanBrainVendorPrices', JSON.stringify(prices));
+}
+
+function renderCatalogPriceList() {
+  var prices = getVendorPrices();
+  var keys = Object.keys(prices);
+  var countEl = document.getElementById('catalogCount');
+  if (countEl) countEl.textContent = keys.length + (keys.length === 1 ? ' PRICE SAVED' : ' PRICES SAVED');
+  var list = document.getElementById('catalogPriceList');
+  if (!list) return;
+  if (keys.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;font-family:var(--mono);font-size:11px;color:var(--text-muted);">No vendor prices saved yet. Upload a catalog page or add prices manually above.</div>';
+    return;
+  }
+  list.innerHTML = '<table style="width:100%;border-collapse:collapse;">' +
+    '<thead><tr style="border-bottom:1px solid var(--amber);"><th style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:2px;padding:8px 12px;text-align:left;font-weight:normal;">ITEM</th><th style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:2px;padding:8px 12px;text-align:right;font-weight:normal;">YOUR PRICE</th><th style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:2px;padding:8px 12px;text-align:center;font-weight:normal;">DEL</th></tr></thead>' +
+    '<tbody>' +
+    keys.map(function(key) {
+      var entry = prices[key];
+      var price = typeof entry === 'object' ? entry.price : entry;
+      var unit = typeof entry === 'object' ? entry.unit : 'each';
+      return '<tr style="border-bottom:1px solid var(--border);">' +
+        '<td style="padding:8px 12px;font-size:13px;color:var(--text);font-weight:300;">' + escHtml(key) + '</td>' +
+        '<td style="padding:8px 12px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--green);"> + parseFloat(price).toFixed(2) + ' <span style="color:var(--text-muted);font-size:10px;">/' + (unit||'each') + '</span></td>' +
+        '<td style="padding:8px 12px;text-align:center;"><button onclick="deleteCatalogPrice(\'' + escHtml(key) + '\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:2px;transition:all 0.15s;" onmouseover="this.style.color=\'var(--red)\'" onmouseout="this.style.color=\'var(--text-muted)\'">&#10005;</button></td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table>';
+}
+
+function deleteCatalogPrice(key) {
+  var prices = getVendorPrices();
+  delete prices[key];
+  saveVendorPrices(prices);
+  renderCatalogPriceList();
+}
+
+function addManualCatalogPrice() {
+  var name = document.getElementById('manualItemName').value.trim();
+  var price = parseFloat(document.getElementById('manualItemPrice').value);
+  var unit = document.getElementById('manualItemUnit').value.trim() || 'each';
+  if (!name || !price || price <= 0) {
+    alert('Please enter both item name and price.');
+    return;
+  }
+  var prices = getVendorPrices();
+  prices[name.toLowerCase()] = { price: price, unit: unit };
+  saveVendorPrices(prices);
+  document.getElementById('manualItemName').value = '';
+  document.getElementById('manualItemPrice').value = '';
+  document.getElementById('manualItemUnit').value = '';
+  renderCatalogPriceList();
+  showSaveToast();
+}
+
+async function handleCatalogUpload(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var status = document.getElementById('catalogUploadStatus');
+  status.style.display = 'block';
+  status.style.color = 'var(--amber)';
+  status.textContent = '⚡ Reading catalog page...';
+  try {
+    var base64 = await fileToBase64(file);
+    var itemNames = editableMaterials.length > 0 ? editableMaterials.map(function(r) { return r.item; }) : [];
+    var response = await fetch('https://foreman-brain-612543858921.europe-west1.run.app/analyze-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64, mediaType: file.type, mode: 'catalog', items: itemNames })
+    });
+    var data = await response.json();
+    var catalogPrices = data.catalogPrices || [];
+    if (catalogPrices.length > 0) {
+      var prices = getVendorPrices();
+      catalogPrices.forEach(function(p) {
+        if (p.item && p.unit_price && p.unit_price > 0) {
+          prices[p.item.toLowerCase()] = { price: p.unit_price, unit: p.unit || 'each' };
+        }
+      });
+      saveVendorPrices(prices);
+      status.style.color = 'var(--green)';
+      status.textContent = '✓ Found ' + catalogPrices.length + ' prices — added to your price book!';
+      renderCatalogPriceList();
+    } else {
+      status.style.color = 'var(--red)';
+      status.textContent = 'Could not read prices from this image. Try a clearer photo.';
+    }
+  } catch(err) {
+    status.style.color = 'var(--red)';
+    status.textContent = 'Upload failed. Please try again.';
+  }
+  e.target.value = '';
+}
+
 function showEstimatorPage() { document.getElementById('historyPage').style.display = 'none'; document.querySelector('.main:not(#historyPage)').style.display = 'block'; document.getElementById('navEstimate').classList.add('active'); document.getElementById('navHistory').classList.remove('active'); }
 function showHistoryPage() { document.getElementById('historyPage').style.display = 'block'; document.querySelector('.main:not(#historyPage)').style.display = 'none'; document.getElementById('navHistory').classList.add('active'); document.getElementById('navEstimate').classList.remove('active'); renderHistoryList(); }
 
@@ -665,6 +821,18 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('jobInput').addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 'Enter') runEstimate(); });
   initVoice();
   initPhoto();
+  document.getElementById('navCatalog').addEventListener('click', showCatalogPage);
+  document.getElementById('catalogUploadArea').addEventListener('click', function() {
+    document.getElementById('catalogFileInput').click();
+  });
+  document.getElementById('catalogFileInput').addEventListener('change', handleCatalogUpload);
+  document.getElementById('addManualPriceBtn').addEventListener('click', addManualCatalogPrice);
+  document.getElementById('clearCatalogBtn').addEventListener('click', function() {
+    if (confirm('Clear all vendor prices? This cannot be undone.')) {
+      localStorage.removeItem('foremanBrainVendorPrices');
+      renderCatalogPriceList();
+    }
+  });
 });
 </script>
 </body>
