@@ -718,7 +718,7 @@ function renderCatalogPriceList() {
       var unit = typeof entry === 'object' ? entry.unit : 'each';
       return '<tr style="border-bottom:1px solid var(--border);">' +
         '<td style="padding:8px 12px;font-size:13px;color:var(--text);font-weight:300;">' + escHtml(key) + '</td>' +
-        '<td style="padding:8px 12px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--green);"> + parseFloat(price).toFixed(2) + ' <span style="color:var(--text-muted);font-size:10px;">/' + (unit||'each') + '</span></td>' +
+        '<td style="padding:8px 12px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--green);">$' + parseFloat(price).toFixed(2) + ' <span style="color:var(--text-muted);font-size:10px;">/' + (unit||'each') + '</span></td>' +
         '<td style="padding:8px 12px;text-align:center;"><button onclick="deleteCatalogPrice(\'' + escHtml(key) + '\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:2px;transition:all 0.15s;" onmouseover="this.style.color=\'var(--red)\'" onmouseout="this.style.color=\'var(--text-muted)\'">&#10005;</button></td>' +
         '</tr>';
     }).join('') +
