@@ -189,7 +189,22 @@ app.post('/price-lookup', async (req, res) => {
 // ─── PHOTO ANALYSIS ───
 app.post('/analyze-photo', async (req, res) => {
   try {
-    const { image, mediaType } = req.body;
+    const { image, mediaType, mode, items } = req.body;
+
+    let prompt;
+    if (mode === 'catalog') {
+      prompt = `You are reading a vendor price catalog page for electrical supplies. Extract every item and price you can see in this image.
+
+Return ONLY a JSON array with no other text:
+[{"item":"exact item name as shown","unit_price":0.00,"unit":"each/ft/box/etc"}]
+
+Items I am looking to match (match as many as you can):
+${(items||[]).map((item,i) => `${i+1}. ${item}`).join('\n')}
+
+Return ONLY the JSON array.`;
+    } else {
+      prompt = `You are a master electrician reviewing a job site photo. Analyze this image and provide a brief technical assessment relevant to electrical estimating. Note: panel brand and condition, existing wiring type, service size if visible, potential code issues, access difficulty, and anything that would affect the estimate. Keep response under 100 words. Be specific and technical.`;
+    }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -200,31 +215,38 @@ app.post('/analyze-photo', async (req, res) => {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        max_tokens: 2000,
         messages: [{
           role: 'user',
           content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: image }
-            },
-            {
-              type: 'text',
-              text: 'You are a master electrician reviewing a job site photo. Analyze this image and provide a brief technical assessment relevant to electrical estimating. Note: panel brand and condition, existing wiring type, service size if visible, potential code issues, access difficulty, and anything that would affect the estimate. Keep response under 100 words. Be specific and technical.'
-            }
+            { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: image } },
+            { type: 'text', text: prompt }
           ]
         }]
       })
     });
 
     const data = await response.json();
-    const analysis = (data.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('');
-    console.log('Photo analysis complete:', analysis.substring(0, 100));
-    res.json({ analysis });
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('');
+    console.log('Photo analysis mode:', mode, '| Length:', text.length);
+
+    if (mode === 'catalog') {
+      let catalogPrices = [];
+      try {
+        const cleaned = text.replace(/```json|```/g, '').trim();
+        const match = cleaned.match(/\[[\s\S]*\]/);
+        if (match) catalogPrices = JSON.parse(match[0]);
+      } catch(e) {
+        console.error('Catalog parse error:', e.message);
+      }
+      res.json({ catalogPrices });
+    } else {
+      res.json({ analysis: text });
+    }
 
   } catch (err) {
     console.error('Photo analysis error:', err.message);
-    res.json({ analysis: 'Could not analyze photo.' });
+    res.json({ analysis: 'Could not analyze photo.', catalogPrices: [] });
   }
 });
 
