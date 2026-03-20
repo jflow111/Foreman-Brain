@@ -945,7 +945,7 @@ function renderEstimate(e) {
 function renderProposalTab(e) {
   var t = calcTotals();
   document.getElementById('tab-proposal').innerHTML =
-    '<div class="proposal-doc" id="proposalText" contenteditable="true" spellcheck="true">' + escHtml(e.customerProposal || '---') + '<br><br><hr style="border:none;border-top:1px solid #2d3748;margin:4px 0;" /><br><strong>Materials (with markup):</strong> ' + fmt(t.markedUp) + '<br><strong>Labor (' + editableLaborHours + ' hrs @ $' + getLaborRate() + '/hr):</strong> ' + fmt(t.labor) + '<br><br><strong style="font-size:1.15em;">Total Estimate: ' + fmt(t.total) + '</strong></div>' +
+    '<div class="proposal-doc" id="proposalText" contenteditable="true" spellcheck="true">' + escHtml(e.customerProposal || '---') + '</div>' +
     '<div class="proposal-actions">' +
     '<button class="btn-action" id="copyBtn">&#128203; Copy Proposal</button>' +
     '<button class="btn-action" id="printBtn">&#128438; Print</button>' +
