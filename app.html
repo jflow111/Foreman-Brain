@@ -617,6 +617,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
     <button class="nav-btn" id="navCatalog">&#128218; Vendor Catalog</button>
     <button class="nav-btn" id="navSimple" title="Simple mode — hides technical tabs">&#128274; Simple View</button>
     <button class="nav-btn" id="navCustomers">&#128100; Customers</button>
+    <button class="nav-btn" id="navInvoices">&#128203; Invoices</button>
     <button class="nav-btn" id="navHistory">&#9776; Job History <span id="historyBadge" style="display:none;background:var(--gold);color:#0a0d10;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:600;"></span></button>
   </div>
   <div class="header-user">
@@ -787,6 +788,25 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
 </div>
 
 <!-- HISTORY PAGE -->
+<div class="main page" id="invoicesPage">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Invoices</div>
+      <div class="page-count" id="invoiceCount">0 invoices</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div style="display:flex;gap:6px;">
+        <button class="invoice-filter-btn active" data-filter="all" style="font-size:11px;font-weight:500;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);cursor:pointer;">All</button>
+        <button class="invoice-filter-btn" data-filter="unpaid" style="font-size:11px;font-weight:500;padding:6px 14px;border-radius:20px;border:1px solid rgba(224,85,85,0.3);background:rgba(224,85,85,0.06);color:var(--red);cursor:pointer;">Unpaid</button>
+        <button class="invoice-filter-btn" data-filter="paid" style="font-size:11px;font-weight:500;padding:6px 14px;border-radius:20px;border:1px solid rgba(52,196,114,0.3);background:rgba(52,196,114,0.06);color:var(--green);cursor:pointer;">Paid</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="invoiceSummaryCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;"></div>
+  <div id="invoiceList"></div>
+</div>
+
 <div class="main page" id="customersPage">
   <div class="page-header">
     <div>
@@ -1075,6 +1095,7 @@ function renderProposalTab(e) {
     '<button class="btn-action" id="printBtn">&#128438; Print</button>' +
     '<button class="btn-action" id="textBtn">&#128172; Text to Client</button>' +
     '<button class="btn-action" id="invoiceBtn" style="color:var(--green);border-color:rgba(52,196,114,0.3);">&#128203; Create Invoice</button>' +
+    '<button class="btn-action" id="changeOrderBtn" style="color:var(--blue);border-color:rgba(59,139,235,0.3);">&#43; Change Order</button>' +
     '</div>' +
     '<div class="proposal-summary">' +
     '<div class="proposal-summary-title">Estimate Summary</div>' +
@@ -1087,6 +1108,7 @@ function renderProposalTab(e) {
   document.getElementById('printBtn').addEventListener('click', printProposal);
   document.getElementById('textBtn').addEventListener('click', textProposal);
   document.getElementById('invoiceBtn').addEventListener('click', createInvoice);
+  document.getElementById('changeOrderBtn').addEventListener('click', showChangeOrderModal);
 }
 
 function copyProposal() {
@@ -1445,6 +1467,96 @@ function deleteJob(id) {
   renderHistoryList(); updateHistoryBadge();
 }
 
+// ── INVOICE TRACKING ──
+var currentInvoiceFilter = 'all';
+
+async function loadInvoices(filter) {
+  if (!window._supabase || !window._userEmail) return [];
+  try {
+    var query = window._supabase.from('invoices').select('*').eq('user_id', window._userEmail).order('created_at', { ascending: false });
+    if (filter && filter !== 'all') query = query.eq('status', filter);
+    var result = await query;
+    return result.data || [];
+  } catch(e) { console.error('Load invoices error:', e); return []; }
+}
+
+async function markInvoicePaid(id) {
+  try {
+    await window._supabase.from('invoices').update({ status: 'paid', paid_date: new Date().toISOString().split('T')[0] }).eq('id', id);
+    renderInvoiceList(currentInvoiceFilter);
+    showToast();
+  } catch(e) { alert('Error updating invoice.'); }
+}
+
+async function deleteInvoice(id) {
+  if (!confirm('Delete this invoice?')) return;
+  await window._supabase.from('invoices').delete().eq('id', id);
+  renderInvoiceList(currentInvoiceFilter);
+}
+
+async function renderInvoiceList(filter) {
+  currentInvoiceFilter = filter || 'all';
+  var list = document.getElementById('invoiceList');
+  var cards = document.getElementById('invoiceSummaryCards');
+  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">Loading...</div>';
+
+  var all = await loadInvoices('all');
+  var unpaid = all.filter(function(i) { return i.status === 'unpaid'; });
+  var paid = all.filter(function(i) { return i.status === 'paid'; });
+  var totalUnpaid = unpaid.reduce(function(sum, i) { return sum + (i.total || 0); }, 0);
+  var totalPaid = paid.reduce(function(sum, i) { return sum + (i.total || 0); }, 0);
+  var totalAll = all.reduce(function(sum, i) { return sum + (i.total || 0); }, 0);
+
+  var count = document.getElementById('invoiceCount');
+  if (count) count.textContent = all.length + ' invoice' + (all.length === 1 ? '' : 's');
+
+  if (cards) cards.innerHTML =
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;"><div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;">Total Invoiced</div><div style="font-size:24px;font-weight:700;color:var(--text);">' + fmt(totalAll) + '</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + all.length + ' invoices</div></div>' +
+    '<div style="background:rgba(224,85,85,0.06);border:1px solid rgba(224,85,85,0.2);border-radius:var(--radius);padding:16px;"><div style="font-size:11px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;">Outstanding</div><div style="font-size:24px;font-weight:700;color:var(--red);">' + fmt(totalUnpaid) + '</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + unpaid.length + ' unpaid</div></div>' +
+    '<div style="background:rgba(52,196,114,0.06);border:1px solid rgba(52,196,114,0.2);border-radius:var(--radius);padding:16px;"><div style="font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;">Collected</div><div style="font-size:24px;font-weight:700;color:var(--green);">' + fmt(totalPaid) + '</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + paid.length + ' paid</div></div>';
+
+  var invoices = filter && filter !== 'all' ? all.filter(function(i) { return i.status === filter; }) : all;
+
+  if (!invoices.length) {
+    list.innerHTML = '<div style="text-align:center;padding:60px 32px;"><div style="font-size:36px;opacity:0.2;margin-bottom:12px;">&#128203;</div><div style="font-size:13px;color:var(--text-muted);">No invoices found.<br/>Create an invoice from any estimate proposal.</div></div>';
+    return;
+  }
+
+  list.innerHTML = invoices.map(function(inv) {
+    var isPaid = inv.status === 'paid';
+    var isOverdue = !isPaid && inv.due_date && new Date(inv.due_date) < new Date();
+    var statusColor = isPaid ? 'var(--green)' : isOverdue ? 'var(--red)' : 'var(--gold)';
+    var statusBg = isPaid ? 'rgba(52,196,114,0.08)' : isOverdue ? 'rgba(224,85,85,0.08)' : 'rgba(232,160,32,0.08)';
+    var statusBorder = isPaid ? 'rgba(52,196,114,0.25)' : isOverdue ? 'rgba(224,85,85,0.25)' : 'rgba(232,160,32,0.25)';
+    var statusText = isPaid ? 'Paid' : isOverdue ? 'Overdue' : 'Unpaid';
+    var createdDate = new Date(inv.created_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+    var dueDate = inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '—';
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.15s;" onmouseover="this.style.borderColor=\'var(--border2)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+      '<div style="flex:1;min-width:0;">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
+      '<span style="font-size:14px;font-weight:600;color:var(--text);">' + escHtml(inv.invoice_number || 'Invoice') + '</span>' +
+      '<span style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;background:' + statusBg + ';border:1px solid ' + statusBorder + ';color:' + statusColor + ';">' + statusText + '</span>' +
+      (isOverdue ? '<span style="font-size:11px;color:var(--red);">&#9888; Overdue</span>' : '') +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--text-muted);font-family:var(--mono);">Created: ' + createdDate + ' &bull; Due: ' + dueDate + (inv.notes ? ' &bull; ' + escHtml(inv.notes) : '') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">' +
+      '<div style="font-size:20px;font-weight:700;color:var(--text);">' + fmt(inv.total || 0) + '</div>' +
+      '<div style="display:flex;gap:6px;">' +
+      (!isPaid ? '<button onclick="markInvoicePaid(\'' + inv.id + '\')" style="font-size:12px;font-weight:500;color:#0a0d10;background:linear-gradient(135deg,var(--green),#28a85a);border:none;border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Mark Paid</button>' : '') +
+      '<button onclick="deleteInvoice(\'' + inv.id + '\')" style="font-size:12px;color:var(--red);background:transparent;border:1px solid rgba(224,85,85,0.3);border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Delete</button>' +
+      '</div></div></div>';
+  }).join('');
+
+  document.querySelectorAll('.invoice-filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.invoice-filter-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
+      this.classList.add('active');
+      renderInvoiceList(this.getAttribute('data-filter'));
+    });
+  });
+}
+
 // ── INVOICE GENERATION ──
 var invoiceCounter = parseInt(localStorage.getItem('foremanBrainInvoiceCounter') || '1000');
 
@@ -1580,6 +1692,69 @@ async function createInvoice() {
   win.document.write('</body></html>');
   win.document.close();
   setTimeout(function() { win.print(); }, 500);
+}
+
+// ── AI CHANGE ORDER ──
+function showChangeOrderModal() {
+  var existing = document.getElementById('changeOrderModal');
+  if (existing) existing.remove();
+  var modal = document.createElement('div');
+  modal.id = 'changeOrderModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML =
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:100%;max-width:500px;">' +
+    '<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;">&#43; Add Change Order</div>' +
+    '<div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Describe the additional work to add to this estimate. AI will generate the extra materials and labor.</div>' +
+    '<textarea id="changeOrderInput" placeholder="Example: Customer also wants 2 outdoor GFCI outlets on the back patio, about 30 feet of new wire needed..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--body);font-size:13px;padding:12px;outline:none;resize:vertical;min-height:100px;margin-bottom:16px;" onfocus="this.style.borderColor=\'var(--gold)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
+    '<div style="display:flex;gap:10px;">' +
+    '<button id="runChangeOrderBtn" style="flex:1;font-size:13px;font-weight:600;color:#0a0d10;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius-sm);padding:12px;cursor:pointer;">&#9658; Generate Change Order</button>' +
+    '<button onclick="document.getElementById(\'changeOrderModal\').remove()" style="font-size:13px;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 20px;cursor:pointer;">Cancel</button>' +
+    '</div>' +
+    '<div id="changeOrderStatus" style="margin-top:12px;font-size:12px;color:var(--text-muted);display:none;"></div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  document.getElementById('runChangeOrderBtn').addEventListener('click', runChangeOrder);
+}
+
+async function runChangeOrder() {
+  var input = document.getElementById('changeOrderInput').value.trim();
+  if (!input) return;
+  var btn = document.getElementById('runChangeOrderBtn');
+  var status = document.getElementById('changeOrderStatus');
+  btn.textContent = 'Generating...'; btn.disabled = true;
+  status.style.display = 'block'; status.style.color = 'var(--gold)'; status.textContent = 'AI is calculating the change order...';
+
+  var originalSummary = currentEstimate ? JSON.stringify(currentEstimate.projectSummary) : '';
+  var changeOrderPrompt = 'CHANGE ORDER REQUEST for existing estimate.\n\nOriginal job: ' + originalSummary + '\n\nAdditional scope requested: ' + input + '\n\nGenerate ONLY the additional materials and labor for this change order. Return the same JSON format but only include the NEW items being added, not the original estimate items. Label it as a change order in the jobType field.';
+
+  try {
+    var response = await fetch(BACKEND + '/estimate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 3000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: changeOrderPrompt }] })
+    });
+    var data = await response.json();
+    var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
+    var cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+    var parsed;
+    try { parsed = JSON.parse(cleaned); }
+    catch(e) { var m = cleaned.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error('Could not parse change order.'); }
+
+    // Merge change order into existing estimate
+    var newItems = parsed.materialTakeoff || [];
+    editableMaterials = editableMaterials.concat(newItems.map(function(r) {
+      return { item: 'CO: ' + (r.item || ''), qty: r.qty || '1', unitCost: parseFloat(r.unitCost) || 0, totalCost: parseFloat(r.totalCost) || 0 };
+    }));
+    editableLaborHours = editableLaborHours + (parseFloat(parsed.laborHours) || 0);
+
+    document.getElementById('changeOrderModal').remove();
+    updateCostCards(); renderMaterialsTab(); updateLaborTab();
+    switchTab('materials');
+    status.style.color = 'var(--green)'; status.textContent = 'Change order added — ' + newItems.length + ' new items added to takeoff.';
+    showToast();
+  } catch(err) {
+    status.style.color = 'var(--red)'; status.textContent = 'Error: ' + err.message;
+    btn.textContent = '&#9658; Generate Change Order'; btn.disabled = false;
+  }
 }
 
 // ── CUSTOMER DATABASE ──
@@ -1765,6 +1940,21 @@ function showCustomersPage() {
   renderCustomerList();
 }
 
+function showInvoicesPage() {
+  document.getElementById('estimatorPage').style.display = 'none';
+  document.getElementById('historyPage').style.display = 'none';
+  document.getElementById('catalogPage').style.display = 'none';
+  document.getElementById('customersPage').style.display = 'none';
+  document.getElementById('invoicesPage').style.display = 'block';
+  document.getElementById('navInvoices').classList.add('active');
+  document.getElementById('navEstimate').classList.remove('active');
+  document.getElementById('navHistory').classList.remove('active');
+  document.getElementById('navCatalog').classList.remove('active');
+  document.getElementById('navCustomers').classList.remove('active');
+  document.getElementById('navSimple').classList.remove('active');
+  renderInvoiceList('all');
+}
+
 // COMPANY SETTINGS
 function loadCompanySettings() {
   var s = JSON.parse(localStorage.getItem('foremanBrainCompany') || '{}');
@@ -1844,6 +2034,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('navHistory').addEventListener('click', showHistoryPage);
   document.getElementById('navCatalog').addEventListener('click', showCatalogPage);
   document.getElementById('navCustomers').addEventListener('click', showCustomersPage);
+  document.getElementById('navInvoices').addEventListener('click', showInvoicesPage);
   document.getElementById('addCustomerBtn').addEventListener('click', function() { openCustomerModal(null); });
   document.getElementById('saveCustomerBtn').addEventListener('click', saveCustomer);
   document.getElementById('customerSearch').addEventListener('input', function() { renderCustomerList(this.value); });
