@@ -616,6 +616,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
     <button class="nav-btn active" id="navEstimate">&#9658; Estimator</button>
     <button class="nav-btn" id="navCatalog">&#128218; Vendor Catalog</button>
     <button class="nav-btn" id="navSimple" title="Simple mode — hides technical tabs">&#128274; Simple View</button>
+    <button class="nav-btn" id="navCustomers">&#128100; Customers</button>
     <button class="nav-btn" id="navHistory">&#9776; Job History <span id="historyBadge" style="display:none;background:var(--gold);color:#0a0d10;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:600;"></span></button>
   </div>
   <div class="header-user">
@@ -786,6 +787,61 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
 </div>
 
 <!-- HISTORY PAGE -->
+<div class="main page" id="customersPage">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Customers</div>
+      <div class="page-count" id="customerCount">0 customers</div>
+    </div>
+    <button id="addCustomerBtn" style="font-size:13px;font-weight:600;color:#0a0d10;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius);padding:10px 20px;cursor:pointer;">+ Add Customer</button>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <input id="customerSearch" placeholder="Search customers by name, phone, or address..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--body);font-size:14px;padding:12px 16px;outline:none;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+  </div>
+
+  <div id="customerList"></div>
+
+  <div id="customerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
+      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:20px;" id="customerModalTitle">Add Customer</div>
+      <input type="hidden" id="editCustomerId" />
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;">Full Name *</label>
+          <input id="cName" placeholder="Customer full name" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--body);font-size:13px;padding:10px 12px;outline:none;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;">Phone</label>
+            <input id="cPhone" placeholder="(555) 555-5555" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--body);font-size:13px;padding:10px 12px;outline:none;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;">Email</label>
+            <input id="cEmail" placeholder="email@example.com" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--body);font-size:13px;padding:10px 12px;outline:none;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;">Address</label>
+          <input id="cAddress" placeholder="Street address" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--body);font-size:13px;padding:10px 12px;outline:none;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;">City</label>
+          <input id="cCity" placeholder="City" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--body);font-size:13px;padding:10px 12px;outline:none;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;">Notes</label>
+          <textarea id="cNotes" placeholder="Any notes about this customer..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--body);font-size:13px;padding:10px 12px;outline:none;resize:vertical;min-height:80px;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button id="saveCustomerBtn" style="flex:1;font-size:13px;font-weight:600;color:#0a0d10;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius-sm);padding:12px;cursor:pointer;">Save Customer</button>
+        <button onclick="closeCustomerModal()" style="font-size:13px;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 20px;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="main page" id="historyPage">
   <div class="page-header">
     <div>
@@ -1375,6 +1431,99 @@ function deleteJob(id) {
   renderHistoryList(); updateHistoryBadge();
 }
 
+// ── CUSTOMER DATABASE ──
+async function loadCustomers(search) {
+  if (!window._supabase || !window._userEmail) return [];
+  try {
+    var query = window._supabase.from('customers').select('*').eq('user_id', window._userEmail).order('name');
+    if (search) query = query.or('name.ilike.%' + search + '%,phone.ilike.%' + search + '%,address.ilike.%' + search + '%');
+    var result = await query;
+    return result.data || [];
+  } catch(e) { console.error('Load customers error:', e); return []; }
+}
+
+async function saveCustomer() {
+  var id = document.getElementById('editCustomerId').value;
+  var name = document.getElementById('cName').value.trim();
+  if (!name) { alert('Please enter a customer name.'); return; }
+  var customer = {
+    user_id: window._userEmail,
+    name: name,
+    phone: document.getElementById('cPhone').value.trim(),
+    email: document.getElementById('cEmail').value.trim(),
+    address: document.getElementById('cAddress').value.trim(),
+    city: document.getElementById('cCity').value.trim(),
+    notes: document.getElementById('cNotes').value.trim()
+  };
+  try {
+    if (id) {
+      await window._supabase.from('customers').update(customer).eq('id', id);
+    } else {
+      await window._supabase.from('customers').insert(customer);
+    }
+    closeCustomerModal();
+    renderCustomerList();
+    showToast();
+  } catch(e) { alert('Error saving customer. Please try again.'); }
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Delete this customer?')) return;
+  await window._supabase.from('customers').delete().eq('id', id);
+  renderCustomerList();
+}
+
+function openCustomerModal(customer) {
+  document.getElementById('editCustomerId').value = customer ? customer.id : '';
+  document.getElementById('cName').value = customer ? customer.name : '';
+  document.getElementById('cPhone').value = customer ? (customer.phone || '') : '';
+  document.getElementById('cEmail').value = customer ? (customer.email || '') : '';
+  document.getElementById('cAddress').value = customer ? (customer.address || '') : '';
+  document.getElementById('cCity').value = customer ? (customer.city || '') : '';
+  document.getElementById('cNotes').value = customer ? (customer.notes || '') : '';
+  document.getElementById('customerModalTitle').textContent = customer ? 'Edit Customer' : 'Add Customer';
+  document.getElementById('customerModal').style.display = 'flex';
+}
+
+function closeCustomerModal() {
+  document.getElementById('customerModal').style.display = 'none';
+}
+
+function selectCustomerForEstimate(customer) {
+  if (document.getElementById('customerName')) document.getElementById('customerName').value = customer.name;
+  if (document.getElementById('customerAddress')) document.getElementById('customerAddress').value = (customer.address || '') + (customer.city ? ', ' + customer.city : '');
+  showEstimatorPage();
+}
+
+async function renderCustomerList(search) {
+  var list = document.getElementById('customerList');
+  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">Loading...</div>';
+  var customers = await loadCustomers(search);
+  var count = document.getElementById('customerCount');
+  if (count) count.textContent = customers.length + ' customer' + (customers.length === 1 ? '' : 's');
+  if (!customers.length) {
+    list.innerHTML = '<div style="text-align:center;padding:60px 32px;"><div style="font-size:36px;opacity:0.2;margin-bottom:12px;">&#128100;</div><div style="font-size:13px;color:var(--text-muted);">No customers yet.<br/>Add your first customer to get started.</div></div>';
+    return;
+  }
+  list.innerHTML = customers.map(function(c) {
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.15s;" onmouseover="this.style.borderColor=\'var(--border2)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+      '<div style="flex:1;min-width:0;">' +
+      '<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;">' + escHtml(c.name) + '</div>' +
+      '<div style="font-size:12px;color:var(--text-muted);font-family:var(--mono);">' +
+      (c.phone ? '&#128222; ' + escHtml(c.phone) + '&nbsp;&nbsp;' : '') +
+      (c.email ? '&#9993; ' + escHtml(c.email) + '&nbsp;&nbsp;' : '') +
+      (c.address ? '&#128205; ' + escHtml(c.address) + (c.city ? ', ' + escHtml(c.city) : '') : '') +
+      '</div>' +
+      (c.notes ? '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;font-style:italic;">' + escHtml(c.notes) + '</div>' : '') +
+      '</div>' +
+      '<div style="display:flex;gap:8px;flex-shrink:0;">' +
+      '<button onclick="selectCustomerForEstimate(' + JSON.stringify(c).replace(/"/g, "&quot;") + ')" style="font-size:12px;font-weight:500;color:#0a0d10;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">New Estimate</button>' +
+      '<button onclick="openCustomerModal(' + JSON.stringify(c).replace(/"/g, "&quot;") + ')" style="font-size:12px;color:var(--text-dim);background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Edit</button>' +
+      '<button onclick="deleteCustomer(\'' + c.id + '\')" style="font-size:12px;color:var(--red);background:transparent;border:1px solid rgba(224,85,85,0.3);border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Delete</button>' +
+      '</div></div>';
+  }).join('');
+}
+
 // VENDOR CATALOG
 function getVendorPrices() { try { return JSON.parse(localStorage.getItem('foremanBrainVendorPrices') || '{}'); } catch(e) { return {}; } }
 function saveVendorPrices(p) { localStorage.setItem('foremanBrainVendorPrices', JSON.stringify(p)); }
@@ -1450,6 +1599,19 @@ function showCatalogPage() {
   document.getElementById('navEstimate').classList.remove('active');
   document.getElementById('navHistory').classList.remove('active');
   renderCatalogPriceList();
+}
+
+function showCustomersPage() {
+  document.getElementById('estimatorPage').style.display = 'none';
+  document.getElementById('historyPage').style.display = 'none';
+  document.getElementById('catalogPage').style.display = 'none';
+  document.getElementById('customersPage').style.display = 'block';
+  document.getElementById('navCustomers').classList.add('active');
+  document.getElementById('navEstimate').classList.remove('active');
+  document.getElementById('navHistory').classList.remove('active');
+  document.getElementById('navCatalog').classList.remove('active');
+  document.getElementById('navSimple').classList.remove('active');
+  renderCustomerList();
 }
 
 // COMPANY SETTINGS
@@ -1530,6 +1692,10 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('navEstimate').addEventListener('click', showEstimatorPage);
   document.getElementById('navHistory').addEventListener('click', showHistoryPage);
   document.getElementById('navCatalog').addEventListener('click', showCatalogPage);
+  document.getElementById('navCustomers').addEventListener('click', showCustomersPage);
+  document.getElementById('addCustomerBtn').addEventListener('click', function() { openCustomerModal(null); });
+  document.getElementById('saveCustomerBtn').addEventListener('click', saveCustomer);
+  document.getElementById('customerSearch').addEventListener('input', function() { renderCustomerList(this.value); });
 
   document.getElementById('clearHistoryBtn').addEventListener('click', function() {
     if (confirm('Delete all saved jobs? This cannot be undone.')) { localStorage.removeItem(HISTORY_KEY); renderHistoryList(); updateHistoryBadge(); }
