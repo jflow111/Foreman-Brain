@@ -1017,9 +1017,11 @@ async function runEstimate() {
   document.getElementById('loadingPanel').style.display = 'block';
   document.getElementById('loadingTitle').textContent = 'Generating Estimate...';
   try {
+    var historicalContext = getHistoricalContext(input);
+    var userText = input + historicalContext;
     var msgContent = capturedPhotos.length > 0
-      ? [{ type: 'text', text: input }, ...capturedPhotos.map(function(p) { return { type: 'image', source: { type: 'base64', media_type: p.type, data: p.base64 } }; })]
-      : input;
+      ? [{ type: 'text', text: userText }, ...capturedPhotos.map(function(p) { return { type: 'image', source: { type: 'base64', media_type: p.type, data: p.base64 } }; })]
+      : userText;
     var response = await fetch(BACKEND + '/estimate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: msgContent }] })
@@ -1126,6 +1128,27 @@ function saveJob(estimate, input) {
 }
 
 function showToast() { var t = document.getElementById('saveToast'); t.classList.add('show'); setTimeout(function() { t.classList.remove('show'); }, 2200); }
+
+function getHistoricalContext(currentInput) {
+  var jobs = loadHistory().filter(function(j) { return j.status === 'won' || j.status === 'lost'; });
+  if (!jobs.length) return '';
+  var inputLower = currentInput.toLowerCase();
+  var inputWords = inputLower.split(/\s+/).filter(function(w) { return w.length > 3; });
+  var scored = jobs.map(function(j) {
+    var jobText = ((j.jobType || '') + ' ' + (j.input || '')).toLowerCase();
+    var matches = inputWords.filter(function(w) { return jobText.includes(w); }).length;
+    return { job: j, score: matches };
+  }).filter(function(s) { return s.score > 0; });
+  scored.sort(function(a, b) { return b.score - a.score; });
+  var topJobs = scored.slice(0, 5).map(function(s) { return s.job; });
+  var recent = jobs.slice(0, 3).filter(function(j) { return !topJobs.find(function(t) { return t.id === j.id; }); });
+  var allContext = topJobs.concat(recent).slice(0, 6);
+  if (!allContext.length) return '';
+  var lines = allContext.map(function(j) {
+    return '- [' + j.status.toUpperCase() + '] ' + j.jobType + ': $' + Math.round(j.total || 0).toLocaleString() + ' total, ' + (j.laborHours || 0) + ' labor hrs';
+  });
+  return '\n\n---\nHISTORICAL PERFORMANCE DATA — use this to calibrate your estimate:\n' + lines.join('\n') + '\nPattern: if similar jobs were won at lower prices, stay competitive. If lost at higher prices, be conservative on labor and material quantities.\n---';
+}
 
 function updateHistoryBadge() {
   var jobs = loadHistory(); var b = document.getElementById('historyBadge');
