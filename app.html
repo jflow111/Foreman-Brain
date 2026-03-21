@@ -1074,6 +1074,7 @@ function renderProposalTab(e) {
     '<button class="btn-action" id="copyBtn">&#128203; Copy Proposal</button>' +
     '<button class="btn-action" id="printBtn">&#128438; Print</button>' +
     '<button class="btn-action" id="textBtn">&#128172; Text to Client</button>' +
+    '<button class="btn-action" id="invoiceBtn" style="color:var(--green);border-color:rgba(52,196,114,0.3);">&#128203; Create Invoice</button>' +
     '</div>' +
     '<div class="proposal-summary">' +
     '<div class="proposal-summary-title">Estimate Summary</div>' +
@@ -1085,6 +1086,7 @@ function renderProposalTab(e) {
   document.getElementById('copyBtn').addEventListener('click', copyProposal);
   document.getElementById('printBtn').addEventListener('click', printProposal);
   document.getElementById('textBtn').addEventListener('click', textProposal);
+  document.getElementById('invoiceBtn').addEventListener('click', createInvoice);
 }
 
 function copyProposal() {
@@ -1429,6 +1431,143 @@ function renderRecentJobs() {
 function deleteJob(id) {
   saveHistory(loadHistory().filter(function(j) { return j.id !== id; }));
   renderHistoryList(); updateHistoryBadge();
+}
+
+// ── INVOICE GENERATION ──
+var invoiceCounter = parseInt(localStorage.getItem('foremanBrainInvoiceCounter') || '1000');
+
+async function createInvoice() {
+  if (!currentEstimate) return;
+  var t = calcTotals();
+  invoiceCounter++;
+  localStorage.setItem('foremanBrainInvoiceCounter', invoiceCounter);
+  var invoiceNum = 'INV-' + invoiceCounter;
+  var company = getCompanyInfo();
+  var customerName = document.getElementById('customerName') ? document.getElementById('customerName').value : '';
+  var customerAddress = document.getElementById('customerAddress') ? document.getElementById('customerAddress').value : '';
+  var today = new Date();
+  var dueDate = new Date(today); dueDate.setDate(dueDate.getDate() + 30);
+  var fmt2 = function(d) { return d.toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'}); };
+
+  // Save to Supabase if available
+  if (window._supabase && window._userEmail) {
+    try {
+      await window._supabase.from('invoices').insert({
+        user_id: window._userEmail,
+        invoice_number: invoiceNum,
+        total: t.total,
+        status: 'unpaid',
+        due_date: dueDate.toISOString().split('T')[0],
+        notes: customerName + ' — ' + ((currentEstimate.projectSummary || {}).jobType || '')
+      });
+    } catch(e) { console.error('Invoice save error:', e); }
+  }
+
+  // Generate printable invoice
+  var win = window.open('', '_blank');
+  win.document.write('<!DOCTYPE html><html><head><title>Invoice ' + invoiceNum + '</title>');
+  win.document.write('<style>');
+  win.document.write('* { box-sizing:border-box; margin:0; padding:0; }');
+  win.document.write('body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:14px; color:#1a1a1a; padding:60px; max-width:800px; margin:0 auto; }');
+  win.document.write('.header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:48px; padding-bottom:32px; border-bottom:2px solid #1a1a1a; }');
+  win.document.write('.company-name { font-size:24px; font-weight:700; margin-bottom:4px; }');
+  win.document.write('.company-info { font-size:12px; color:#666; line-height:1.8; }');
+  win.document.write('.invoice-meta { text-align:right; }');
+  win.document.write('.invoice-title { font-size:32px; font-weight:700; color:#1a1a1a; margin-bottom:8px; }');
+  win.document.write('.invoice-num { font-size:14px; color:#666; margin-bottom:4px; }');
+  win.document.write('.invoice-status { display:inline-block; background:#fff3cd; color:#856404; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; border:1px solid #ffc107; }');
+  win.document.write('.bill-section { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-bottom:40px; }');
+  win.document.write('.bill-label { font-size:11px; font-weight:600; color:#666; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }');
+  win.document.write('.bill-name { font-size:15px; font-weight:600; margin-bottom:4px; }');
+  win.document.write('.bill-info { font-size:13px; color:#444; line-height:1.7; }');
+  win.document.write('table { width:100%; border-collapse:collapse; margin-bottom:32px; }');
+  win.document.write('thead tr { border-bottom:2px solid #1a1a1a; }');
+  win.document.write('th { font-size:11px; font-weight:600; color:#666; letter-spacing:0.5px; text-transform:uppercase; padding:10px 12px; text-align:left; }');
+  win.document.write('th.right { text-align:right; }');
+  win.document.write('tbody tr { border-bottom:1px solid #eee; }');
+  win.document.write('tbody tr:hover { background:#f9f9f9; }');
+  win.document.write('td { padding:10px 12px; font-size:13px; color:#333; }');
+  win.document.write('td.right { text-align:right; font-family:monospace; }');
+  win.document.write('.totals { margin-left:auto; width:300px; }');
+  win.document.write('.total-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:13px; }');
+  win.document.write('.total-row.final { border-top:2px solid #1a1a1a; border-bottom:none; padding-top:12px; margin-top:4px; font-size:16px; font-weight:700; }');
+  win.document.write('.total-label { color:#444; }');
+  win.document.write('.total-val { font-family:monospace; font-weight:500; }');
+  win.document.write('.notes-section { margin-top:40px; padding-top:24px; border-top:1px solid #eee; }');
+  win.document.write('.notes-title { font-size:11px; font-weight:600; color:#666; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }');
+  win.document.write('.notes-text { font-size:13px; color:#444; line-height:1.7; }');
+  win.document.write('.footer { margin-top:48px; padding-top:24px; border-top:1px solid #eee; text-align:center; font-size:12px; color:#999; }');
+  win.document.write('.due-banner { background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:16px 20px; margin-bottom:32px; display:flex; justify-content:space-between; align-items:center; }');
+  win.document.write('.due-label { font-size:12px; color:#166534; font-weight:600; }');
+  win.document.write('.due-date { font-size:15px; color:#166534; font-weight:700; }');
+  win.document.write('@media print { body { padding:40px; } }');
+  win.document.write('</style></head><body>');
+
+  // Header
+  win.document.write('<div class="header">');
+  win.document.write('<div>');
+  if (company.companyName) {
+    win.document.write('<div class="company-name">' + escHtml(company.companyName) + '</div>');
+    win.document.write('<div class="company-info">');
+    if (company.companyLicense) win.document.write('CA License #' + escHtml(company.companyLicense) + '<br>');
+    if (company.companyPhone) win.document.write(escHtml(company.companyPhone) + '<br>');
+    win.document.write('</div>');
+  } else {
+    win.document.write('<div class="company-name">Electrical Contractor</div>');
+  }
+  win.document.write('</div>');
+  win.document.write('<div class="invoice-meta">');
+  win.document.write('<div class="invoice-title">INVOICE</div>');
+  win.document.write('<div class="invoice-num">' + invoiceNum + '</div>');
+  win.document.write('<div class="invoice-num">Date: ' + fmt2(today) + '</div>');
+  win.document.write('<div style="margin-top:8px;"><span class="invoice-status">UNPAID</span></div>');
+  win.document.write('</div></div>');
+
+  // Due date banner
+  win.document.write('<div class="due-banner"><span class="due-label">Payment Due</span><span class="due-date">' + fmt2(dueDate) + '</span></div>');
+
+  // Bill to
+  win.document.write('<div class="bill-section">');
+  win.document.write('<div><div class="bill-label">Bill To</div>');
+  if (customerName) win.document.write('<div class="bill-name">' + escHtml(customerName) + '</div>');
+  if (customerAddress) win.document.write('<div class="bill-info">' + escHtml(customerAddress) + '</div>');
+  win.document.write('</div>');
+  win.document.write('<div><div class="bill-label">Job Description</div>');
+  win.document.write('<div class="bill-info">' + escHtml((currentEstimate.projectSummary || {}).jobType || 'Electrical Work') + '</div>');
+  win.document.write('</div></div>');
+
+  // Materials table
+  win.document.write('<table><thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Unit Price</th><th class="right">Total</th></tr></thead><tbody>');
+  editableMaterials.forEach(function(m) {
+    win.document.write('<tr><td>' + escHtml(m.item) + '</td><td class="right">' + escHtml(m.qty) + '</td><td class="right">$' + (parseFloat(m.unitCost)||0).toFixed(2) + '</td><td class="right">$' + (parseFloat(m.totalCost)||0).toFixed(2) + '</td></tr>');
+  });
+  win.document.write('<tr style="background:#f9f9f9;"><td colspan="3" style="padding:10px 12px;font-size:13px;color:#444;">Labor — ' + editableLaborHours + ' hours @ $' + getLaborRate() + '/hr</td><td class="right">$' + (editableLaborHours * getLaborRate()).toFixed(2) + '</td></tr>');
+  win.document.write('</tbody></table>');
+
+  // Totals
+  win.document.write('<div class="totals">');
+  win.document.write('<div class="total-row"><span class="total-label">Materials (subtotal)</span><span class="total-val">$' + t.raw.toFixed(2) + '</span></div>');
+  win.document.write('<div class="total-row"><span class="total-label">Materials markup (&times;' + getMarkup() + ')</span><span class="total-val">$' + t.markedUp.toFixed(2) + '</span></div>');
+  win.document.write('<div class="total-row"><span class="total-label">Labor</span><span class="total-val">$' + t.labor.toFixed(2) + '</span></div>');
+  win.document.write('<div class="total-row final"><span class="total-label">Total Due</span><span class="total-val">$' + t.total.toFixed(2) + '</span></div>');
+  win.document.write('</div>');
+
+  // Notes
+  win.document.write('<div class="notes-section">');
+  win.document.write('<div class="notes-title">Notes & Exclusions</div>');
+  win.document.write('<div class="notes-text">This invoice does not include: drywall patching or painting, trenching or boring, permit fees, utility coordination, or unforeseen concealed conditions.<br><br>');
+  win.document.write('Payment is due within 30 days of invoice date. Thank you for your business.</div>');
+  win.document.write('</div>');
+
+  // Footer
+  win.document.write('<div class="footer">');
+  if (company.companyName) win.document.write(escHtml(company.companyName) + ' &bull; ');
+  if (company.companyLicense) win.document.write('CA License #' + escHtml(company.companyLicense) + ' &bull; ');
+  win.document.write('Generated by Foreman Brain</div>');
+
+  win.document.write('</body></html>');
+  win.document.close();
+  setTimeout(function() { win.print(); }, 500);
 }
 
 // ── CUSTOMER DATABASE ──
