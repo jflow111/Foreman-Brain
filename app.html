@@ -1103,9 +1103,21 @@ function copyProposal() {
 function textProposal() {
   if (!currentEstimate) return;
   var t = calcTotals();
-  var pt = document.getElementById('proposalText');
-  var text = (pt ? pt.innerText : currentEstimate.customerProposal || '') + '\n\nESTIMATE SUMMARY\nMaterials: ' + fmt(t.markedUp) + '\nLabor: ' + fmt(t.labor) + '\nTOTAL: ' + fmt(t.total);
-  window.open('sms:?body=' + encodeURIComponent(text));
+  var co = getCompanyInfo();
+  var ps = currentEstimate.projectSummary || {};
+  var customerName = document.getElementById('customerName') ? document.getElementById('customerName').value.trim() : '';
+  var lines = [];
+  if (co.companyName) lines.push(co.companyName);
+  lines.push('Estimate: ' + (ps.jobType || 'Electrical Work'));
+  if (customerName) lines.push('For: ' + customerName);
+  lines.push('');
+  lines.push('Materials: ' + fmt(t.markedUp));
+  lines.push('Labor: ' + fmt(t.labor));
+  lines.push('Total: ' + fmt(t.total));
+  lines.push('');
+  lines.push('Valid 30 days. Permit required. Reply to schedule.');
+  if (co.companyPhone) lines.push(co.companyPhone);
+  window.location.href = 'sms:?body=' + encodeURIComponent(lines.join('\n'));
 }
 
 function printProposal() {
