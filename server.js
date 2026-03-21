@@ -80,6 +80,50 @@ async function searchGooglePrice(itemName, store) {
   }
 }
 
+// ─── JOB HISTORY SYNC ───
+async function getUserFromToken(token) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${token}` }
+    });
+    const data = await r.json();
+    return data && data.id ? data : null;
+  } catch(e) { return null; }
+}
+
+app.get('/jobs', async (req, res) => {
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  const user = await getUserFromToken(token);
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}&select=job_history`, {
+      headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
+    });
+    const data = await r.json();
+    res.json({ jobs: (data[0] && data[0].job_history) || [] });
+  } catch(e) {
+    res.json({ jobs: [] });
+  }
+});
+
+app.post('/jobs', async (req, res) => {
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  const user = await getUserFromToken(token);
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+  const { jobs } = req.body;
+  if (!Array.isArray(jobs)) return res.status(400).json({ error: 'jobs must be an array' });
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ job_history: jobs })
+    });
+    res.json({ ok: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ─── AI ESTIMATE ───
 app.post('/estimate', async (req, res) => {
   try {

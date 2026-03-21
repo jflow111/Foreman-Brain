@@ -18,13 +18,14 @@
   var session = await sb.auth.getSession();
   if (!session.data.session) { window.location.href = 'auth.html'; return; }
   var uid = session.data.session.user.id;
-  var profile = await sb.from('profiles').select('subscription_status,is_admin,email').eq('id', uid).single();
+  var profile = await sb.from('profiles').select('subscription_status,is_admin,stripe_subscription_id').eq('id', uid).single();
   if (!profile.data || (profile.data.subscription_status !== 'active' && !profile.data.is_admin)) {
     await sb.auth.signOut(); window.location.href = 'auth.html'; return;
   }
   window._supabase = sb;
   window._userProfile = profile.data;
   window._userEmail = session.data.session.user.email;
+  window._authToken = session.data.session.access_token;
 })();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -142,6 +143,66 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
   transition: all 0.15s;
 }
 .btn-logout:hover { color: var(--red); border-color: var(--red); background: rgba(224,85,85,0.06); }
+.btn-account {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-account:hover { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-glow2); }
+
+/* ── AI DISCLAIMER ── */
+.ai-disclaimer {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: rgba(232,160,32,0.06); border: 1px solid rgba(232,160,32,0.2);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  font-size: 12px; color: var(--text-dim); line-height: 1.5;
+  margin-bottom: 16px;
+}
+.ai-disclaimer-icon { color: var(--gold); font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+@media print { .ai-disclaimer { display: none; } }
+
+/* ── ACCOUNT MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.7); display: none;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 32px; width: 100%; max-width: 420px;
+}
+.modal-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 24px; }
+.modal-section { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+.modal-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.modal-section-title { font-size: 11px; font-weight: 600; color: var(--gold); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.modal-input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); font-size: 13px;
+  padding: 9px 12px; box-sizing: border-box; margin-bottom: 8px;
+}
+.modal-input:focus { outline: none; border-color: var(--gold-dim); }
+.modal-btn {
+  font-size: 12px; font-weight: 500; padding: 8px 16px;
+  border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; border: 1px solid;
+}
+.modal-btn-primary { background: var(--gold-glow2); color: var(--gold); border-color: var(--gold-dim); }
+.modal-btn-primary:hover { background: var(--gold-glow); }
+.modal-btn-danger { background: rgba(224,85,85,0.08); color: var(--red); border-color: rgba(224,85,85,0.3); }
+.modal-btn-danger:hover { background: rgba(224,85,85,0.15); }
+.modal-btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
+.modal-btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+.modal-msg { font-size: 12px; margin-top: 6px; min-height: 16px; }
+.modal-msg.ok { color: #34c472; }
+.modal-msg.err { color: var(--red); }
+.modal-footer { display: flex; justify-content: flex-end; margin-top: 24px; }
+.modal-cancel-note { font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
 
 /* ── MAIN ── */
 .main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 80px; }
@@ -559,6 +620,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
   </div>
   <div class="header-user">
     <span class="user-email" id="userEmailDisplay"></span>
+    <button class="btn-account" id="accountBtn">Account</button>
     <button class="btn-logout" id="logoutBtn">Sign Out</button>
   </div>
 </header>
@@ -659,6 +721,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
   <div id="recentJobs" style="margin-bottom:20px;"></div>
 
   <div id="results" style="display:none;">
+    <div class="ai-disclaimer">
+      <span class="ai-disclaimer-icon">⚠</span>
+      <span>AI-generated estimate — all NEC/CEC code requirements, conductor sizing, and protection rules must be verified by the licensed contractor before submitting a bid. You are the responsible professional.</span>
+    </div>
     <div class="cost-grid" id="costGrid"></div>
     <div class="tabs-wrapper">
       <div class="tabs-bar">
@@ -1106,7 +1172,33 @@ function removePhoto(idx) {
 // JOB HISTORY
 var HISTORY_KEY = 'foremanBrainJobs';
 function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
-function saveHistory(jobs) { localStorage.setItem(HISTORY_KEY, JSON.stringify(jobs)); }
+function saveHistory(jobs) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(jobs));
+  if (window._authToken) {
+    fetch(BACKEND + '/jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window._authToken },
+      body: JSON.stringify({ jobs: jobs })
+    }).catch(function() {});
+  }
+}
+
+async function loadCloudHistory() {
+  if (!window._authToken) return;
+  try {
+    var r = await fetch(BACKEND + '/jobs', { headers: { 'Authorization': 'Bearer ' + window._authToken } });
+    if (!r.ok) return;
+    var data = await r.json();
+    if (Array.isArray(data.jobs) && data.jobs.length > 0) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(data.jobs));
+      updateHistoryBadge();
+      renderRecentJobs();
+    } else {
+      var local = loadHistory();
+      if (local.length) saveHistory(local);
+    }
+  } catch(e) {}
+}
 
 function saveJob(estimate, input) {
   var t = calcTotals();
@@ -1457,12 +1549,63 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('logoutBtn').addEventListener('click', async function() { if (window._supabase) await window._supabase.auth.signOut(); window.location.href = 'auth.html'; });
 
   updateHistoryBadge();
+  loadCloudHistory();
   initVoice();
   initPhoto();
   loadCompanySettings();
   checkWelcome();
   renderRecentJobs();
   document.getElementById('navSimple').addEventListener('click', toggleSimpleMode);
+
+  // Account modal
+  document.getElementById('accountBtn').addEventListener('click', function() {
+    document.getElementById('emailMsg').textContent = '';
+    document.getElementById('passwordMsg').textContent = '';
+    document.getElementById('cancelMsg').textContent = '';
+    document.getElementById('newEmail').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    document.getElementById('accountModal').classList.add('open');
+  });
+  document.getElementById('closeAccountModal').addEventListener('click', function() {
+    document.getElementById('accountModal').classList.remove('open');
+  });
+  document.getElementById('accountModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+  document.getElementById('changeEmailBtn').addEventListener('click', async function() {
+    var msg = document.getElementById('emailMsg');
+    var email = document.getElementById('newEmail').value.trim();
+    if (!email) { msg.textContent = 'Enter a new email address.'; msg.className = 'modal-msg err'; return; }
+    msg.textContent = 'Updating...'; msg.className = 'modal-msg';
+    var { error } = await window._supabase.auth.updateUser({ email: email });
+    if (error) { msg.textContent = error.message; msg.className = 'modal-msg err'; }
+    else { msg.textContent = 'Check your new email for a confirmation link.'; msg.className = 'modal-msg ok'; }
+  });
+  document.getElementById('changePasswordBtn').addEventListener('click', async function() {
+    var msg = document.getElementById('passwordMsg');
+    var pw = document.getElementById('newPassword').value;
+    var pw2 = document.getElementById('confirmPassword').value;
+    if (!pw || pw.length < 8) { msg.textContent = 'Password must be at least 8 characters.'; msg.className = 'modal-msg err'; return; }
+    if (pw !== pw2) { msg.textContent = 'Passwords do not match.'; msg.className = 'modal-msg err'; return; }
+    msg.textContent = 'Updating...'; msg.className = 'modal-msg';
+    var { error } = await window._supabase.auth.updateUser({ password: pw });
+    if (error) { msg.textContent = error.message; msg.className = 'modal-msg err'; }
+    else { msg.textContent = 'Password updated successfully.'; msg.className = 'modal-msg ok'; document.getElementById('newPassword').value = ''; document.getElementById('confirmPassword').value = ''; }
+  });
+  document.getElementById('cancelSubBtn').addEventListener('click', async function() {
+    var msg = document.getElementById('cancelMsg');
+    var subId = window._userProfile && window._userProfile.stripe_subscription_id;
+    if (!subId) { msg.textContent = 'No active subscription found.'; msg.className = 'modal-msg err'; return; }
+    if (!confirm('Cancel your subscription? You will keep access until the end of the billing period.')) return;
+    msg.textContent = 'Canceling...'; msg.className = 'modal-msg';
+    try {
+      var r = await fetch(BACKEND + '/cancel-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription_id: subId }) });
+      var d = await r.json();
+      if (d.success) { msg.textContent = 'Subscription canceled. Access continues until end of billing period.'; msg.className = 'modal-msg ok'; }
+      else { msg.textContent = d.error || 'Could not cancel. Please try again.'; msg.className = 'modal-msg err'; }
+    } catch(e) { msg.textContent = 'Network error. Please try again.'; msg.className = 'modal-msg err'; }
+  });
 
   // Save labor rate and markup when changed
   document.getElementById('laborRate').addEventListener('change', saveCompanySettings);
@@ -1475,5 +1618,34 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+
+<!-- ACCOUNT MODAL -->
+<div class="modal-overlay" id="accountModal">
+  <div class="modal-box">
+    <div class="modal-title">Account Settings</div>
+    <div class="modal-section">
+      <div class="modal-section-title">Change Email</div>
+      <input class="modal-input" id="newEmail" type="email" placeholder="New email address" />
+      <button class="modal-btn modal-btn-primary" id="changeEmailBtn">Update Email</button>
+      <div class="modal-msg" id="emailMsg"></div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Change Password</div>
+      <input class="modal-input" id="newPassword" type="password" placeholder="New password" />
+      <input class="modal-input" id="confirmPassword" type="password" placeholder="Confirm new password" />
+      <button class="modal-btn modal-btn-primary" id="changePasswordBtn">Update Password</button>
+      <div class="modal-msg" id="passwordMsg"></div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Subscription</div>
+      <button class="modal-btn modal-btn-danger" id="cancelSubBtn">Cancel Subscription</button>
+      <div class="modal-cancel-note">Canceling will end your access at the end of the current billing period.</div>
+      <div class="modal-msg" id="cancelMsg"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-ghost" id="closeAccountModal">Close</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
