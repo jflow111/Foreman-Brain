@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Foreman Brain" />
 <meta name="theme-color" content="#0a0d10" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-192.png" />
 <title>Foreman Brain — AI Electrical Estimating</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -109,6 +111,26 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
 .btn-logout:hover { color: var(--red); border-color: rgba(224,85,85,0.3); background: rgba(224,85,85,0.06); }
 .content-area { margin-left: 220px; flex: 1; min-width: 0; }
 .main { max-width: 960px; margin: 0 auto; padding: 28px 28px 80px; }
+
+/* ── INSTALL BANNER ── */
+.install-banner {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: linear-gradient(135deg, #1a1f2a, #111418);
+  border-top: 1px solid var(--gold-dim);
+  padding: 14px 20px max(14px, env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 32px rgba(232,160,32,0.12);
+  animation: slide-up 0.3s ease;
+}
+@keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.install-banner.visible { display: block; }
+.install-banner-inner { display: flex; align-items: center; gap: 14px; max-width: 600px; margin: 0 auto; }
+.install-banner-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.install-banner-text { flex: 1; min-width: 0; }
+.install-banner-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.install-banner-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.install-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-install { font-size: 13px; font-weight: 600; color: #0a0d10; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border: none; border-radius: var(--radius-sm); padding: 10px 20px; cursor: pointer; white-space: nowrap; }
+.btn-install-dismiss { font-size: 12px; color: var(--text-muted); background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; cursor: pointer; }
 
 /* ── BOTTOM NAV (mobile) ── */
 .bottom-nav {
@@ -1922,6 +1944,77 @@ async function renderCustomerList(search) {
 </script>
 </div><!-- end content-area -->
 </div><!-- end app-layout -->
+
+<!-- INSTALL BANNER -->
+<div class="install-banner" id="installBanner">
+  <div class="install-banner-inner">
+    <div class="install-banner-icon">&#9889;</div>
+    <div class="install-banner-text">
+      <div class="install-banner-title" id="installBannerTitle">Add Foreman Brain to your home screen</div>
+      <div class="install-banner-sub" id="installBannerSub">Works offline &bull; Instant access &bull; No App Store needed</div>
+    </div>
+    <div class="install-banner-actions">
+      <button class="btn-install" id="installBtn">Install</button>
+      <button class="btn-install-dismiss" id="installDismiss">&#10005;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PWA INSTALL ──
+var _deferredPrompt = null;
+var _isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+var _isInStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function() {});
+}
+
+function showInstallBanner() {
+  if (_isInStandalone) return; // Already installed
+  if (localStorage.getItem('pwaInstallDismissed')) return;
+  var banner = document.getElementById('installBanner');
+  if (!banner) return;
+  if (_isIOS) {
+    document.getElementById('installBannerTitle').textContent = 'Add Foreman Brain to your home screen';
+    document.getElementById('installBannerSub').innerHTML = 'Tap <strong style="color:var(--gold)">&#9085; Share</strong> then <strong style="color:var(--gold)">Add to Home Screen</strong>';
+    document.getElementById('installBtn').style.display = 'none';
+  }
+  banner.classList.add('visible');
+}
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _deferredPrompt = e;
+  setTimeout(showInstallBanner, 3000);
+});
+
+window.addEventListener('appinstalled', function() {
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.classList.remove('visible');
+  _deferredPrompt = null;
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Show iOS banner after a delay
+  if (_isIOS && !_isInStandalone) {
+    setTimeout(showInstallBanner, 3000);
+  }
+
+  document.getElementById('installBtn').addEventListener('click', async function() {
+    if (!_deferredPrompt) return;
+    _deferredPrompt.prompt();
+    var result = await _deferredPrompt.userChoice;
+    _deferredPrompt = null;
+    document.getElementById('installBanner').classList.remove('visible');
+  });
+
+  document.getElementById('installDismiss').addEventListener('click', function() {
+    document.getElementById('installBanner').classList.remove('visible');
+    localStorage.setItem('pwaInstallDismissed', '1');
+  });
+});
+</script>
 
 <!-- ACCOUNT MODAL -->
 <div class="modal-overlay" id="accountModal">
