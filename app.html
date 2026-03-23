@@ -1049,9 +1049,9 @@ function renderProposalTab(e) {
     '</div>' +
     '<div class="proposal-summary">' +
     '<div class="proposal-summary-title">Estimate Summary</div>' +
-    '<div class="proposal-summary-row"><span class="proposal-summary-label">Materials (with markup)</span><span class="proposal-summary-val" id="prop-mat">' + fmt(t.markedUp) + '</span></div>' +
-    '<div class="proposal-summary-row"><span class="proposal-summary-label">Labor</span><span class="proposal-summary-val" id="prop-labor">' + fmt(t.labor) + ' (' + editableLaborHours + ' hrs)</span></div>' +
-    '<div class="proposal-summary-row"><span class="proposal-total-label">Total Estimate</span><span class="proposal-total-val" id="prop-total">' + fmt(t.total) + '</span></div>' +
+    '<div class="proposal-summary-row"><span class="proposal-summary-label">Materials (with markup)</span><span class="proposal-summary-val" id="prop-mat" contenteditable="true" title="Click to edit">' + fmt(t.markedUp) + '</span></div>' +
+    '<div class="proposal-summary-row"><span class="proposal-summary-label">Labor</span><span class="proposal-summary-val" id="prop-labor" contenteditable="true" title="Click to edit">' + fmt(t.labor) + ' (' + editableLaborHours + ' hrs)</span></div>' +
+    '<div class="proposal-summary-row"><span class="proposal-total-label">Total Estimate</span><span class="proposal-total-val" id="prop-total" contenteditable="true" title="Click to edit">' + fmt(t.total) + '</span></div>' +
     '</div>' +
     '<div class="exclusions-box"><div class="exclusions-title">Standard Exclusions</div>Drywall patching or painting &bull; Trenching or boring &bull; Permit fees &bull; Utility coordination &bull; Unforeseen concealed conditions</div>';
   document.getElementById('copyBtn').addEventListener('click', copyProposal);
