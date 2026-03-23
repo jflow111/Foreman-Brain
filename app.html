@@ -18,14 +18,13 @@
   var session = await sb.auth.getSession();
   if (!session.data.session) { window.location.href = 'auth.html'; return; }
   var uid = session.data.session.user.id;
-  var profile = await sb.from('profiles').select('subscription_status,is_admin,stripe_subscription_id').eq('id', uid).single();
+  var profile = await sb.from('profiles').select('subscription_status,is_admin,email').eq('id', uid).single();
   if (!profile.data || (profile.data.subscription_status !== 'active' && !profile.data.is_admin)) {
     await sb.auth.signOut(); window.location.href = 'auth.html'; return;
   }
   window._supabase = sb;
   window._userProfile = profile.data;
   window._userEmail = session.data.session.user.email;
-  window._authToken = session.data.session.access_token;
 })();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -64,148 +63,67 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
 ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
 /* ── HEADER ── */
-.header {
-  background: rgba(17,20,24,0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  padding: 0 28px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+/* ── SIDEBAR LAYOUT ── */
+.app-layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; overflow-y: auto;
 }
-.header-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
+.sidebar-logo {
+  display: flex; align-items: center; gap: 10px; padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--border); text-decoration: none;
 }
 .logo-mark {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, var(--gold), var(--gold-light));
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  box-shadow: 0 0 0 1px rgba(232,160,32,0.3), 0 4px 12px rgba(232,160,32,0.2);
+  width: 34px; height: 34px; background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px;
+  flex-shrink: 0; box-shadow: 0 0 0 1px rgba(232,160,32,0.3), 0 4px 12px rgba(232,160,32,0.15);
 }
-.logo-text {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.3px;
-}
+.logo-text { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; line-height: 1.2; }
 .logo-text span { color: var(--gold); }
-.header-divider { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
-.header-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text-muted);
-  font-family: var(--mono);
-}
-.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse-dot 2s ease-in-out infinite; }
-@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
-.header-nav { display: flex; gap: 4px; margin-left: auto; }
+.logo-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+.sidebar-nav { padding: 12px 8px; flex: 1; }
+.nav-section-label { font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; padding: 8px 8px 4px; }
 .nav-btn {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-dim);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  padding: 6px 14px;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  font-size: 13px; font-weight: 500; color: var(--text-dim);
+  background: transparent; border: none; border-radius: var(--radius);
+  padding: 9px 12px; cursor: pointer; transition: all 0.15s; text-align: left; margin-bottom: 2px;
 }
 .nav-btn:hover { color: var(--text); background: var(--surface2); }
-.nav-btn.active { color: var(--gold); background: var(--gold-glow2); border-color: var(--border); }
-.header-user { display: flex; align-items: center; gap: 10px; margin-left: 8px; padding-left: 12px; border-left: 1px solid var(--border); }
-.user-email { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+.nav-btn.active { color: var(--gold); background: var(--gold-glow2); }
+.nav-btn .nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-btn .nav-badge { margin-left: auto; background: var(--gold); color: #0a0d10; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+.sidebar-footer { padding: 12px 8px; border-top: 1px solid var(--border); }
+.user-info { padding: 8px 12px 4px; }
+.user-email { font-size: 11px; color: var(--text-muted); font-family: var(--mono); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-row { display: flex; align-items: center; gap: 6px; padding: 4px 0 8px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse-dot 2s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.status-text { font-size: 10px; color: var(--text-muted); }
 .btn-logout {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 5px 12px;
-  cursor: pointer;
-  transition: all 0.15s;
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  font-size: 12px; font-weight: 500; color: var(--text-muted);
+  background: transparent; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer; transition: all 0.15s;
 }
-.btn-logout:hover { color: var(--red); border-color: var(--red); background: rgba(224,85,85,0.06); }
-.btn-account {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 5px 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.btn-account:hover { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-glow2); }
+.btn-logout:hover { color: var(--red); border-color: rgba(224,85,85,0.3); background: rgba(224,85,85,0.06); }
+.content-area { margin-left: 220px; flex: 1; min-width: 0; }
+.main { max-width: 960px; margin: 0 auto; padding: 28px 28px 80px; }
 
-/* ── AI DISCLAIMER ── */
-.ai-disclaimer {
-  display: flex; align-items: flex-start; gap: 10px;
-  background: rgba(232,160,32,0.06); border: 1px solid rgba(232,160,32,0.2);
-  border-radius: var(--radius-sm); padding: 10px 14px;
-  font-size: 12px; color: var(--text-dim); line-height: 1.5;
-  margin-bottom: 16px;
+/* ── BOTTOM NAV (mobile) ── */
+.bottom-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface); border-top: 1px solid var(--border); z-index: 100;
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
 }
-.ai-disclaimer-icon { color: var(--gold); font-size: 14px; flex-shrink: 0; margin-top: 1px; }
-@media print { .ai-disclaimer { display: none; } }
-
-/* ── ACCOUNT MODAL ── */
-.modal-overlay {
-  position: fixed; inset: 0; z-index: 1000;
-  background: rgba(0,0,0,0.7); display: none;
-  align-items: center; justify-content: center; padding: 20px;
+.bottom-nav-items { display: flex; justify-content: space-around; }
+.bottom-nav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 500; color: var(--text-muted);
+  background: transparent; border: none; padding: 4px 12px; cursor: pointer; transition: all 0.15s; min-width: 56px;
 }
-.modal-overlay.open { display: flex; }
-.modal-box {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 32px; width: 100%; max-width: 420px;
-}
-.modal-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 24px; }
-.modal-section { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
-.modal-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-.modal-section-title { font-size: 11px; font-weight: 600; color: var(--gold); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
-.modal-input {
-  width: 100%; background: var(--surface2); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); color: var(--text); font-size: 13px;
-  padding: 9px 12px; box-sizing: border-box; margin-bottom: 8px;
-}
-.modal-input:focus { outline: none; border-color: var(--gold-dim); }
-.modal-btn {
-  font-size: 12px; font-weight: 500; padding: 8px 16px;
-  border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; border: 1px solid;
-}
-.modal-btn-primary { background: var(--gold-glow2); color: var(--gold); border-color: var(--gold-dim); }
-.modal-btn-primary:hover { background: var(--gold-glow); }
-.modal-btn-danger { background: rgba(224,85,85,0.08); color: var(--red); border-color: rgba(224,85,85,0.3); }
-.modal-btn-danger:hover { background: rgba(224,85,85,0.15); }
-.modal-btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
-.modal-btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
-.modal-msg { font-size: 12px; margin-top: 6px; min-height: 16px; }
-.modal-msg.ok { color: #34c472; }
-.modal-msg.err { color: var(--red); }
-.modal-footer { display: flex; justify-content: flex-end; margin-top: 24px; }
-.modal-cancel-note { font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
-
-/* ── MAIN ── */
-.main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 80px; }
+.bottom-nav-btn .bnav-icon { font-size: 18px; }
+.bottom-nav-btn.active { color: var(--gold); }
 
 /* ── SECTION HEADER ── */
 .section-header { margin-bottom: 20px; }
@@ -505,8 +423,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
 .proposal-summary-val { color: var(--text); font-family: var(--mono); font-weight: 500; }
 .proposal-total-label { color: var(--gold); font-weight: 600; font-size: 14px; }
 .proposal-total-val { color: var(--gold); font-family: var(--mono); font-weight: 700; font-size: 20px; }
-.proposal-summary-val[contenteditable]:hover, .proposal-total-val[contenteditable]:hover { background: var(--gold-glow2); border-radius: 3px; outline: 1px dashed var(--gold-dim); cursor: text; }
-.proposal-summary-val[contenteditable]:focus, .proposal-total-val[contenteditable]:focus { background: var(--gold-glow); border-radius: 3px; outline: 1px solid var(--gold-dim); }
 .exclusions-box { margin-top: 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 11px; color: var(--text-muted); line-height: 1.7; }
 .exclusions-title { font-weight: 600; color: var(--text-dim); margin-bottom: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; }
 
@@ -553,25 +469,48 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
 .fab-btn { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border: none; font-size: 22px; cursor: pointer; box-shadow: 0 4px 20px rgba(232,160,32,0.5); display: flex; align-items: center; justify-content: center; transition: transform 0.15s; color: #0a0d10; }
 .fab-btn:active { transform: scale(0.93); }
 
+/* ── ACCOUNT MODAL ── */
+.modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; width: 100%; max-width: 420px; }
+.modal-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 24px; }
+.modal-section { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+.modal-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.modal-section-title { font-size: 11px; font-weight: 600; color: var(--gold); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.modal-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; padding: 9px 12px; box-sizing: border-box; margin-bottom: 8px; }
+.modal-input:focus { outline: none; border-color: var(--gold-dim); }
+.modal-btn { font-size: 12px; font-weight: 500; padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; border: 1px solid; }
+.modal-btn-primary { background: var(--gold-glow2); color: var(--gold); border-color: var(--gold-dim); }
+.modal-btn-primary:hover { background: var(--gold-glow); }
+.modal-btn-danger { background: rgba(224,85,85,0.08); color: var(--red); border-color: rgba(224,85,85,0.3); }
+.modal-btn-danger:hover { background: rgba(224,85,85,0.15); }
+.modal-btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
+.modal-btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+.modal-msg { font-size: 12px; margin-top: 6px; min-height: 16px; }
+.modal-msg.ok { color: #34c472; }
+.modal-msg.err { color: var(--red); }
+.modal-footer { display: flex; justify-content: flex-end; margin-top: 24px; }
+.modal-cancel-note { font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+
 /* ── RESPONSIVE ── */
-@media (max-width:800px) {
+@media (max-width:900px) {
   .cost-grid { grid-template-columns: 1fr 1fr; }
   .summary-grid { grid-template-columns: 1fr; }
   .labor-grid { grid-template-columns: 1fr; }
-  .header-status { display: none; }
   .tab-btn { padding: 10px 12px; font-size: 11px; }
 }
-@media (max-width:600px) {
-  .main { padding: 16px 16px 80px; }
-  .header { padding: 0 16px; }
+@media (max-width:768px) {
+  .sidebar { display: none; }
+  .content-area { margin-left: 0; }
+  .bottom-nav { display: block; }
+  .main { padding: 16px 16px 90px; }
   .cost-grid { grid-template-columns: 1fr 1fr; }
   .btn-run { width: 100%; justify-content: center; }
   .input-actions { flex-direction: column; }
-  .tab-btn { padding: 10px 10px; font-size: 10px; }
+  .tab-btn { padding: 10px 8px; font-size: 10px; }
   .hours-big { font-size: 48px; }
   .tab-content { padding: 16px; }
-  .fab { display: flex; }
-  .user-email { display: none; }
+  .fab { display: none; }
 }
 </style>
 </head>
@@ -602,30 +541,47 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
   </div>
 </div>
 
-<header class="header">
-  <a class="header-logo" href="#">
+<div class="app-layout">
+
+<nav class="sidebar">
+  <a class="sidebar-logo" href="#">
     <div class="logo-mark">&#9889;</div>
-    <div class="logo-text">Foreman<span>Brain</span></div>
+    <div>
+      <div class="logo-text">Foreman<span>Brain</span></div>
+      <div class="logo-sub">AI Electrical Estimating</div>
+    </div>
   </a>
-  <div class="header-divider"></div>
-  <div class="header-status">
-    <div class="status-dot"></div>
-    <span>AI Active</span>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <button class="nav-btn active" id="navEstimate"><span class="nav-icon">&#9658;</span> Estimator</button>
+    <button class="nav-btn" id="navCustomers"><span class="nav-icon">&#128100;</span> Customers</button>
+    <button class="nav-btn" id="navInvoices"><span class="nav-icon">&#128203;</span> Invoices</button>
+    <button class="nav-btn" id="navHistory"><span class="nav-icon">&#9776;</span> Job History <span class="nav-badge" id="historyBadge" style="display:none;"></span></button>
+    <div class="nav-section-label" style="margin-top:8px;">Tools</div>
+    <button class="nav-btn" id="navCatalog"><span class="nav-icon">&#128218;</span> Vendor Catalog</button>
+    <button class="nav-btn" id="navSimple"><span class="nav-icon">&#128274;</span> Simple View</button>
   </div>
-  <div class="header-nav">
-    <button class="nav-btn active" id="navEstimate">&#9658; Estimator</button>
-    <button class="nav-btn" id="navCatalog">&#128218; Vendor Catalog</button>
-    <button class="nav-btn" id="navSimple" title="Simple mode — hides technical tabs">&#128274; Simple View</button>
-    <button class="nav-btn" id="navCustomers">&#128100; Customers</button>
-    <button class="nav-btn" id="navInvoices">&#128203; Invoices</button>
-    <button class="nav-btn" id="navHistory">&#9776; Job History <span id="historyBadge" style="display:none;background:var(--gold);color:#0a0d10;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:600;"></span></button>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <span class="user-email" id="userEmailDisplay"></span>
+      <div class="status-row"><div class="status-dot"></div><span class="status-text">AI Active</span></div>
+    </div>
+    <button class="btn-logout" id="accountBtn" style="margin-bottom:6px;">&#128100; Account</button>
+    <button class="btn-logout" id="logoutBtn">&#9888; Sign Out</button>
   </div>
-  <div class="header-user">
-    <span class="user-email" id="userEmailDisplay"></span>
-    <button class="btn-account" id="accountBtn">Account</button>
-    <button class="btn-logout" id="logoutBtn">Sign Out</button>
+</nav>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-items">
+    <button class="bottom-nav-btn active" id="bnavEstimate"><span class="bnav-icon">&#9658;</span>Estimate</button>
+    <button class="bottom-nav-btn" id="bnavCustomers"><span class="bnav-icon">&#128100;</span>Customers</button>
+    <button class="bottom-nav-btn" id="bnavInvoices"><span class="bnav-icon">&#128203;</span>Invoices</button>
+    <button class="bottom-nav-btn" id="bnavHistory"><span class="bnav-icon" style="position:relative;">&#9776;<span class="nav-badge" id="historyBadgeMobile" style="display:none;position:absolute;top:-4px;right:-4px;"></span></span>History</button>
+    <button class="bottom-nav-btn" id="bnavMore"><span class="bnav-icon">&#8943;</span>More</button>
   </div>
-</header>
+</nav>
+
+<div class="content-area">
 
 <!-- ESTIMATOR PAGE -->
 <div class="main" id="estimatorPage">
@@ -723,10 +679,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
   <div id="recentJobs" style="margin-bottom:20px;"></div>
 
   <div id="results" style="display:none;">
-    <div class="ai-disclaimer">
-      <span class="ai-disclaimer-icon">⚠</span>
-      <span>AI-generated estimate — all NEC/CEC code requirements, conductor sizing, and protection rules must be verified by the licensed contractor before submitting a bid. You are the responsible professional.</span>
-    </div>
     <div class="cost-grid" id="costGrid"></div>
     <div class="tabs-wrapper">
       <div class="tabs-bar">
@@ -787,7 +739,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
   </div>
 </div>
 
-<!-- HISTORY PAGE -->
+<!-- INVOICES PAGE -->
 <div class="main page" id="invoicesPage">
   <div class="page-header">
     <div>
@@ -802,11 +754,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
       </div>
     </div>
   </div>
-
   <div id="invoiceSummaryCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;"></div>
   <div id="invoiceList"></div>
 </div>
 
+<!-- CUSTOMERS PAGE -->
 <div class="main page" id="customersPage">
   <div class="page-header">
     <div>
@@ -815,14 +767,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
     </div>
     <button id="addCustomerBtn" style="font-size:13px;font-weight:600;color:#0a0d10;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius);padding:10px 20px;cursor:pointer;">+ Add Customer</button>
   </div>
-
   <div style="margin-bottom:16px;">
     <input id="customerSearch" placeholder="Search customers by name, phone, or address..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--body);font-size:14px;padding:12px 16px;outline:none;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
   </div>
-
   <div id="customerList"></div>
-
-  <div id="customerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div id="customerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;align-items:center;justify-content:center;padding:20px;">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
       <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:20px;" id="customerModalTitle">Add Customer</div>
       <input type="hidden" id="editCustomerId" />
@@ -862,6 +811,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
   </div>
 </div>
 
+<!-- HISTORY PAGE -->
 <div class="main page" id="historyPage">
   <div class="page-header">
     <div>
@@ -1012,7 +962,7 @@ function updateLaborTab() {
     '<div class="breakdown-row"><span class="breakdown-label">Labor Cost</span><span class="breakdown-val" id="lb-labor">' + fmtFull(hrs * getLaborRate()) + '</span></div>' +
     '<div class="total-banner"><span class="total-banner-label">Total Estimate</span><span class="total-banner-val" id="lb-total">' + fmt(roundTo10(t.markedUp + hrs * getLaborRate())) + '</span></div>' +
     '</div>' +
-    '<div class="hours-card"><div class="hours-label">Estimated Labor</div><div class="hours-big" id="lb-hrs">' + hrs + '</div><div class="hours-unit">HOURS ON-SITE</div><div class="hours-rate-line" id="lb-rate-line">@ $' + getLaborRate() + '/hr = <strong id="lb-labor-val">' + fmtFull(hrs * getLaborRate()) + '</strong></div></div>' +
+    '<div class="hours-card"><div class="hours-label">Estimated Labor</div><div class="hours-big" id="lb-hrs">' + hrs + '</div><div class="hours-unit">HOURS ON-SITE</div><div class="hours-rate-line" id="lb-rate-line">@$' + getLaborRate() + '/hr = <strong id="lb-labor-val">' + fmtFull(hrs * getLaborRate()) + '</strong></div></div>' +
     '</div>';
   document.getElementById('labor-hours-input').addEventListener('input', function() {
     editableLaborHours = parseFloat(this.value) || 0;
@@ -1099,9 +1049,9 @@ function renderProposalTab(e) {
     '</div>' +
     '<div class="proposal-summary">' +
     '<div class="proposal-summary-title">Estimate Summary</div>' +
-    '<div class="proposal-summary-row"><span class="proposal-summary-label">Materials (with markup)</span><span class="proposal-summary-val" id="prop-mat" contenteditable="true" title="Click to edit">' + fmt(t.markedUp) + '</span></div>' +
-    '<div class="proposal-summary-row"><span class="proposal-summary-label">Labor</span><span class="proposal-summary-val" id="prop-labor" contenteditable="true" title="Click to edit">' + fmt(t.labor) + ' (' + editableLaborHours + ' hrs)</span></div>' +
-    '<div class="proposal-summary-row"><span class="proposal-total-label">Total Estimate</span><span class="proposal-total-val" id="prop-total" contenteditable="true" title="Click to edit">' + fmt(t.total) + '</span></div>' +
+    '<div class="proposal-summary-row"><span class="proposal-summary-label">Materials (with markup)</span><span class="proposal-summary-val" id="prop-mat">' + fmt(t.markedUp) + '</span></div>' +
+    '<div class="proposal-summary-row"><span class="proposal-summary-label">Labor</span><span class="proposal-summary-val" id="prop-labor">' + fmt(t.labor) + ' (' + editableLaborHours + ' hrs)</span></div>' +
+    '<div class="proposal-summary-row"><span class="proposal-total-label">Total Estimate</span><span class="proposal-total-val" id="prop-total">' + fmt(t.total) + '</span></div>' +
     '</div>' +
     '<div class="exclusions-box"><div class="exclusions-title">Standard Exclusions</div>Drywall patching or painting &bull; Trenching or boring &bull; Permit fees &bull; Utility coordination &bull; Unforeseen concealed conditions</div>';
   document.getElementById('copyBtn').addEventListener('click', copyProposal);
@@ -1125,21 +1075,9 @@ function copyProposal() {
 function textProposal() {
   if (!currentEstimate) return;
   var t = calcTotals();
-  var co = getCompanyInfo();
-  var ps = currentEstimate.projectSummary || {};
-  var customerName = document.getElementById('customerName') ? document.getElementById('customerName').value.trim() : '';
-  var lines = [];
-  if (co.companyName) lines.push(co.companyName);
-  lines.push('Estimate: ' + (ps.jobType || 'Electrical Work'));
-  if (customerName) lines.push('For: ' + customerName);
-  lines.push('');
-  lines.push('Materials: ' + fmt(t.markedUp));
-  lines.push('Labor: ' + fmt(t.labor));
-  lines.push('Total: ' + fmt(t.total));
-  lines.push('');
-  lines.push('Valid 30 days. Permit required. Reply to schedule.');
-  if (co.companyPhone) lines.push(co.companyPhone);
-  window.location.href = 'sms:?body=' + encodeURIComponent(lines.join('\n'));
+  var pt = document.getElementById('proposalText');
+  var text = (pt ? pt.innerText : currentEstimate.customerProposal || '') + '\n\nESTIMATE SUMMARY\nMaterials: ' + fmt(t.markedUp) + '\nLabor: ' + fmt(t.labor) + '\nTOTAL: ' + fmt(t.total);
+  window.open('sms:?body=' + encodeURIComponent(text));
 }
 
 function printProposal() {
@@ -1175,11 +1113,9 @@ async function runEstimate() {
   document.getElementById('loadingPanel').style.display = 'block';
   document.getElementById('loadingTitle').textContent = 'Generating Estimate...';
   try {
-    var historicalContext = getHistoricalContext(input);
-    var userText = input + historicalContext;
     var msgContent = capturedPhotos.length > 0
-      ? [{ type: 'text', text: userText }, ...capturedPhotos.map(function(p) { return { type: 'image', source: { type: 'base64', media_type: p.type, data: p.base64 } }; })]
-      : userText;
+      ? [{ type: 'text', text: input }, ...capturedPhotos.map(function(p) { return { type: 'image', source: { type: 'base64', media_type: p.type, data: p.base64 } }; })]
+      : input;
     var response = await fetch(BACKEND + '/estimate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: msgContent }] })
@@ -1264,33 +1200,7 @@ function removePhoto(idx) {
 // JOB HISTORY
 var HISTORY_KEY = 'foremanBrainJobs';
 function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
-function saveHistory(jobs) {
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(jobs));
-  if (window._authToken) {
-    fetch(BACKEND + '/jobs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window._authToken },
-      body: JSON.stringify({ jobs: jobs })
-    }).catch(function() {});
-  }
-}
-
-async function loadCloudHistory() {
-  if (!window._authToken) return;
-  try {
-    var r = await fetch(BACKEND + '/jobs', { headers: { 'Authorization': 'Bearer ' + window._authToken } });
-    if (!r.ok) return;
-    var data = await r.json();
-    if (Array.isArray(data.jobs) && data.jobs.length > 0) {
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(data.jobs));
-      updateHistoryBadge();
-      renderRecentJobs();
-    } else {
-      var local = loadHistory();
-      if (local.length) saveHistory(local);
-    }
-  } catch(e) {}
-}
+function saveHistory(jobs) { localStorage.setItem(HISTORY_KEY, JSON.stringify(jobs)); }
 
 function saveJob(estimate, input) {
   var t = calcTotals();
@@ -1313,30 +1223,12 @@ function saveJob(estimate, input) {
 
 function showToast() { var t = document.getElementById('saveToast'); t.classList.add('show'); setTimeout(function() { t.classList.remove('show'); }, 2200); }
 
-function getHistoricalContext(currentInput) {
-  var jobs = loadHistory().filter(function(j) { return j.status === 'won' || j.status === 'lost'; });
-  if (!jobs.length) return '';
-  var inputLower = currentInput.toLowerCase();
-  var inputWords = inputLower.split(/\s+/).filter(function(w) { return w.length > 3; });
-  var scored = jobs.map(function(j) {
-    var jobText = ((j.jobType || '') + ' ' + (j.input || '')).toLowerCase();
-    var matches = inputWords.filter(function(w) { return jobText.includes(w); }).length;
-    return { job: j, score: matches };
-  }).filter(function(s) { return s.score > 0; });
-  scored.sort(function(a, b) { return b.score - a.score; });
-  var topJobs = scored.slice(0, 5).map(function(s) { return s.job; });
-  var recent = jobs.slice(0, 3).filter(function(j) { return !topJobs.find(function(t) { return t.id === j.id; }); });
-  var allContext = topJobs.concat(recent).slice(0, 6);
-  if (!allContext.length) return '';
-  var lines = allContext.map(function(j) {
-    return '- [' + j.status.toUpperCase() + '] ' + j.jobType + ': $' + Math.round(j.total || 0).toLocaleString() + ' total, ' + (j.laborHours || 0) + ' labor hrs';
-  });
-  return '\n\n---\nHISTORICAL PERFORMANCE DATA — use this to calibrate your estimate:\n' + lines.join('\n') + '\nPattern: if similar jobs were won at lower prices, stay competitive. If lost at higher prices, be conservative on labor and material quantities.\n---';
-}
-
 function updateHistoryBadge() {
-  var jobs = loadHistory(); var b = document.getElementById('historyBadge');
-  b.textContent = jobs.length; b.style.display = jobs.length > 0 ? 'inline' : 'none';
+  var jobs = loadHistory();
+  var b = document.getElementById('historyBadge');
+  if (b) { b.textContent = jobs.length; b.style.display = jobs.length > 0 ? 'inline' : 'none'; }
+  var bm = document.getElementById('historyBadgeMobile');
+  if (bm) { bm.textContent = jobs.length; bm.style.display = jobs.length > 0 ? 'inline' : 'none'; }
   var c = document.getElementById('historyCount'); if (c) c.textContent = jobs.length + ' job' + (jobs.length === 1 ? '' : 's') + ' saved';
 }
 
@@ -1355,7 +1247,7 @@ function renderHistoryList() {
     return '<div class="job-card" id="jc-' + job.id + '">' +
       '<div class="job-card-left">' +
       '<div class="job-type-badge">' + escHtml(job.jobType) + '</div>' +
-      '<div class="job-card-desc">' + escHtml(job.customerName ? job.customerName + ' \u2014 ' + job.input : job.input || '') + '</div>' +
+      '<div class="job-card-desc">' + escHtml(job.customerName ? job.customerName + ' — ' + job.input : job.input || '') + '</div>' +
       '<div class="job-card-meta">' + job.date + ' &bull; ' + job.time + (job.customerAddress ? ' &bull; ' + escHtml(job.customerAddress) : '') + '</div>' +
       '</div>' +
       '<div class="job-card-right">' +
@@ -1453,9 +1345,9 @@ function renderRecentJobs() {
   el.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:0.3px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;">Recent Jobs <span style="flex:1;height:1px;background:var(--border);display:block;"></span></div>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
     jobs.map(function(job) {
-      return '<button onclick="loadJob(' + job.id + ')" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;cursor:pointer;text-align:left;transition:all 0.15s;max-width:280px;" onmouseover="this.style.borderColor=\'var(--border2)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.transform=\'none\'">' +
+      return '<button onclick="loadJob(' + job.id + ')" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;cursor:pointer;text-align:left;transition:all 0.15s;max-width:280px;">' +
         '<div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:3px;">' + escHtml(job.jobType) + '</div>' +
-        '<div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;max-width:240px;">' + escHtml((job.customerName ? job.customerName + ' \u2014 ' : '') + job.input) + '</div>' +
+        '<div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;max-width:240px;">' + escHtml((job.customerName ? job.customerName + ' — ' : '') + job.input) + '</div>' +
         '<div style="font-size:11px;color:var(--text-muted);font-family:var(--mono);">' + fmt(job.total) + ' &bull; ' + job.date + '</div>' +
         '</button>';
     }).join('') +
@@ -1465,389 +1357,6 @@ function renderRecentJobs() {
 function deleteJob(id) {
   saveHistory(loadHistory().filter(function(j) { return j.id !== id; }));
   renderHistoryList(); updateHistoryBadge();
-}
-
-// ── INVOICE TRACKING ──
-var currentInvoiceFilter = 'all';
-
-async function loadInvoices(filter) {
-  if (!window._supabase || !window._userEmail) return [];
-  try {
-    var query = window._supabase.from('invoices').select('*').eq('user_id', window._userEmail).order('created_at', { ascending: false });
-    if (filter && filter !== 'all') query = query.eq('status', filter);
-    var result = await query;
-    return result.data || [];
-  } catch(e) { console.error('Load invoices error:', e); return []; }
-}
-
-async function markInvoicePaid(id) {
-  try {
-    await window._supabase.from('invoices').update({ status: 'paid', paid_date: new Date().toISOString().split('T')[0] }).eq('id', id);
-    renderInvoiceList(currentInvoiceFilter);
-    showToast();
-  } catch(e) { alert('Error updating invoice.'); }
-}
-
-async function deleteInvoice(id) {
-  if (!confirm('Delete this invoice?')) return;
-  await window._supabase.from('invoices').delete().eq('id', id);
-  renderInvoiceList(currentInvoiceFilter);
-}
-
-async function renderInvoiceList(filter) {
-  currentInvoiceFilter = filter || 'all';
-  var list = document.getElementById('invoiceList');
-  var cards = document.getElementById('invoiceSummaryCards');
-  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">Loading...</div>';
-
-  var all = await loadInvoices('all');
-  var unpaid = all.filter(function(i) { return i.status === 'unpaid'; });
-  var paid = all.filter(function(i) { return i.status === 'paid'; });
-  var totalUnpaid = unpaid.reduce(function(sum, i) { return sum + (i.total || 0); }, 0);
-  var totalPaid = paid.reduce(function(sum, i) { return sum + (i.total || 0); }, 0);
-  var totalAll = all.reduce(function(sum, i) { return sum + (i.total || 0); }, 0);
-
-  var count = document.getElementById('invoiceCount');
-  if (count) count.textContent = all.length + ' invoice' + (all.length === 1 ? '' : 's');
-
-  if (cards) cards.innerHTML =
-    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;"><div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;">Total Invoiced</div><div style="font-size:24px;font-weight:700;color:var(--text);">' + fmt(totalAll) + '</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + all.length + ' invoices</div></div>' +
-    '<div style="background:rgba(224,85,85,0.06);border:1px solid rgba(224,85,85,0.2);border-radius:var(--radius);padding:16px;"><div style="font-size:11px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;">Outstanding</div><div style="font-size:24px;font-weight:700;color:var(--red);">' + fmt(totalUnpaid) + '</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + unpaid.length + ' unpaid</div></div>' +
-    '<div style="background:rgba(52,196,114,0.06);border:1px solid rgba(52,196,114,0.2);border-radius:var(--radius);padding:16px;"><div style="font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;">Collected</div><div style="font-size:24px;font-weight:700;color:var(--green);">' + fmt(totalPaid) + '</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + paid.length + ' paid</div></div>';
-
-  var invoices = filter && filter !== 'all' ? all.filter(function(i) { return i.status === filter; }) : all;
-
-  if (!invoices.length) {
-    list.innerHTML = '<div style="text-align:center;padding:60px 32px;"><div style="font-size:36px;opacity:0.2;margin-bottom:12px;">&#128203;</div><div style="font-size:13px;color:var(--text-muted);">No invoices found.<br/>Create an invoice from any estimate proposal.</div></div>';
-    return;
-  }
-
-  list.innerHTML = invoices.map(function(inv) {
-    var isPaid = inv.status === 'paid';
-    var isOverdue = !isPaid && inv.due_date && new Date(inv.due_date) < new Date();
-    var statusColor = isPaid ? 'var(--green)' : isOverdue ? 'var(--red)' : 'var(--gold)';
-    var statusBg = isPaid ? 'rgba(52,196,114,0.08)' : isOverdue ? 'rgba(224,85,85,0.08)' : 'rgba(232,160,32,0.08)';
-    var statusBorder = isPaid ? 'rgba(52,196,114,0.25)' : isOverdue ? 'rgba(224,85,85,0.25)' : 'rgba(232,160,32,0.25)';
-    var statusText = isPaid ? 'Paid' : isOverdue ? 'Overdue' : 'Unpaid';
-    var createdDate = new Date(inv.created_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
-    var dueDate = inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '—';
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.15s;" onmouseover="this.style.borderColor=\'var(--border2)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
-      '<div style="flex:1;min-width:0;">' +
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
-      '<span style="font-size:14px;font-weight:600;color:var(--text);">' + escHtml(inv.invoice_number || 'Invoice') + '</span>' +
-      '<span style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;background:' + statusBg + ';border:1px solid ' + statusBorder + ';color:' + statusColor + ';">' + statusText + '</span>' +
-      (isOverdue ? '<span style="font-size:11px;color:var(--red);">&#9888; Overdue</span>' : '') +
-      '</div>' +
-      '<div style="font-size:12px;color:var(--text-muted);font-family:var(--mono);">Created: ' + createdDate + ' &bull; Due: ' + dueDate + (inv.notes ? ' &bull; ' + escHtml(inv.notes) : '') + '</div>' +
-      '</div>' +
-      '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">' +
-      '<div style="font-size:20px;font-weight:700;color:var(--text);">' + fmt(inv.total || 0) + '</div>' +
-      '<div style="display:flex;gap:6px;">' +
-      (!isPaid ? '<button onclick="markInvoicePaid(\'' + inv.id + '\')" style="font-size:12px;font-weight:500;color:#0a0d10;background:linear-gradient(135deg,var(--green),#28a85a);border:none;border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Mark Paid</button>' : '') +
-      '<button onclick="deleteInvoice(\'' + inv.id + '\')" style="font-size:12px;color:var(--red);background:transparent;border:1px solid rgba(224,85,85,0.3);border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Delete</button>' +
-      '</div></div></div>';
-  }).join('');
-
-  document.querySelectorAll('.invoice-filter-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.invoice-filter-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
-      this.classList.add('active');
-      renderInvoiceList(this.getAttribute('data-filter'));
-    });
-  });
-}
-
-// ── INVOICE GENERATION ──
-var invoiceCounter = parseInt(localStorage.getItem('foremanBrainInvoiceCounter') || '1000');
-
-async function createInvoice() {
-  if (!currentEstimate) return;
-  var t = calcTotals();
-  invoiceCounter++;
-  localStorage.setItem('foremanBrainInvoiceCounter', invoiceCounter);
-  var invoiceNum = 'INV-' + invoiceCounter;
-  var company = getCompanyInfo();
-  var customerName = document.getElementById('customerName') ? document.getElementById('customerName').value : '';
-  var customerAddress = document.getElementById('customerAddress') ? document.getElementById('customerAddress').value : '';
-  var today = new Date();
-  var dueDate = new Date(today); dueDate.setDate(dueDate.getDate() + 30);
-  var fmt2 = function(d) { return d.toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'}); };
-
-  // Save to Supabase if available
-  if (window._supabase && window._userEmail) {
-    try {
-      await window._supabase.from('invoices').insert({
-        user_id: window._userEmail,
-        invoice_number: invoiceNum,
-        total: t.total,
-        status: 'unpaid',
-        due_date: dueDate.toISOString().split('T')[0],
-        notes: customerName + ' — ' + ((currentEstimate.projectSummary || {}).jobType || '')
-      });
-    } catch(e) { console.error('Invoice save error:', e); }
-  }
-
-  // Generate printable invoice
-  var win = window.open('', '_blank');
-  win.document.write('<!DOCTYPE html><html><head><title>Invoice ' + invoiceNum + '</title>');
-  win.document.write('<style>');
-  win.document.write('* { box-sizing:border-box; margin:0; padding:0; }');
-  win.document.write('body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:14px; color:#1a1a1a; padding:60px; max-width:800px; margin:0 auto; }');
-  win.document.write('.header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:48px; padding-bottom:32px; border-bottom:2px solid #1a1a1a; }');
-  win.document.write('.company-name { font-size:24px; font-weight:700; margin-bottom:4px; }');
-  win.document.write('.company-info { font-size:12px; color:#666; line-height:1.8; }');
-  win.document.write('.invoice-meta { text-align:right; }');
-  win.document.write('.invoice-title { font-size:32px; font-weight:700; color:#1a1a1a; margin-bottom:8px; }');
-  win.document.write('.invoice-num { font-size:14px; color:#666; margin-bottom:4px; }');
-  win.document.write('.invoice-status { display:inline-block; background:#fff3cd; color:#856404; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; border:1px solid #ffc107; }');
-  win.document.write('.bill-section { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-bottom:40px; }');
-  win.document.write('.bill-label { font-size:11px; font-weight:600; color:#666; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }');
-  win.document.write('.bill-name { font-size:15px; font-weight:600; margin-bottom:4px; }');
-  win.document.write('.bill-info { font-size:13px; color:#444; line-height:1.7; }');
-  win.document.write('table { width:100%; border-collapse:collapse; margin-bottom:32px; }');
-  win.document.write('thead tr { border-bottom:2px solid #1a1a1a; }');
-  win.document.write('th { font-size:11px; font-weight:600; color:#666; letter-spacing:0.5px; text-transform:uppercase; padding:10px 12px; text-align:left; }');
-  win.document.write('th.right { text-align:right; }');
-  win.document.write('tbody tr { border-bottom:1px solid #eee; }');
-  win.document.write('tbody tr:hover { background:#f9f9f9; }');
-  win.document.write('td { padding:10px 12px; font-size:13px; color:#333; }');
-  win.document.write('td.right { text-align:right; font-family:monospace; }');
-  win.document.write('.totals { margin-left:auto; width:300px; }');
-  win.document.write('.total-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:13px; }');
-  win.document.write('.total-row.final { border-top:2px solid #1a1a1a; border-bottom:none; padding-top:12px; margin-top:4px; font-size:16px; font-weight:700; }');
-  win.document.write('.total-label { color:#444; }');
-  win.document.write('.total-val { font-family:monospace; font-weight:500; }');
-  win.document.write('.notes-section { margin-top:40px; padding-top:24px; border-top:1px solid #eee; }');
-  win.document.write('.notes-title { font-size:11px; font-weight:600; color:#666; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }');
-  win.document.write('.notes-text { font-size:13px; color:#444; line-height:1.7; }');
-  win.document.write('.footer { margin-top:48px; padding-top:24px; border-top:1px solid #eee; text-align:center; font-size:12px; color:#999; }');
-  win.document.write('.due-banner { background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:16px 20px; margin-bottom:32px; display:flex; justify-content:space-between; align-items:center; }');
-  win.document.write('.due-label { font-size:12px; color:#166534; font-weight:600; }');
-  win.document.write('.due-date { font-size:15px; color:#166534; font-weight:700; }');
-  win.document.write('@media print { body { padding:40px; } }');
-  win.document.write('</style></head><body>');
-
-  // Header
-  win.document.write('<div class="header">');
-  win.document.write('<div>');
-  if (company.companyName) {
-    win.document.write('<div class="company-name">' + escHtml(company.companyName) + '</div>');
-    win.document.write('<div class="company-info">');
-    if (company.companyLicense) win.document.write('CA License #' + escHtml(company.companyLicense) + '<br>');
-    if (company.companyPhone) win.document.write(escHtml(company.companyPhone) + '<br>');
-    win.document.write('</div>');
-  } else {
-    win.document.write('<div class="company-name">Electrical Contractor</div>');
-  }
-  win.document.write('</div>');
-  win.document.write('<div class="invoice-meta">');
-  win.document.write('<div class="invoice-title">INVOICE</div>');
-  win.document.write('<div class="invoice-num">' + invoiceNum + '</div>');
-  win.document.write('<div class="invoice-num">Date: ' + fmt2(today) + '</div>');
-  win.document.write('<div style="margin-top:8px;"><span class="invoice-status">UNPAID</span></div>');
-  win.document.write('</div></div>');
-
-  // Due date banner
-  win.document.write('<div class="due-banner"><span class="due-label">Payment Due</span><span class="due-date">' + fmt2(dueDate) + '</span></div>');
-
-  // Bill to
-  win.document.write('<div class="bill-section">');
-  win.document.write('<div><div class="bill-label">Bill To</div>');
-  if (customerName) win.document.write('<div class="bill-name">' + escHtml(customerName) + '</div>');
-  if (customerAddress) win.document.write('<div class="bill-info">' + escHtml(customerAddress) + '</div>');
-  win.document.write('</div>');
-  win.document.write('<div><div class="bill-label">Job Description</div>');
-  win.document.write('<div class="bill-info">' + escHtml((currentEstimate.projectSummary || {}).jobType || 'Electrical Work') + '</div>');
-  win.document.write('</div></div>');
-
-  // Materials table
-  win.document.write('<table><thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Unit Price</th><th class="right">Total</th></tr></thead><tbody>');
-  editableMaterials.forEach(function(m) {
-    win.document.write('<tr><td>' + escHtml(m.item) + '</td><td class="right">' + escHtml(m.qty) + '</td><td class="right">$' + (parseFloat(m.unitCost)||0).toFixed(2) + '</td><td class="right">$' + (parseFloat(m.totalCost)||0).toFixed(2) + '</td></tr>');
-  });
-  win.document.write('<tr style="background:#f9f9f9;"><td colspan="3" style="padding:10px 12px;font-size:13px;color:#444;">Labor — ' + editableLaborHours + ' hours @ $' + getLaborRate() + '/hr</td><td class="right">$' + (editableLaborHours * getLaborRate()).toFixed(2) + '</td></tr>');
-  win.document.write('</tbody></table>');
-
-  // Totals
-  win.document.write('<div class="totals">');
-  win.document.write('<div class="total-row"><span class="total-label">Materials (subtotal)</span><span class="total-val">$' + t.raw.toFixed(2) + '</span></div>');
-  win.document.write('<div class="total-row"><span class="total-label">Materials markup (&times;' + getMarkup() + ')</span><span class="total-val">$' + t.markedUp.toFixed(2) + '</span></div>');
-  win.document.write('<div class="total-row"><span class="total-label">Labor</span><span class="total-val">$' + t.labor.toFixed(2) + '</span></div>');
-  win.document.write('<div class="total-row final"><span class="total-label">Total Due</span><span class="total-val">$' + t.total.toFixed(2) + '</span></div>');
-  win.document.write('</div>');
-
-  // Notes
-  win.document.write('<div class="notes-section">');
-  win.document.write('<div class="notes-title">Notes & Exclusions</div>');
-  win.document.write('<div class="notes-text">This invoice does not include: drywall patching or painting, trenching or boring, permit fees, utility coordination, or unforeseen concealed conditions.<br><br>');
-  win.document.write('Payment is due within 30 days of invoice date. Thank you for your business.</div>');
-  win.document.write('</div>');
-
-  // Footer
-  win.document.write('<div class="footer">');
-  if (company.companyName) win.document.write(escHtml(company.companyName) + ' &bull; ');
-  if (company.companyLicense) win.document.write('CA License #' + escHtml(company.companyLicense) + ' &bull; ');
-  win.document.write('Generated by Foreman Brain</div>');
-
-  win.document.write('</body></html>');
-  win.document.close();
-  setTimeout(function() { win.print(); }, 500);
-}
-
-// ── AI CHANGE ORDER ──
-function showChangeOrderModal() {
-  var existing = document.getElementById('changeOrderModal');
-  if (existing) existing.remove();
-  var modal = document.createElement('div');
-  modal.id = 'changeOrderModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;';
-  modal.innerHTML =
-    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:100%;max-width:500px;">' +
-    '<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;">&#43; Add Change Order</div>' +
-    '<div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Describe the additional work to add to this estimate. AI will generate the extra materials and labor.</div>' +
-    '<textarea id="changeOrderInput" placeholder="Example: Customer also wants 2 outdoor GFCI outlets on the back patio, about 30 feet of new wire needed..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--body);font-size:13px;padding:12px;outline:none;resize:vertical;min-height:100px;margin-bottom:16px;" onfocus="this.style.borderColor=\'var(--gold)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
-    '<div style="display:flex;gap:10px;">' +
-    '<button id="runChangeOrderBtn" style="flex:1;font-size:13px;font-weight:600;color:#0a0d10;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius-sm);padding:12px;cursor:pointer;">&#9658; Generate Change Order</button>' +
-    '<button onclick="document.getElementById(\'changeOrderModal\').remove()" style="font-size:13px;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 20px;cursor:pointer;">Cancel</button>' +
-    '</div>' +
-    '<div id="changeOrderStatus" style="margin-top:12px;font-size:12px;color:var(--text-muted);display:none;"></div>' +
-    '</div>';
-  document.body.appendChild(modal);
-  document.getElementById('runChangeOrderBtn').addEventListener('click', runChangeOrder);
-}
-
-async function runChangeOrder() {
-  var input = document.getElementById('changeOrderInput').value.trim();
-  if (!input) return;
-  var btn = document.getElementById('runChangeOrderBtn');
-  var status = document.getElementById('changeOrderStatus');
-  btn.textContent = 'Generating...'; btn.disabled = true;
-  status.style.display = 'block'; status.style.color = 'var(--gold)'; status.textContent = 'AI is calculating the change order...';
-
-  var originalSummary = currentEstimate ? JSON.stringify(currentEstimate.projectSummary) : '';
-  var changeOrderPrompt = 'CHANGE ORDER REQUEST for existing estimate.\n\nOriginal job: ' + originalSummary + '\n\nAdditional scope requested: ' + input + '\n\nGenerate ONLY the additional materials and labor for this change order. Return the same JSON format but only include the NEW items being added, not the original estimate items. Label it as a change order in the jobType field.';
-
-  try {
-    var response = await fetch(BACKEND + '/estimate', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 3000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: changeOrderPrompt }] })
-    });
-    var data = await response.json();
-    var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
-    var cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
-    var parsed;
-    try { parsed = JSON.parse(cleaned); }
-    catch(e) { var m = cleaned.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error('Could not parse change order.'); }
-
-    // Merge change order into existing estimate
-    var newItems = parsed.materialTakeoff || [];
-    editableMaterials = editableMaterials.concat(newItems.map(function(r) {
-      return { item: 'CO: ' + (r.item || ''), qty: r.qty || '1', unitCost: parseFloat(r.unitCost) || 0, totalCost: parseFloat(r.totalCost) || 0 };
-    }));
-    editableLaborHours = editableLaborHours + (parseFloat(parsed.laborHours) || 0);
-
-    document.getElementById('changeOrderModal').remove();
-    updateCostCards(); renderMaterialsTab(); updateLaborTab();
-    switchTab('materials');
-    status.style.color = 'var(--green)'; status.textContent = 'Change order added — ' + newItems.length + ' new items added to takeoff.';
-    showToast();
-  } catch(err) {
-    status.style.color = 'var(--red)'; status.textContent = 'Error: ' + err.message;
-    btn.textContent = '&#9658; Generate Change Order'; btn.disabled = false;
-  }
-}
-
-// ── CUSTOMER DATABASE ──
-async function loadCustomers(search) {
-  if (!window._supabase || !window._userEmail) return [];
-  try {
-    var query = window._supabase.from('customers').select('*').eq('user_id', window._userEmail).order('name');
-    if (search) query = query.or('name.ilike.%' + search + '%,phone.ilike.%' + search + '%,address.ilike.%' + search + '%');
-    var result = await query;
-    return result.data || [];
-  } catch(e) { console.error('Load customers error:', e); return []; }
-}
-
-async function saveCustomer() {
-  var id = document.getElementById('editCustomerId').value;
-  var name = document.getElementById('cName').value.trim();
-  if (!name) { alert('Please enter a customer name.'); return; }
-  var customer = {
-    user_id: window._userEmail,
-    name: name,
-    phone: document.getElementById('cPhone').value.trim(),
-    email: document.getElementById('cEmail').value.trim(),
-    address: document.getElementById('cAddress').value.trim(),
-    city: document.getElementById('cCity').value.trim(),
-    notes: document.getElementById('cNotes').value.trim()
-  };
-  try {
-    if (id) {
-      await window._supabase.from('customers').update(customer).eq('id', id);
-    } else {
-      await window._supabase.from('customers').insert(customer);
-    }
-    closeCustomerModal();
-    renderCustomerList();
-    showToast();
-  } catch(e) { alert('Error saving customer. Please try again.'); }
-}
-
-async function deleteCustomer(id) {
-  if (!confirm('Delete this customer?')) return;
-  await window._supabase.from('customers').delete().eq('id', id);
-  renderCustomerList();
-}
-
-function openCustomerModal(customer) {
-  document.getElementById('editCustomerId').value = customer ? customer.id : '';
-  document.getElementById('cName').value = customer ? customer.name : '';
-  document.getElementById('cPhone').value = customer ? (customer.phone || '') : '';
-  document.getElementById('cEmail').value = customer ? (customer.email || '') : '';
-  document.getElementById('cAddress').value = customer ? (customer.address || '') : '';
-  document.getElementById('cCity').value = customer ? (customer.city || '') : '';
-  document.getElementById('cNotes').value = customer ? (customer.notes || '') : '';
-  document.getElementById('customerModalTitle').textContent = customer ? 'Edit Customer' : 'Add Customer';
-  document.getElementById('customerModal').style.display = 'flex';
-}
-
-function closeCustomerModal() {
-  document.getElementById('customerModal').style.display = 'none';
-}
-
-function selectCustomerForEstimate(customer) {
-  if (document.getElementById('customerName')) document.getElementById('customerName').value = customer.name;
-  if (document.getElementById('customerAddress')) document.getElementById('customerAddress').value = (customer.address || '') + (customer.city ? ', ' + customer.city : '');
-  showEstimatorPage();
-}
-
-async function renderCustomerList(search) {
-  var list = document.getElementById('customerList');
-  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">Loading...</div>';
-  var customers = await loadCustomers(search);
-  var count = document.getElementById('customerCount');
-  if (count) count.textContent = customers.length + ' customer' + (customers.length === 1 ? '' : 's');
-  if (!customers.length) {
-    list.innerHTML = '<div style="text-align:center;padding:60px 32px;"><div style="font-size:36px;opacity:0.2;margin-bottom:12px;">&#128100;</div><div style="font-size:13px;color:var(--text-muted);">No customers yet.<br/>Add your first customer to get started.</div></div>';
-    return;
-  }
-  list.innerHTML = customers.map(function(c) {
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.15s;" onmouseover="this.style.borderColor=\'var(--border2)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
-      '<div style="flex:1;min-width:0;">' +
-      '<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;">' + escHtml(c.name) + '</div>' +
-      '<div style="font-size:12px;color:var(--text-muted);font-family:var(--mono);">' +
-      (c.phone ? '&#128222; ' + escHtml(c.phone) + '&nbsp;&nbsp;' : '') +
-      (c.email ? '&#9993; ' + escHtml(c.email) + '&nbsp;&nbsp;' : '') +
-      (c.address ? '&#128205; ' + escHtml(c.address) + (c.city ? ', ' + escHtml(c.city) : '') : '') +
-      '</div>' +
-      (c.notes ? '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;font-style:italic;">' + escHtml(c.notes) + '</div>' : '') +
-      '</div>' +
-      '<div style="display:flex;gap:8px;flex-shrink:0;">' +
-      '<button onclick="selectCustomerForEstimate(' + JSON.stringify(c).replace(/"/g, "&quot;") + ')" style="font-size:12px;font-weight:500;color:#0a0d10;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">New Estimate</button>' +
-      '<button onclick="openCustomerModal(' + JSON.stringify(c).replace(/"/g, "&quot;") + ')" style="font-size:12px;color:var(--text-dim);background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Edit</button>' +
-      '<button onclick="deleteCustomer(\'' + c.id + '\')" style="font-size:12px;color:var(--red);background:transparent;border:1px solid rgba(224,85,85,0.3);border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Delete</button>' +
-      '</div></div>';
-  }).join('');
 }
 
 // VENDOR CATALOG
@@ -1892,7 +1401,7 @@ async function handleCatalogUpload(e) {
       var prices = getVendorPrices();
       cp.forEach(function(p) { if (p.item && p.unit_price > 0) prices[p.item.toLowerCase()] = { price: p.unit_price, unit: p.unit || 'each' }; });
       saveVendorPrices(prices);
-      status.style.color = 'var(--green)'; status.textContent = '\u2713 Found ' + cp.length + ' prices \u2014 added to your price book!';
+      status.style.color = 'var(--green)'; status.textContent = '\u2713 Found ' + cp.length + ' prices — added to your price book!';
       renderCatalogPriceList();
     } else { status.style.color = 'var(--red)'; status.textContent = 'No prices found. Try a clearer photo.'; }
   } catch(err) { status.style.color = 'var(--red)'; status.textContent = 'Upload failed. Please try again.'; }
@@ -1900,58 +1409,49 @@ async function handleCatalogUpload(e) {
 }
 
 // PAGE NAVIGATION
+function setActiveNav(id) {
+  ['navEstimate','navCustomers','navInvoices','navHistory','navCatalog','navSimple'].forEach(function(n) {
+    var el = document.getElementById(n); if (el) el.classList.remove('active');
+  });
+  ['bnavEstimate','bnavCustomers','bnavInvoices','bnavHistory','bnavMore'].forEach(function(n) {
+    var el = document.getElementById(n); if (el) el.classList.remove('active');
+  });
+  var el = document.getElementById(id); if (el) el.classList.add('active');
+  var bmap = { navEstimate:'bnavEstimate', navCustomers:'bnavCustomers', navInvoices:'bnavInvoices', navHistory:'bnavHistory' };
+  if (bmap[id]) { var bel = document.getElementById(bmap[id]); if (bel) bel.classList.add('active'); }
+}
+function hideAllPages() {
+  ['estimatorPage','historyPage','catalogPage','customersPage','invoicesPage'].forEach(function(p) {
+    var el = document.getElementById(p); if (el) el.style.display = 'none';
+  });
+}
 function showEstimatorPage() {
+  hideAllPages();
   document.getElementById('estimatorPage').style.display = 'block';
-  document.getElementById('historyPage').style.display = 'none';
-  document.getElementById('catalogPage').style.display = 'none';
-  document.getElementById('navEstimate').classList.add('active');
-  document.getElementById('navHistory').classList.remove('active');
-  document.getElementById('navCatalog').classList.remove('active');
+  setActiveNav('navEstimate');
 }
 function showHistoryPage() {
-  document.getElementById('estimatorPage').style.display = 'none';
+  hideAllPages();
   document.getElementById('historyPage').style.display = 'block';
-  document.getElementById('catalogPage').style.display = 'none';
-  document.getElementById('navHistory').classList.add('active');
-  document.getElementById('navEstimate').classList.remove('active');
-  document.getElementById('navCatalog').classList.remove('active');
+  setActiveNav('navHistory');
   renderHistoryList();
 }
 function showCatalogPage() {
-  document.getElementById('estimatorPage').style.display = 'none';
-  document.getElementById('historyPage').style.display = 'none';
+  hideAllPages();
   document.getElementById('catalogPage').style.display = 'block';
-  document.getElementById('navCatalog').classList.add('active');
-  document.getElementById('navEstimate').classList.remove('active');
-  document.getElementById('navHistory').classList.remove('active');
+  setActiveNav('navCatalog');
   renderCatalogPriceList();
 }
-
 function showCustomersPage() {
-  document.getElementById('estimatorPage').style.display = 'none';
-  document.getElementById('historyPage').style.display = 'none';
-  document.getElementById('catalogPage').style.display = 'none';
+  hideAllPages();
   document.getElementById('customersPage').style.display = 'block';
-  document.getElementById('navCustomers').classList.add('active');
-  document.getElementById('navEstimate').classList.remove('active');
-  document.getElementById('navHistory').classList.remove('active');
-  document.getElementById('navCatalog').classList.remove('active');
-  document.getElementById('navSimple').classList.remove('active');
+  setActiveNav('navCustomers');
   renderCustomerList();
 }
-
 function showInvoicesPage() {
-  document.getElementById('estimatorPage').style.display = 'none';
-  document.getElementById('historyPage').style.display = 'none';
-  document.getElementById('catalogPage').style.display = 'none';
-  document.getElementById('customersPage').style.display = 'none';
+  hideAllPages();
   document.getElementById('invoicesPage').style.display = 'block';
-  document.getElementById('navInvoices').classList.add('active');
-  document.getElementById('navEstimate').classList.remove('active');
-  document.getElementById('navHistory').classList.remove('active');
-  document.getElementById('navCatalog').classList.remove('active');
-  document.getElementById('navCustomers').classList.remove('active');
-  document.getElementById('navSimple').classList.remove('active');
+  setActiveNav('navInvoices');
   renderInvoiceList('all');
 }
 
@@ -2008,7 +1508,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var qfs = [
     'Homeowner wants a 50A EV charger installed in the attached garage. Panel is in the basement, approximately 60 feet away.',
     'Service upgrade from 100A to 200A panel. House is 1970s construction with 20 existing circuits. Meter is on the exterior south wall.',
-    'Kitchen remodel \u2014 customer needs 2 new 20A small appliance circuits, dedicated circuit for refrigerator, and dedicated circuit for microwave. Open walls.',
+    'Kitchen remodel — customer needs 2 new 20A small appliance circuits, dedicated circuit for refrigerator, and dedicated circuit for microwave. Open walls.',
     'Install a 60A subpanel in the detached garage. The garage is approximately 80 feet from the main house panel. Overhead run.',
     '240V 50A circuit for a new hot tub on the back deck. Needs GFCI disconnect within sight of spa. About 50 feet from panel.',
     'Add 6 recessed LED lights and a ceiling fan with light kit in the living room. Currently no overhead lighting, finished drywall ceiling.'
@@ -2035,9 +1535,6 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('navCatalog').addEventListener('click', showCatalogPage);
   document.getElementById('navCustomers').addEventListener('click', showCustomersPage);
   document.getElementById('navInvoices').addEventListener('click', showInvoicesPage);
-  document.getElementById('addCustomerBtn').addEventListener('click', function() { openCustomerModal(null); });
-  document.getElementById('saveCustomerBtn').addEventListener('click', saveCustomer);
-  document.getElementById('customerSearch').addEventListener('input', function() { renderCustomerList(this.value); });
 
   document.getElementById('clearHistoryBtn').addEventListener('click', function() {
     if (confirm('Delete all saved jobs? This cannot be undone.')) { localStorage.removeItem(HISTORY_KEY); renderHistoryList(); updateHistoryBadge(); }
@@ -2057,13 +1554,34 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('logoutBtn').addEventListener('click', async function() { if (window._supabase) await window._supabase.auth.signOut(); window.location.href = 'auth.html'; });
 
   updateHistoryBadge();
-  loadCloudHistory();
   initVoice();
   initPhoto();
   loadCompanySettings();
   checkWelcome();
   renderRecentJobs();
   document.getElementById('navSimple').addEventListener('click', toggleSimpleMode);
+
+  // Bottom nav
+  document.getElementById('bnavEstimate').addEventListener('click', showEstimatorPage);
+  document.getElementById('bnavCustomers').addEventListener('click', showCustomersPage);
+  document.getElementById('bnavInvoices').addEventListener('click', showInvoicesPage);
+  document.getElementById('bnavHistory').addEventListener('click', showHistoryPage);
+  document.getElementById('bnavMore').addEventListener('click', showCatalogPage);
+
+  // Save labor rate and markup when changed
+  document.getElementById('laborRate').addEventListener('change', saveCompanySettings);
+  document.getElementById('markupRate').addEventListener('change', saveCompanySettings);
+
+  // Company settings toggle
+  document.getElementById('settingsBtn').addEventListener('click', function() {
+    var p = document.getElementById('companyPanel');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // Customer & invoice listeners
+  document.getElementById('addCustomerBtn').addEventListener('click', function() { openCustomerModal(null); });
+  document.getElementById('saveCustomerBtn').addEventListener('click', saveCustomer);
+  document.getElementById('customerSearch').addEventListener('input', function() { renderCustomerList(this.value); });
 
   // Account modal
   document.getElementById('accountBtn').addEventListener('click', function() {
@@ -2086,8 +1604,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var email = document.getElementById('newEmail').value.trim();
     if (!email) { msg.textContent = 'Enter a new email address.'; msg.className = 'modal-msg err'; return; }
     msg.textContent = 'Updating...'; msg.className = 'modal-msg';
-    var { error } = await window._supabase.auth.updateUser({ email: email });
-    if (error) { msg.textContent = error.message; msg.className = 'modal-msg err'; }
+    var result = await window._supabase.auth.updateUser({ email: email });
+    if (result.error) { msg.textContent = result.error.message; msg.className = 'modal-msg err'; }
     else { msg.textContent = 'Check your new email for a confirmation link.'; msg.className = 'modal-msg ok'; }
   });
   document.getElementById('changePasswordBtn').addEventListener('click', async function() {
@@ -2097,8 +1615,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!pw || pw.length < 8) { msg.textContent = 'Password must be at least 8 characters.'; msg.className = 'modal-msg err'; return; }
     if (pw !== pw2) { msg.textContent = 'Passwords do not match.'; msg.className = 'modal-msg err'; return; }
     msg.textContent = 'Updating...'; msg.className = 'modal-msg';
-    var { error } = await window._supabase.auth.updateUser({ password: pw });
-    if (error) { msg.textContent = error.message; msg.className = 'modal-msg err'; }
+    var result = await window._supabase.auth.updateUser({ password: pw });
+    if (result.error) { msg.textContent = result.error.message; msg.className = 'modal-msg err'; }
     else { msg.textContent = 'Password updated successfully.'; msg.className = 'modal-msg ok'; document.getElementById('newPassword').value = ''; document.getElementById('confirmPassword').value = ''; }
   });
   document.getElementById('cancelSubBtn').addEventListener('click', async function() {
@@ -2115,17 +1633,295 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(e) { msg.textContent = 'Network error. Please try again.'; msg.className = 'modal-msg err'; }
   });
 
-  // Save labor rate and markup when changed
-  document.getElementById('laborRate').addEventListener('change', saveCompanySettings);
-  document.getElementById('markupRate').addEventListener('change', saveCompanySettings);
-
-  // Company settings toggle
-  document.getElementById('settingsBtn').addEventListener('click', function() {
-    var p = document.getElementById('companyPanel');
-    p.style.display = p.style.display === 'none' ? 'block' : 'none';
-  });
+  loadCloudHistory();
 });
+
+// ── CLOUD HISTORY ──
+async function loadCloudHistory() {
+  if (!window._authToken) return;
+  try {
+    var r = await fetch(BACKEND + '/jobs', { headers: { 'Authorization': 'Bearer ' + window._authToken } });
+    if (!r.ok) return;
+    var data = await r.json();
+    if (Array.isArray(data.jobs) && data.jobs.length > 0) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(data.jobs));
+      updateHistoryBadge();
+      renderRecentJobs();
+    } else {
+      var local = loadHistory();
+      if (local.length) saveHistory(local);
+    }
+  } catch(e) {}
+}
+
+// ── INVOICE TRACKING ──
+var currentInvoiceFilter = 'all';
+var invoiceCounter = parseInt(localStorage.getItem('foremanBrainInvoiceCounter') || '1000');
+
+async function loadInvoices(filter) {
+  if (!window._supabase || !window._userEmail) return [];
+  try {
+    var query = window._supabase.from('invoices').select('*').eq('user_id', window._userEmail).order('created_at', { ascending: false });
+    if (filter && filter !== 'all') query = query.eq('status', filter);
+    var result = await query;
+    return result.data || [];
+  } catch(e) { console.error('Load invoices error:', e); return []; }
+}
+
+async function markInvoicePaid(id) {
+  try {
+    await window._supabase.from('invoices').update({ status: 'paid', paid_date: new Date().toISOString().split('T')[0] }).eq('id', id);
+    renderInvoiceList(currentInvoiceFilter);
+    showToast();
+  } catch(e) { alert('Error updating invoice.'); }
+}
+
+async function deleteInvoice(id) {
+  if (!confirm('Delete this invoice?')) return;
+  await window._supabase.from('invoices').delete().eq('id', id);
+  renderInvoiceList(currentInvoiceFilter);
+}
+
+async function renderInvoiceList(filter) {
+  currentInvoiceFilter = filter || 'all';
+  var list = document.getElementById('invoiceList');
+  var cards = document.getElementById('invoiceSummaryCards');
+  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">Loading...</div>';
+  var all = await loadInvoices('all');
+  var unpaid = all.filter(function(i) { return i.status === 'unpaid'; });
+  var paid = all.filter(function(i) { return i.status === 'paid'; });
+  var totalUnpaid = unpaid.reduce(function(sum, i) { return sum + (i.total || 0); }, 0);
+  var totalPaid = paid.reduce(function(sum, i) { return sum + (i.total || 0); }, 0);
+  var totalAll = all.reduce(function(sum, i) { return sum + (i.total || 0); }, 0);
+  var count = document.getElementById('invoiceCount');
+  if (count) count.textContent = all.length + ' invoice' + (all.length === 1 ? '' : 's');
+  if (cards) cards.innerHTML =
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;"><div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;">Total Invoiced</div><div style="font-size:24px;font-weight:700;color:var(--text);">' + fmt(totalAll) + '</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + all.length + ' invoices</div></div>' +
+    '<div style="background:rgba(224,85,85,0.06);border:1px solid rgba(224,85,85,0.2);border-radius:var(--radius);padding:16px;"><div style="font-size:11px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;">Outstanding</div><div style="font-size:24px;font-weight:700;color:var(--red);">' + fmt(totalUnpaid) + '</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + unpaid.length + ' unpaid</div></div>' +
+    '<div style="background:rgba(52,196,114,0.06);border:1px solid rgba(52,196,114,0.2);border-radius:var(--radius);padding:16px;"><div style="font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;">Collected</div><div style="font-size:24px;font-weight:700;color:var(--green);">' + fmt(totalPaid) + '</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + paid.length + ' paid</div></div>';
+  var invoices = filter && filter !== 'all' ? all.filter(function(i) { return i.status === filter; }) : all;
+  if (!invoices.length) {
+    list.innerHTML = '<div style="text-align:center;padding:60px 32px;"><div style="font-size:36px;opacity:0.2;margin-bottom:12px;">&#128203;</div><div style="font-size:13px;color:var(--text-muted);">No invoices found.<br/>Create an invoice from any estimate proposal.</div></div>';
+    return;
+  }
+  list.innerHTML = invoices.map(function(inv) {
+    var isPaid = inv.status === 'paid';
+    var isOverdue = !isPaid && inv.due_date && new Date(inv.due_date) < new Date();
+    var statusColor = isPaid ? 'var(--green)' : isOverdue ? 'var(--red)' : 'var(--gold)';
+    var statusBg = isPaid ? 'rgba(52,196,114,0.08)' : isOverdue ? 'rgba(224,85,85,0.08)' : 'rgba(232,160,32,0.08)';
+    var statusBorder = isPaid ? 'rgba(52,196,114,0.25)' : isOverdue ? 'rgba(224,85,85,0.25)' : 'rgba(232,160,32,0.25)';
+    var statusText = isPaid ? 'Paid' : isOverdue ? 'Overdue' : 'Unpaid';
+    var createdDate = new Date(inv.created_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+    var dueDate = inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '\u2014';
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:16px;" onmouseover="this.style.borderColor=\'var(--border2)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+      '<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:14px;font-weight:600;color:var(--text);">' + escHtml(inv.invoice_number || 'Invoice') + '</span><span style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;background:' + statusBg + ';border:1px solid ' + statusBorder + ';color:' + statusColor + ';">' + statusText + '</span></div>' +
+      '<div style="font-size:12px;color:var(--text-muted);font-family:var(--mono);">Created: ' + createdDate + ' &bull; Due: ' + dueDate + (inv.notes ? ' &bull; ' + escHtml(inv.notes) : '') + '</div></div>' +
+      '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0;"><div style="font-size:20px;font-weight:700;color:var(--text);">' + fmt(inv.total || 0) + '</div><div style="display:flex;gap:6px;">' +
+      (!isPaid ? '<button onclick="markInvoicePaid(\'' + inv.id + '\')" style="font-size:12px;font-weight:500;color:#0a0d10;background:linear-gradient(135deg,var(--green),#28a85a);border:none;border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Mark Paid</button>' : '') +
+      '<button onclick="deleteInvoice(\'' + inv.id + '\')" style="font-size:12px;color:var(--red);background:transparent;border:1px solid rgba(224,85,85,0.3);border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Delete</button>' +
+      '</div></div></div>';
+  }).join('');
+  document.querySelectorAll('.invoice-filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.invoice-filter-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
+      this.classList.add('active');
+      renderInvoiceList(this.getAttribute('data-filter'));
+    });
+  });
+}
+
+async function createInvoice() {
+  if (!currentEstimate) return;
+  var t = calcTotals();
+  invoiceCounter++;
+  localStorage.setItem('foremanBrainInvoiceCounter', invoiceCounter);
+  var invoiceNum = 'INV-' + invoiceCounter;
+  var company = getCompanyInfo();
+  var customerName = document.getElementById('customerName') ? document.getElementById('customerName').value : '';
+  var customerAddress = document.getElementById('customerAddress') ? document.getElementById('customerAddress').value : '';
+  var today = new Date();
+  var dueDate = new Date(today); dueDate.setDate(dueDate.getDate() + 30);
+  var fmt2 = function(d) { return d.toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'}); };
+  if (window._supabase && window._userEmail) {
+    try {
+      await window._supabase.from('invoices').insert({
+        user_id: window._userEmail, invoice_number: invoiceNum, total: t.total, status: 'unpaid',
+        due_date: dueDate.toISOString().split('T')[0],
+        notes: customerName + ' \u2014 ' + ((currentEstimate.projectSummary || {}).jobType || '')
+      });
+    } catch(e) { console.error('Invoice save error:', e); }
+  }
+  var win = window.open('', '_blank');
+  win.document.write('<!DOCTYPE html><html><head><title>Invoice ' + invoiceNum + '</title>');
+  win.document.write('<style>* { box-sizing:border-box; margin:0; padding:0; } body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:14px; color:#1a1a1a; padding:60px; max-width:800px; margin:0 auto; } .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:48px; padding-bottom:32px; border-bottom:2px solid #1a1a1a; } .company-name { font-size:24px; font-weight:700; margin-bottom:4px; } .company-info { font-size:12px; color:#666; line-height:1.8; } .invoice-meta { text-align:right; } .invoice-title { font-size:32px; font-weight:700; margin-bottom:8px; } .invoice-num { font-size:14px; color:#666; margin-bottom:4px; } .invoice-status { display:inline-block; background:#fff3cd; color:#856404; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; border:1px solid #ffc107; } .bill-section { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-bottom:40px; } .bill-label { font-size:11px; font-weight:600; color:#666; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; } .bill-name { font-size:15px; font-weight:600; margin-bottom:4px; } .bill-info { font-size:13px; color:#444; line-height:1.7; } table { width:100%; border-collapse:collapse; margin-bottom:32px; } thead tr { border-bottom:2px solid #1a1a1a; } th { font-size:11px; font-weight:600; color:#666; letter-spacing:0.5px; text-transform:uppercase; padding:10px 12px; text-align:left; } th.right { text-align:right; } tbody tr { border-bottom:1px solid #eee; } td { padding:10px 12px; font-size:13px; color:#333; } td.right { text-align:right; font-family:monospace; } .totals { margin-left:auto; width:300px; } .total-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:13px; } .total-row.final { border-top:2px solid #1a1a1a; border-bottom:none; padding-top:12px; margin-top:4px; font-size:16px; font-weight:700; } .total-label { color:#444; } .due-banner { background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:16px 20px; margin-bottom:32px; display:flex; justify-content:space-between; align-items:center; } .due-label { font-size:12px; color:#166534; font-weight:600; } .due-date { font-size:15px; color:#166534; font-weight:700; } .footer { margin-top:48px; padding-top:24px; border-top:1px solid #eee; text-align:center; font-size:12px; color:#999; } @media print { body { padding:40px; } }</style></head><body>');
+  win.document.write('<div class="header"><div>');
+  if (company.companyName) {
+    win.document.write('<div class="company-name">' + escHtml(company.companyName) + '</div><div class="company-info">');
+    if (company.companyLicense) win.document.write('CA License #' + escHtml(company.companyLicense) + '<br>');
+    if (company.companyPhone) win.document.write(escHtml(company.companyPhone) + '<br>');
+    win.document.write('</div>');
+  } else { win.document.write('<div class="company-name">Electrical Contractor</div>'); }
+  win.document.write('</div><div class="invoice-meta"><div class="invoice-title">INVOICE</div><div class="invoice-num">' + invoiceNum + '</div><div class="invoice-num">Date: ' + fmt2(today) + '</div><div style="margin-top:8px;"><span class="invoice-status">UNPAID</span></div></div></div>');
+  win.document.write('<div class="due-banner"><span class="due-label">Payment Due</span><span class="due-date">' + fmt2(dueDate) + '</span></div>');
+  win.document.write('<div class="bill-section"><div><div class="bill-label">Bill To</div>');
+  if (customerName) win.document.write('<div class="bill-name">' + escHtml(customerName) + '</div>');
+  if (customerAddress) win.document.write('<div class="bill-info">' + escHtml(customerAddress) + '</div>');
+  win.document.write('</div><div><div class="bill-label">Job Description</div><div class="bill-info">' + escHtml((currentEstimate.projectSummary || {}).jobType || 'Electrical Work') + '</div></div></div>');
+  win.document.write('<table><thead><tr><th>Item / Description</th><th class="right">Qty</th><th class="right">Unit Price</th><th class="right">Total</th></tr></thead><tbody>');
+  editableMaterials.forEach(function(m) {
+    win.document.write('<tr><td>' + escHtml(m.item) + '</td><td class="right">' + escHtml(m.qty) + '</td><td class="right">$' + (parseFloat(m.unitCost)||0).toFixed(2) + '</td><td class="right">$' + (parseFloat(m.totalCost)||0).toFixed(2) + '</td></tr>');
+  });
+  win.document.write('<tr style="background:#f9f9f9;"><td colspan="3" style="padding:10px 12px;font-size:13px;color:#444;">Labor \u2014 ' + editableLaborHours + ' hours @ $' + getLaborRate() + '/hr</td><td class="right">$' + (editableLaborHours * getLaborRate()).toFixed(2) + '</td></tr></tbody></table>');
+  win.document.write('<div class="totals"><div class="total-row"><span class="total-label">Materials (subtotal)</span><span>$' + t.raw.toFixed(2) + '</span></div><div class="total-row"><span class="total-label">Materials markup (\u00d7' + getMarkup() + ')</span><span>$' + t.markedUp.toFixed(2) + '</span></div><div class="total-row"><span class="total-label">Labor</span><span>$' + t.labor.toFixed(2) + '</span></div><div class="total-row final"><span class="total-label">Total Due</span><span>$' + t.total.toFixed(2) + '</span></div></div>');
+  win.document.write('<div style="margin-top:40px;padding-top:24px;border-top:1px solid #eee;"><div style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Notes & Exclusions</div><div style="font-size:13px;color:#444;line-height:1.7;">This invoice does not include: drywall patching or painting, trenching or boring, permit fees, utility coordination, or unforeseen concealed conditions.<br><br>Payment is due within 30 days of invoice date. Thank you for your business.</div></div>');
+  win.document.write('<div class="footer">');
+  if (company.companyName) win.document.write(escHtml(company.companyName) + ' &bull; ');
+  if (company.companyLicense) win.document.write('CA License #' + escHtml(company.companyLicense) + ' &bull; ');
+  win.document.write('Generated by Foreman Brain</div></body></html>');
+  win.document.close();
+  setTimeout(function() { win.print(); }, 500);
+}
+
+// ── AI CHANGE ORDER ──
+function showChangeOrderModal() {
+  var existing = document.getElementById('changeOrderModal');
+  if (existing) existing.remove();
+  var modal = document.createElement('div');
+  modal.id = 'changeOrderModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML =
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;width:100%;max-width:500px;">' +
+    '<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;">&#43; Add Change Order</div>' +
+    '<div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Describe the additional work to add to this estimate.</div>' +
+    '<textarea id="changeOrderInput" placeholder="Example: Customer also wants 2 outdoor GFCI outlets on the back patio..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--body);font-size:13px;padding:12px;outline:none;resize:vertical;min-height:100px;margin-bottom:16px;" onfocus="this.style.borderColor=\'var(--gold)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
+    '<div style="display:flex;gap:10px;"><button id="runChangeOrderBtn" style="flex:1;font-size:13px;font-weight:600;color:#0a0d10;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius-sm);padding:12px;cursor:pointer;">&#9658; Generate Change Order</button>' +
+    '<button onclick="document.getElementById(\'changeOrderModal\').remove()" style="font-size:13px;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 20px;cursor:pointer;">Cancel</button></div>' +
+    '<div id="changeOrderStatus" style="margin-top:12px;font-size:12px;color:var(--text-muted);display:none;"></div></div>';
+  document.body.appendChild(modal);
+  document.getElementById('runChangeOrderBtn').addEventListener('click', runChangeOrder);
+}
+
+async function runChangeOrder() {
+  var input = document.getElementById('changeOrderInput').value.trim();
+  if (!input) return;
+  var btn = document.getElementById('runChangeOrderBtn');
+  var status = document.getElementById('changeOrderStatus');
+  btn.textContent = 'Generating...'; btn.disabled = true;
+  status.style.display = 'block'; status.style.color = 'var(--gold)'; status.textContent = 'AI is calculating the change order...';
+  var originalSummary = currentEstimate ? JSON.stringify(currentEstimate.projectSummary) : '';
+  var changeOrderPrompt = 'CHANGE ORDER REQUEST for existing estimate.\n\nOriginal job: ' + originalSummary + '\n\nAdditional scope requested: ' + input + '\n\nGenerate ONLY the additional materials and labor for this change order. Return the same JSON format but only include the NEW items being added. Label it as a change order in the jobType field.';
+  try {
+    var response = await fetch(BACKEND + '/estimate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 3000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: changeOrderPrompt }] })
+    });
+    var data = await response.json();
+    var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
+    var cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+    var parsed;
+    try { parsed = JSON.parse(cleaned); }
+    catch(e) { var m = cleaned.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error('Could not parse change order.'); }
+    var newItems = parsed.materialTakeoff || [];
+    editableMaterials = editableMaterials.concat(newItems.map(function(r) {
+      return { item: 'CO: ' + (r.item || ''), qty: r.qty || '1', unitCost: parseFloat(r.unitCost) || 0, totalCost: parseFloat(r.totalCost) || 0 };
+    }));
+    editableLaborHours = editableLaborHours + (parseFloat(parsed.laborHours) || 0);
+    document.getElementById('changeOrderModal').remove();
+    updateCostCards(); renderMaterialsTab(); updateLaborTab();
+    switchTab('materials');
+    showToast();
+  } catch(err) {
+    status.style.color = 'var(--red)'; status.textContent = 'Error: ' + err.message;
+    btn.textContent = '&#9658; Generate Change Order'; btn.disabled = false;
+  }
+}
+
+// ── CUSTOMER DATABASE ──
+async function loadCustomers(search) {
+  if (!window._supabase || !window._userEmail) return [];
+  try {
+    var query = window._supabase.from('customers').select('*').eq('user_id', window._userEmail).order('name');
+    if (search) query = query.or('name.ilike.%' + search + '%,phone.ilike.%' + search + '%,address.ilike.%' + search + '%');
+    var result = await query;
+    return result.data || [];
+  } catch(e) { console.error('Load customers error:', e); return []; }
+}
+
+async function saveCustomer() {
+  var id = document.getElementById('editCustomerId').value;
+  var name = document.getElementById('cName').value.trim();
+  if (!name) { alert('Please enter a customer name.'); return; }
+  var customer = {
+    user_id: window._userEmail, name: name,
+    phone: document.getElementById('cPhone').value.trim(),
+    email: document.getElementById('cEmail').value.trim(),
+    address: document.getElementById('cAddress').value.trim(),
+    city: document.getElementById('cCity').value.trim(),
+    notes: document.getElementById('cNotes').value.trim()
+  };
+  try {
+    if (id) { await window._supabase.from('customers').update(customer).eq('id', id); }
+    else { await window._supabase.from('customers').insert(customer); }
+    closeCustomerModal(); renderCustomerList(); showToast();
+  } catch(e) { alert('Error saving customer. Please try again.'); }
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Delete this customer?')) return;
+  await window._supabase.from('customers').delete().eq('id', id);
+  renderCustomerList();
+}
+
+function openCustomerModal(customer) {
+  document.getElementById('editCustomerId').value = customer ? customer.id : '';
+  document.getElementById('cName').value = customer ? customer.name : '';
+  document.getElementById('cPhone').value = customer ? (customer.phone || '') : '';
+  document.getElementById('cEmail').value = customer ? (customer.email || '') : '';
+  document.getElementById('cAddress').value = customer ? (customer.address || '') : '';
+  document.getElementById('cCity').value = customer ? (customer.city || '') : '';
+  document.getElementById('cNotes').value = customer ? (customer.notes || '') : '';
+  document.getElementById('customerModalTitle').textContent = customer ? 'Edit Customer' : 'Add Customer';
+  document.getElementById('customerModal').style.display = 'flex';
+}
+
+function closeCustomerModal() {
+  document.getElementById('customerModal').style.display = 'none';
+}
+
+function selectCustomerForEstimate(customer) {
+  if (document.getElementById('customerName')) document.getElementById('customerName').value = customer.name;
+  if (document.getElementById('customerAddress')) document.getElementById('customerAddress').value = (customer.address || '') + (customer.city ? ', ' + customer.city : '');
+  showEstimatorPage();
+}
+
+async function renderCustomerList(search) {
+  var list = document.getElementById('customerList');
+  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">Loading...</div>';
+  var customers = await loadCustomers(search);
+  var count = document.getElementById('customerCount');
+  if (count) count.textContent = customers.length + ' customer' + (customers.length === 1 ? '' : 's');
+  if (!customers.length) {
+    list.innerHTML = '<div style="text-align:center;padding:60px 32px;"><div style="font-size:36px;opacity:0.2;margin-bottom:12px;">&#128100;</div><div style="font-size:13px;color:var(--text-muted);">No customers yet.<br/>Add your first customer to get started.</div></div>';
+    return;
+  }
+  list.innerHTML = customers.map(function(c) {
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:16px;" onmouseover="this.style.borderColor=\'var(--border2)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+      '<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;">' + escHtml(c.name) + '</div>' +
+      '<div style="font-size:12px;color:var(--text-muted);font-family:var(--mono);">' +
+      (c.phone ? '&#128222; ' + escHtml(c.phone) + '&nbsp;&nbsp;' : '') +
+      (c.email ? '&#9993; ' + escHtml(c.email) + '&nbsp;&nbsp;' : '') +
+      (c.address ? '&#128205; ' + escHtml(c.address) + (c.city ? ', ' + escHtml(c.city) : '') : '') +
+      '</div>' + (c.notes ? '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;font-style:italic;">' + escHtml(c.notes) + '</div>' : '') + '</div>' +
+      '<div style="display:flex;gap:8px;flex-shrink:0;">' +
+      '<button onclick="selectCustomerForEstimate(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')" style="font-size:12px;font-weight:500;color:#0a0d10;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">New Estimate</button>' +
+      '<button onclick="openCustomerModal(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')" style="font-size:12px;color:var(--text-dim);background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Edit</button>' +
+      '<button onclick="deleteCustomer(\'' + c.id + '\')" style="font-size:12px;color:var(--red);background:transparent;border:1px solid rgba(224,85,85,0.3);border-radius:var(--radius-sm);padding:7px 14px;cursor:pointer;">Delete</button>' +
+      '</div></div>';
+  }).join('');
+}
 </script>
+</div><!-- end content-area -->
+</div><!-- end app-layout -->
 
 <!-- ACCOUNT MODAL -->
 <div class="modal-overlay" id="accountModal">
