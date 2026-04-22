@@ -1198,6 +1198,225 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
 .pt-no-match-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .pt-no-match-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
 
+/* ── INLINE EDIT MODALS ── */
+.se-edit-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,13,16,0.82);
+  z-index: 8000;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+.se-edit-overlay.open { display: flex; }
+@media (min-width: 600px) {
+  .se-edit-overlay { align-items: center; padding: 20px; }
+}
+.se-edit-modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slide-up 0.22s ease;
+}
+@media (min-width: 600px) {
+  .se-edit-modal { border-radius: var(--radius); max-height: 80vh; }
+}
+@keyframes slide-up {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.se-edit-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.se-edit-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.se-edit-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+}
+.se-edit-modal-close:hover { color: var(--text); }
+.se-edit-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+}
+.se-edit-modal-footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.se-edit-save-btn {
+  flex: 1;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #0a0d10;
+  font-family: var(--body);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 11px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.se-edit-save-btn:hover { opacity: 0.85; }
+.se-edit-cancel-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-family: var(--body);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 11px 18px;
+  cursor: pointer;
+}
+/* material rows */
+.se-mat-editor-row {
+  display: grid;
+  grid-template-columns: 1fr 52px 72px 64px 28px;
+  gap: 6px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.se-mat-editor-row:last-of-type { border-bottom: none; }
+.se-mat-editor-head {
+  grid-template-columns: 1fr 52px 72px 64px 28px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border2);
+  margin-bottom: 2px;
+}
+.se-mat-col-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.se-mat-col-total {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.se-mat-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 12px;
+  padding: 6px 7px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.se-mat-input:focus { border-color: var(--gold); }
+.se-mat-del-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.se-mat-del-btn:hover { color: var(--red); }
+.se-mat-subtotal-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0 0;
+  margin-top: 6px;
+  border-top: 1px solid var(--border2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.se-mat-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  background: var(--surface2);
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-family: var(--body);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 12px;
+  cursor: pointer;
+  width: 100%;
+  transition: color 0.15s, border-color 0.15s;
+}
+.se-mat-add-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+/* labor + pricing editor fields */
+.se-edit-field {
+  margin-bottom: 14px;
+}
+.se-edit-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.se-edit-input {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 15px;
+  padding: 10px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.se-edit-input:focus { border-color: var(--gold); }
+.se-edit-live-total {
+  background: var(--gold-glow2);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+.se-edit-live-label { font-size: 12px; color: var(--text-muted); }
+.se-edit-live-value { font-size: 18px; font-weight: 700; color: var(--text); }
+.se-edit-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.se-edit-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
 /* ── SCAN RESULT STATE ── */
 .se-scan-photo-thumb {
   width: 100%;
@@ -2957,6 +3176,8 @@ async function seGenerateEstimate() {
       return { item: r.item, qty: parseFloat(r.qty) || 1, unitCost: parseFloat(r.unitCost) || 0, totalCost: parseFloat(r.totalCost) || 0 };
     });
     editableLaborHours = parsed.laborHours || 0;
+    seEstimateOverrides = { markup: null, flatAdjustment: 0, manualTotal: null };
+    _seContractorMode = false;
 
     seRenderPreview(parsed);
   } catch(err) {
@@ -3124,18 +3345,13 @@ function seGetAssumptions(estimate) {
 }
 
 function seRenderPreview(estimate) {
+  var t = seCalcPreviewTotals();
   var lr = getLaborRate();
-  var mu = getMarkup();
-  var raw = 0;
-  editableMaterials.forEach(function(r) { raw += r.totalCost || 0; });
-  var markedUp = raw * mu;
-  var labor = editableLaborHours * lr;
-  var total = roundTo10(markedUp + labor);
   var ps = estimate.projectSummary || {};
   var jobLabel = SE_JOB_LABELS[seCurrentJobType] || ps.jobType || 'Electrical Job';
   var html = '';
 
-  // ── 1. Analysis Summary Card ──
+  // ── 1. Analysis Summary Card — structural edit ──
   var meta = seGetAnalysisMeta();
   html += '<div class="eso-card eso-analysis-card">' +
     '<div class="eso-card-header">' +
@@ -3153,21 +3369,21 @@ function seRenderPreview(estimate) {
   }
   html += '</div>';
 
-  // ── 2. Scope of Work Card ──
+  // ── 2. Scope of Work Card — structural edit ──
   var scopeText = estimate.customerProposal || ps.customerRequest || '';
   if (scopeText) {
     html += '<div class="eso-card">' +
       '<div class="eso-card-header"><div class="eso-card-title">Scope of Work</div>' +
-      '<button class="eso-edit-btn" data-edit="questions">&#9998; Edit</button></div>' +
+      '<button class="eso-edit-btn" data-edit="questions" title="Restart question flow">&#9998; Edit Scope</button></div>' +
       '<div class="eso-scope-text">' + escHtml(scopeText) + '</div>' +
       '</div>';
   }
 
-  // ── 3. Materials Card ──
+  // ── 3. Materials Card — inline edit ──
   if (editableMaterials.length) {
     html += '<div class="eso-card">' +
       '<div class="eso-card-header"><div class="eso-card-title">Materials</div>' +
-      '<button class="eso-edit-btn" data-edit="questions">&#9998; Edit</button></div>' +
+      '<button class="eso-edit-btn" data-edit="materials">&#9998; Edit</button></div>' +
       '<table class="eso-materials-table"><thead><tr>' +
       '<th>Item</th><th class="eso-th-num">Qty</th><th class="eso-th-num">Unit</th><th class="eso-th-num">Total</th>' +
       '</tr></thead><tbody>';
@@ -3178,35 +3394,46 @@ function seRenderPreview(estimate) {
         '<td class="eso-td-num">$' + (r.totalCost||0).toFixed(2) + '</td></tr>';
     });
     html += '</tbody></table>' +
-      '<div class="eso-materials-footer"><span>Materials subtotal</span><span>' + fmt(raw) + '</span></div>' +
+      '<div class="eso-materials-footer"><span>Materials subtotal</span><span>' + fmt(t.raw) + '</span></div>' +
       '</div>';
   }
 
-  // ── 4. Labor Card ──
+  // ── 4. Labor Card — inline edit ──
   var laborNote = seGetLaborNote();
   html += '<div class="eso-card">' +
-    '<div class="eso-card-header"><div class="eso-card-title">Labor</div></div>' +
+    '<div class="eso-card-header"><div class="eso-card-title">Labor</div>' +
+    '<button class="eso-edit-btn" data-edit="labor">&#9998; Edit</button></div>' +
     '<div class="eso-labor-row"><span>Estimated hours</span><span>' + editableLaborHours + ' hrs</span></div>' +
     '<div class="eso-labor-row"><span>Rate</span><span>$' + lr + ' / hr</span></div>';
   if (laborNote) html += '<div class="eso-labor-note">&#8627; ' + escHtml(laborNote) + '</div>';
-  html += '<div class="eso-labor-row eso-labor-total"><span>Labor total</span><span>' + fmt(labor) + '</span></div>' +
+  html += '<div class="eso-labor-row eso-labor-total"><span>Labor total</span><span>' + fmt(t.labor) + '</span></div>' +
     '</div>';
 
-  // ── 5. Price Summary Card ──
+  // ── 5. Price Summary Card — inline edit ──
   html += '<div class="eso-card eso-price-card">' +
     '<div class="eso-card-header"><div class="eso-card-title">Price Summary</div>' +
-    '<button class="eso-mode-toggle" id="eso-mode-btn">&#128274; Contractor View</button></div>' +
-    '<div class="eso-price-row"><span>Materials</span><span>' + fmt(markedUp) + '</span></div>' +
-    '<div class="eso-price-row"><span>Labor</span><span>' + fmt(labor) + '</span></div>' +
+    '<div style="display:flex;gap:6px;">' +
+    '<button class="eso-edit-btn" data-edit="pricing">&#9998; Adjust</button>' +
+    '<button class="eso-mode-toggle" id="eso-mode-btn">&#128274; Contractor View</button>' +
+    '</div></div>' +
+    '<div class="eso-price-row"><span>Materials</span><span>' + fmt(t.markedUp) + '</span></div>' +
+    '<div class="eso-price-row"><span>Labor</span><span>' + fmt(t.labor) + '</span></div>';
+  if (t.flatAdj !== 0) {
+    html += '<div class="eso-price-row"><span>Adjustment</span><span style="color:' + (t.flatAdj > 0 ? 'var(--green)' : 'var(--red)') + ';">' + (t.flatAdj > 0 ? '+' : '') + fmt(t.flatAdj) + '</span></div>';
+  }
+  if (seEstimateOverrides.manualTotal !== null) {
+    html += '<div class="eso-price-row" style="font-style:italic;"><span>Manual override active</span><span style="color:var(--gold);">&#9998;</span></div>';
+  }
+  html +=
     '<div class="eso-price-row eso-contractor-row" style="display:none;">' +
-    '<span>Material cost (raw)</span><span>' + fmt(raw) + '</span></div>' +
+    '<span>Material cost (raw)</span><span>' + fmt(t.raw) + '</span></div>' +
     '<div class="eso-price-row eso-contractor-row" style="display:none;">' +
-    '<span>Markup (&times;' + mu + ')</span><span style="color:var(--green);">+' + fmt(markedUp - raw) + '</span></div>' +
+    '<span>Markup (&times;' + t.mu + ')</span><span style="color:var(--green);">+' + fmt(t.markedUp - t.raw) + '</span></div>' +
     '<div class="eso-price-row eso-contractor-row" style="display:none;">' +
-    '<span>Gross margin (mat.)</span><span style="color:var(--green);">' + Math.round((markedUp - raw) / (total || 1) * 100) + '% of total</span></div>' +
+    '<span>Gross margin (mat.)</span><span style="color:var(--green);">' + Math.round((t.markedUp - t.raw) / (t.total || 1) * 100) + '% of total</span></div>' +
     '<div class="eso-total-row">' +
     '<span class="eso-total-label">Total Estimate</span>' +
-    '<span class="eso-total-amount">' + fmt(total) + '</span>' +
+    '<span class="eso-total-amount">' + fmt(t.total) + '</span>' +
     '</div></div>';
 
   // ── 6. Assumptions / Notes Card ──
@@ -3232,31 +3459,45 @@ function seRenderPreview(estimate) {
 
   document.getElementById('se-preview-content').innerHTML = html;
 
-  // Wire edit buttons → back to question flow
-  document.querySelectorAll('.eso-edit-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var target = this.getAttribute('data-edit');
-      if (target === 'jobtype') seShowState('jobtype');
-      else if (target === 'questions') { seShowState('questions'); seRenderQuestion(0); }
-    });
+  // Wire structural edit buttons (jobtype, questions)
+  document.querySelectorAll('.eso-edit-btn[data-edit="jobtype"]').forEach(function(btn) {
+    btn.addEventListener('click', function() { seShowState('jobtype'); });
+  });
+  document.querySelectorAll('.eso-edit-btn[data-edit="questions"]').forEach(function(btn) {
+    btn.addEventListener('click', function() { seShowState('questions'); seRenderQuestion(0); });
   });
 
-  // Wire contractor/customer mode toggle
-  var contractorMode = false;
+  // Wire inline edit buttons → modals
+  document.querySelectorAll('.eso-edit-btn[data-edit="materials"]').forEach(function(btn) {
+    btn.addEventListener('click', seOpenMatModal);
+  });
+  document.querySelectorAll('.eso-edit-btn[data-edit="labor"]').forEach(function(btn) {
+    btn.addEventListener('click', seOpenLaborModal);
+  });
+  document.querySelectorAll('.eso-edit-btn[data-edit="pricing"]').forEach(function(btn) {
+    btn.addEventListener('click', seOpenPricingModal);
+  });
+
+  // Wire contractor/customer mode toggle — preserve state across re-renders
   var modeBtn = document.getElementById('eso-mode-btn');
   if (modeBtn) {
+    if (_seContractorMode) {
+      document.querySelectorAll('.eso-contractor-row').forEach(function(el) { el.style.display = 'flex'; });
+      modeBtn.innerHTML = '&#128065; Customer View';
+      modeBtn.classList.add('active');
+    }
     modeBtn.addEventListener('click', function() {
-      contractorMode = !contractorMode;
+      _seContractorMode = !_seContractorMode;
       document.querySelectorAll('.eso-contractor-row').forEach(function(el) {
-        el.style.display = contractorMode ? 'flex' : 'none';
+        el.style.display = _seContractorMode ? 'flex' : 'none';
       });
-      this.innerHTML = contractorMode ? '&#128065; Customer View' : '&#128274; Contractor View';
-      this.classList.toggle('active', contractorMode);
+      this.innerHTML = _seContractorMode ? '&#128065; Customer View' : '&#128274; Contractor View';
+      this.classList.toggle('active', _seContractorMode);
     });
   }
 
   // Render sticky action bar
-  seRenderActionBar(total);
+  seRenderActionBar(t.total);
   seInitCustomerPicker();
 }
 
@@ -3339,6 +3580,244 @@ function seRenderActionBar(total) {
     }
   });
 }
+
+// ── INLINE EDIT MODALS ──
+
+var seEstimateOverrides = { markup: null, flatAdjustment: 0, manualTotal: null };
+var _seContractorMode = false;
+
+function seCalcPreviewTotals() {
+  var raw = 0;
+  editableMaterials.forEach(function(r) { raw += parseFloat(r.totalCost) || 0; });
+  var mu = seEstimateOverrides.markup !== null ? seEstimateOverrides.markup : getMarkup();
+  var lr = getLaborRate();
+  var markedUp = raw * mu;
+  var labor = editableLaborHours * lr;
+  var calculated = roundTo10(markedUp + labor + (seEstimateOverrides.flatAdjustment || 0));
+  var total = seEstimateOverrides.manualTotal !== null ? seEstimateOverrides.manualTotal : calculated;
+  return { raw: raw, mu: mu, markedUp: markedUp, labor: labor, flatAdj: seEstimateOverrides.flatAdjustment || 0, calculated: calculated, total: total };
+}
+
+function seCloseEditModal(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.remove('open');
+}
+
+// ── Material Editor ──
+function seOpenMatModal() {
+  var body = document.getElementById('seMatModalBody');
+  if (!body) return;
+  seRenderMatModalBody(body);
+  document.getElementById('seMatSaveBtn').onclick = function() { seApplyMatEdits(body); };
+  document.getElementById('seMatModal').classList.add('open');
+}
+
+function seRenderMatModalBody(body) {
+  var rows = editableMaterials.map(function(r, i) {
+    return '<div class="se-mat-editor-row" id="se-mat-row-' + i + '">' +
+      '<input class="se-mat-input" data-i="' + i + '" data-f="item" value="' + escHtml(r.item) + '" style="font-size:12px;" />' +
+      '<input class="se-mat-input" data-i="' + i + '" data-f="qty" type="number" min="0" step="0.5" value="' + r.qty + '" />' +
+      '<input class="se-mat-input" data-i="' + i + '" data-f="unitCost" type="number" min="0" step="0.01" value="' + (r.unitCost||0).toFixed(2) + '" />' +
+      '<span class="se-mat-col-total" id="se-mat-tot-' + i + '">$' + (r.totalCost||0).toFixed(2) + '</span>' +
+      '<button class="se-mat-del-btn" data-del="' + i + '" title="Remove">&#128465;</button>' +
+    '</div>';
+  }).join('');
+
+  var subtotal = 0;
+  editableMaterials.forEach(function(r) { subtotal += parseFloat(r.totalCost) || 0; });
+
+  body.innerHTML =
+    '<div class="se-mat-editor-row se-mat-editor-head">' +
+    '<span class="se-mat-col-label">Item</span>' +
+    '<span class="se-mat-col-label">Qty</span>' +
+    '<span class="se-mat-col-label">Unit $</span>' +
+    '<span class="se-mat-col-label">Total</span>' +
+    '<span></span></div>' +
+    '<div id="se-mat-rows">' + rows + '</div>' +
+    '<button class="se-mat-add-btn" id="se-mat-add-btn">&#43; Add Item</button>' +
+    '<div class="se-mat-subtotal-row"><span>Materials Subtotal</span><span id="se-mat-subtotal">$' + subtotal.toFixed(2) + '</span></div>';
+
+  // Wire row events
+  seWireMatModalEvents(body);
+}
+
+function seWireMatModalEvents(body) {
+  function recalcRow(i) {
+    var qty = parseFloat(body.querySelector('[data-i="' + i + '"][data-f="qty"]').value) || 0;
+    var unit = parseFloat(body.querySelector('[data-i="' + i + '"][data-f="unitCost"]').value) || 0;
+    var tot = qty * unit;
+    var totEl = document.getElementById('se-mat-tot-' + i);
+    if (totEl) totEl.textContent = '$' + tot.toFixed(2);
+    recalcSubtotal();
+  }
+  function recalcSubtotal() {
+    var total = 0;
+    body.querySelectorAll('[data-f="qty"]').forEach(function(qEl) {
+      var i = qEl.getAttribute('data-i');
+      var qty = parseFloat(qEl.value) || 0;
+      var uEl = body.querySelector('[data-i="' + i + '"][data-f="unitCost"]');
+      var unit = parseFloat(uEl ? uEl.value : 0) || 0;
+      total += qty * unit;
+    });
+    var sub = document.getElementById('se-mat-subtotal');
+    if (sub) sub.textContent = '$' + total.toFixed(2);
+  }
+
+  body.querySelectorAll('[data-f="qty"],[data-f="unitCost"]').forEach(function(inp) {
+    inp.addEventListener('input', function() { recalcRow(parseInt(this.getAttribute('data-i'))); });
+  });
+
+  body.querySelectorAll('[data-del]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var row = document.getElementById('se-mat-row-' + this.getAttribute('data-del'));
+      if (row) row.remove();
+      recalcSubtotal();
+    });
+  });
+
+  var addBtn = document.getElementById('se-mat-add-btn');
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      var rows = document.getElementById('se-mat-rows');
+      var existingRows = rows.querySelectorAll('.se-mat-editor-row');
+      var i = existingRows.length;
+      var newRow = document.createElement('div');
+      newRow.className = 'se-mat-editor-row';
+      newRow.id = 'se-mat-row-' + i;
+      newRow.innerHTML =
+        '<input class="se-mat-input" data-i="' + i + '" data-f="item" placeholder="Item name" />' +
+        '<input class="se-mat-input" data-i="' + i + '" data-f="qty" type="number" min="0" step="0.5" value="1" />' +
+        '<input class="se-mat-input" data-i="' + i + '" data-f="unitCost" type="number" min="0" step="0.01" value="0" />' +
+        '<span class="se-mat-col-total" id="se-mat-tot-' + i + '">$0.00</span>' +
+        '<button class="se-mat-del-btn" data-del="' + i + '" title="Remove">&#128465;</button>';
+      rows.appendChild(newRow);
+      newRow.querySelector('[data-f="qty"]').addEventListener('input', function() { recalcRow(i); });
+      newRow.querySelector('[data-f="unitCost"]').addEventListener('input', function() { recalcRow(i); });
+      newRow.querySelector('[data-del]').addEventListener('click', function() { newRow.remove(); recalcSubtotal(); });
+      newRow.querySelector('[data-f="item"]').focus();
+    });
+  }
+}
+
+function seApplyMatEdits(body) {
+  var newMaterials = [];
+  body.querySelectorAll('.se-mat-editor-row[id^="se-mat-row-"]').forEach(function(row) {
+    var itemEl = row.querySelector('[data-f="item"]');
+    var qtyEl  = row.querySelector('[data-f="qty"]');
+    var unitEl = row.querySelector('[data-f="unitCost"]');
+    if (!itemEl || !qtyEl || !unitEl) return;
+    var item = itemEl.value.trim();
+    var qty  = parseFloat(qtyEl.value) || 0;
+    var unit = parseFloat(unitEl.value) || 0;
+    if (!item && qty === 0) return; // skip truly empty rows
+    newMaterials.push({ item: item || 'Unnamed item', qty: qty, unitCost: unit, totalCost: parseFloat((qty * unit).toFixed(2)) });
+  });
+  editableMaterials = newMaterials;
+  seCloseEditModal('seMatModal');
+  seRenderPreview(currentEstimate);
+}
+
+// ── Labor Editor ──
+function seOpenLaborModal() {
+  var body = document.getElementById('seLaborModalBody');
+  if (!body) return;
+  var lr = getLaborRate();
+  body.innerHTML =
+    '<div class="se-edit-field">' +
+      '<div class="se-edit-label">Estimated Hours</div>' +
+      '<input class="se-edit-input" id="seLaborHrsInput" type="number" min="0" step="0.5" value="' + editableLaborHours + '" />' +
+    '</div>' +
+    '<div class="se-edit-field">' +
+      '<div class="se-edit-label">Labor Rate (from company settings)</div>' +
+      '<input class="se-edit-input" id="seLaborRateInput" type="number" min="0" step="1" value="' + lr + '" />' +
+      '<div class="se-edit-hint">Changes here update this estimate only — to change permanently, use Company Settings.</div>' +
+    '</div>' +
+    '<div class="se-edit-live-total">' +
+      '<span class="se-edit-live-label">Labor Total</span>' +
+      '<span class="se-edit-live-value" id="seLaborLiveTotal">' + fmt(editableLaborHours * lr) + '</span>' +
+    '</div>';
+
+  function updateLaborLive() {
+    var hrs  = parseFloat(document.getElementById('seLaborHrsInput').value) || 0;
+    var rate = parseFloat(document.getElementById('seLaborRateInput').value) || 0;
+    var el = document.getElementById('seLaborLiveTotal');
+    if (el) el.textContent = fmt(hrs * rate);
+  }
+  body.querySelector('#seLaborHrsInput').addEventListener('input', updateLaborLive);
+  body.querySelector('#seLaborRateInput').addEventListener('input', updateLaborLive);
+
+  document.getElementById('seLaborSaveBtn').onclick = function() {
+    var hrs  = parseFloat(document.getElementById('seLaborHrsInput').value) || 0;
+    var rate = parseFloat(document.getElementById('seLaborRateInput').value) || 0;
+    editableLaborHours = hrs;
+    document.getElementById('laborRate').value = rate;
+    seCloseEditModal('seLaborModal');
+    seRenderPreview(currentEstimate);
+  };
+
+  document.getElementById('seLaborModal').classList.add('open');
+}
+
+// ── Pricing Editor ──
+function seOpenPricingModal() {
+  var body = document.getElementById('sePricingModalBody');
+  if (!body) return;
+  var t = seCalcPreviewTotals();
+  var currentMarkup = seEstimateOverrides.markup !== null ? seEstimateOverrides.markup : getMarkup();
+  var currentAdj    = seEstimateOverrides.flatAdjustment || 0;
+  var currentManual = seEstimateOverrides.manualTotal;
+
+  body.innerHTML =
+    '<div class="se-edit-field">' +
+      '<div class="se-edit-label">Markup Multiplier</div>' +
+      '<input class="se-edit-input" id="sePricingMarkupInput" type="number" min="1" step="0.01" value="' + currentMarkup + '" />' +
+      '<div class="se-edit-hint">e.g. 1.35 = 35% markup on materials</div>' +
+    '</div>' +
+    '<div class="se-edit-field">' +
+      '<div class="se-edit-label">Flat Adjustment ($)</div>' +
+      '<input class="se-edit-input" id="sePricingAdjInput" type="number" step="50" value="' + currentAdj + '" />' +
+      '<div class="se-edit-hint">Positive to add, negative to discount. e.g. -200 for $200 off.</div>' +
+    '</div>' +
+    '<div class="se-edit-live-total">' +
+      '<span class="se-edit-live-label">Calculated Total</span>' +
+      '<span class="se-edit-live-value" id="sePricingLiveTotal">' + fmt(t.total) + '</span>' +
+    '</div>' +
+    '<hr class="se-edit-divider" />' +
+    '<div class="se-edit-field">' +
+      '<div class="se-edit-label">Manual Total Override (optional)</div>' +
+      '<input class="se-edit-input" id="sePricingManualInput" type="number" min="0" step="50" placeholder="Leave blank to use calculated total" value="' + (currentManual !== null ? currentManual : '') + '" />' +
+      '<div class="se-edit-hint">If set, this exact amount overrides all calculations on the estimate.</div>' +
+    '</div>';
+
+  function updatePricingLive() {
+    var mu  = parseFloat(document.getElementById('sePricingMarkupInput').value) || getMarkup();
+    var adj = parseFloat(document.getElementById('sePricingAdjInput').value) || 0;
+    var raw = 0; editableMaterials.forEach(function(r) { raw += parseFloat(r.totalCost) || 0; });
+    var calc = roundTo10((raw * mu) + (editableLaborHours * getLaborRate()) + adj);
+    var manualVal = document.getElementById('sePricingManualInput').value.trim();
+    var total = manualVal !== '' ? (parseFloat(manualVal) || calc) : calc;
+    var el = document.getElementById('sePricingLiveTotal');
+    if (el) el.textContent = fmt(total);
+  }
+  body.querySelector('#sePricingMarkupInput').addEventListener('input', updatePricingLive);
+  body.querySelector('#sePricingAdjInput').addEventListener('input', updatePricingLive);
+  body.querySelector('#sePricingManualInput').addEventListener('input', updatePricingLive);
+
+  document.getElementById('sePricingSaveBtn').onclick = function() {
+    var mu  = parseFloat(document.getElementById('sePricingMarkupInput').value);
+    var adj = parseFloat(document.getElementById('sePricingAdjInput').value) || 0;
+    var manualStr = document.getElementById('sePricingManualInput').value.trim();
+    seEstimateOverrides.markup       = (!isNaN(mu) && mu >= 1) ? mu : null;
+    seEstimateOverrides.flatAdjustment = adj;
+    seEstimateOverrides.manualTotal  = manualStr !== '' ? (parseFloat(manualStr) || null) : null;
+    seCloseEditModal('sePricingModal');
+    seRenderPreview(currentEstimate);
+  };
+
+  document.getElementById('sePricingModal').classList.add('open');
+}
+
+// ── END INLINE EDIT MODALS ──
 
 function seInitCustomerPicker() {
   var btn = document.getElementById('se-link-customer-btn');
@@ -4266,6 +4745,51 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+
+<!-- MATERIAL EDITOR MODAL -->
+<div class="se-edit-overlay" id="seMatModal">
+  <div class="se-edit-modal">
+    <div class="se-edit-modal-header">
+      <span class="se-edit-modal-title">&#9998; Edit Materials</span>
+      <button class="se-edit-modal-close" onclick="seCloseEditModal('seMatModal')">&#10005;</button>
+    </div>
+    <div class="se-edit-modal-body" id="seMatModalBody"></div>
+    <div class="se-edit-modal-footer">
+      <button class="se-edit-save-btn" id="seMatSaveBtn">&#10003; Apply Changes</button>
+      <button class="se-edit-cancel-btn" onclick="seCloseEditModal('seMatModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- LABOR EDITOR MODAL -->
+<div class="se-edit-overlay" id="seLaborModal">
+  <div class="se-edit-modal">
+    <div class="se-edit-modal-header">
+      <span class="se-edit-modal-title">&#9998; Edit Labor</span>
+      <button class="se-edit-modal-close" onclick="seCloseEditModal('seLaborModal')">&#10005;</button>
+    </div>
+    <div class="se-edit-modal-body" id="seLaborModalBody"></div>
+    <div class="se-edit-modal-footer">
+      <button class="se-edit-save-btn" id="seLaborSaveBtn">&#10003; Apply Changes</button>
+      <button class="se-edit-cancel-btn" onclick="seCloseEditModal('seLaborModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING EDITOR MODAL -->
+<div class="se-edit-overlay" id="sePricingModal">
+  <div class="se-edit-modal">
+    <div class="se-edit-modal-header">
+      <span class="se-edit-modal-title">&#9998; Pricing Adjustments</span>
+      <button class="se-edit-modal-close" onclick="seCloseEditModal('sePricingModal')">&#10005;</button>
+    </div>
+    <div class="se-edit-modal-body" id="sePricingModalBody"></div>
+    <div class="se-edit-modal-footer">
+      <button class="se-edit-save-btn" id="sePricingSaveBtn">&#10003; Apply Changes</button>
+      <button class="se-edit-cancel-btn" onclick="seCloseEditModal('sePricingModal')">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- CAMERA MODAL -->
 <div class="se-camera-modal" id="seCameraModal">
