@@ -2206,6 +2206,55 @@ function seGetAnalysisMeta() {
       if (a.timing) chip('&#128336;', a.timing === 'now' ? 'Active now' : a.timing === 'intermittent' ? 'Intermittent' : 'Stopped');
       if (a.safety && a.safety !== 'none') chip('&#9888;', 'Safety: ' + a.safety.replace(/-/g,' '));
       break;
+    case 'subpanel':
+      if (a.panel_size && a.panel_size !== 'unsure') chip('&#9889;', a.panel_size.toUpperCase() + ' subpanel');
+      if (a.location) chip('&#128205;', a.location.replace(/-/g,' '));
+      if (a.distance && a.distance !== 'unsure') chip('&#128207;', a.distance + ' ft feeder run');
+      if (a.run_type && a.run_type !== 'unsure') chip('&#128337;', a.run_type.replace(/-/g,' ') + ' run');
+      break;
+    case 'service-upgrade':
+      if (a.current_size && a.current_size !== 'unsure') chip('&#9889;', a.current_size.toUpperCase() + ' existing');
+      if (a.upgrade_to && a.upgrade_to !== 'unsure') chip('&#8594;', a.upgrade_to.toUpperCase() + ' new service');
+      if (a.meter_location && a.meter_location !== 'unsure') chip('&#128337;', a.meter_location.replace(/-/g,' '));
+      if (a.panel_replace) chip('&#9646;', a.panel_replace === 'yes-replace' ? 'Panel replacement included' : 'Panel reused');
+      break;
+    case 'hot-tub':
+      if (a.circuit_size && a.circuit_size !== 'unsure') chip('&#9889;', a.circuit_size.toUpperCase() + ' circuit');
+      if (a.distance && a.distance !== 'unsure') chip('&#128207;', a.distance + ' ft from panel');
+      if (a.location) chip('&#128205;', a.location.replace(/-/g,' '));
+      if (a.routing && a.routing !== 'unsure') chip('&#128337;', a.routing + ' routing');
+      break;
+    case 'receptacle-add':
+      if (a.qty && a.qty !== 'unsure') chip('&#128268;', a.qty + ' receptacle' + (a.qty === '1' ? '' : 's'));
+      if (a.outlet_type) chip('&#9889;', a.outlet_type.replace(/-/g,' '));
+      if (a.wall_access && a.wall_access !== 'unsure') chip('&#127968;', a.wall_access.replace(/-/g,' '));
+      if (a.power_source && a.power_source !== 'unsure') chip('&#128268;', a.power_source === 'new-circuit' ? 'New circuit' : 'Tap existing');
+      break;
+    case 'kitchen-circuits':
+      if (a.scope && a.scope !== 'unsure') chip('&#128262;', a.scope.replace(/-/g,' '));
+      if (a.wall_access && a.wall_access !== 'unsure') chip('&#127968;', a.wall_access.replace(/-/g,' ') + ' walls');
+      if (a.panel_capacity && a.panel_capacity !== 'unsure') chip('&#9646;', a.panel_capacity === 'has-space' ? 'Panel has space' : 'Panel work needed');
+      break;
+    case 'fan-install':
+      if (a.existing_fixture) chip('&#128161;', a.existing_fixture.replace(/-/g,' '));
+      if (a.control && a.control !== 'unsure') chip('&#127996;', a.control.replace(/-/g,' '));
+      if (a.ceiling_height && a.ceiling_height !== 'unsure') chip('&#9699;', a.ceiling_height + ' ceiling');
+      break;
+    case 'service-call':
+      if (a.call_type) chip('&#128295;', a.call_type.replace(/-/g,' '));
+      if (a.estimated_time && a.estimated_time !== 'unknown') chip('&#128336;', a.estimated_time.replace(/-/g,' '));
+      if (a.travel) chip('&#128205;', a.travel + ' travel');
+      break;
+    case 'replace-fixture':
+      if (a.fixture_type) chip('&#128161;', a.fixture_type.replace(/-/g,' '));
+      if (a.qty) chip('&#128337;', a.qty + ' fixture' + (a.qty === '1' ? '' : 's'));
+      if (a.ceiling_height && a.ceiling_height !== 'unsure') chip('&#9699;', a.ceiling_height + ' ceiling');
+      break;
+    case 'replace-receptacle':
+      if (a.device_type) chip('&#128268;', a.device_type.replace(/-/g,' '));
+      if (a.qty) chip('&#128337;', a.qty + ' device' + (a.qty === '1' ? '' : 's'));
+      if (a.wiring_condition && a.wiring_condition !== 'unsure') chip('&#9889;', a.wiring_condition + ' wiring');
+      break;
     default:
       if (seCurrentJobType) chip('&#128295;', (SE_JOB_LABELS[seCurrentJobType] || seCurrentJobType));
   }
@@ -2228,6 +2277,39 @@ function seGetLaborNote() {
   if (seCurrentJobType === 'troubleshooting') {
     if (a.safety && a.safety !== 'none') return 'Safety issue noted — priority diagnostic response';
     if (a.timing === 'intermittent') return 'Intermittent fault — extended diagnostic time included';
+  }
+  if (seCurrentJobType === 'subpanel') {
+    if (a.run_type === 'underground') return 'Includes trenching, conduit, and backfill for underground feeder run';
+    if (a.run_type === 'overhead') return 'Includes overhead aerial run with proper clearance hardware';
+    if (a.location === 'detached-garage' || a.location === 'shop-barn') return 'Detached structure — separate grounding electrode system required';
+  }
+  if (seCurrentJobType === 'service-upgrade') {
+    if (a.meter_location === 'move-both') return 'Includes relocation of both meter base and main panel — highest complexity';
+    if (a.meter_location === 'move-meter' || a.meter_location === 'move-panel') return 'Includes equipment relocation and utility coordination';
+    if (a.panel_replace === 'yes-replace') return 'Includes full panel replacement and breaker transfer';
+  }
+  if (seCurrentJobType === 'hot-tub') {
+    if (a.routing === 'underground') return 'Includes underground trench, PVC conduit, and backfill';
+  }
+  if (seCurrentJobType === 'receptacle-add') {
+    if (a.wall_access === 'finished') return 'Finished walls — fish wire labor included per outlet';
+  }
+  if (seCurrentJobType === 'kitchen-circuits') {
+    if (a.wall_access === 'closed') return 'Closed walls — fish wire through finished drywall included';
+    if (a.wall_access === 'open') return 'Open walls — direct wire run during remodel';
+  }
+  if (seCurrentJobType === 'fan-install') {
+    if (a.ceiling_height === 'very-high') return 'Very high ceiling — scaffold or lift equipment required';
+    if (a.control === 'dual-control') return 'Includes 3-wire cable run for separate fan and light controls';
+    if (a.box_type === 'heavy-duty') return 'Includes structural fan brace installation';
+  }
+  if (seCurrentJobType === 'replace-fixture') {
+    if (a.ceiling_height === 'very-high') return 'Very high ceiling — scaffold or lift equipment required';
+    if (a.wiring_condition === 'old-wiring') return 'Old wiring — pigtailing and adapter work included';
+  }
+  if (seCurrentJobType === 'service-call') {
+    if (a.estimated_time === 'half-day') return 'Extended diagnostic — half-day labor block';
+    if (a.travel === 'extended') return 'Extended travel — 30+ miles billed at labor rate';
   }
   return '';
 }
