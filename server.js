@@ -246,6 +246,35 @@ Items I am looking to match (match as many as you can):
 ${(items||[]).map((item,i) => `${i+1}. ${item}`).join('\n')}
 
 Return ONLY the JSON array.`;
+    } else if (mode === 'scan') {
+      prompt = `You are a master electrician looking at a job site photo. Identify the most likely electrical job visible.
+
+Return ONLY a JSON object, no other text:
+{
+  "likelyJobType": "ev-charger|recessed-lighting|troubleshooting|subpanel|service-upgrade|hot-tub|receptacle-add|kitchen-circuits|fan-install|service-call|replace-fixture|replace-receptacle|unknown",
+  "confidence": "high|medium|low",
+  "detectedDetails": ["2 to 5 short clue strings from the image"],
+  "notes": "One sentence technical observation"
+}
+
+Job type guide:
+- ev-charger: EV charger unit, NEMA 14-50 outlet, garage with car, charging station
+- recessed-lighting: ceiling with existing cans, empty ceiling, open joists
+- troubleshooting: burn marks, tripped breakers, visible damage, scorching
+- subpanel: breaker panel in garage or outbuilding, feeder wires
+- service-upgrade: old meter base, service entrance, main panel, 100A service
+- hot-tub: hot tub, spa, GFCI disconnect box outdoors
+- receptacle-add: blank wall, missing outlets, open wall
+- kitchen-circuits: kitchen countertop, appliances, range, microwave
+- fan-install: ceiling fan, fan bracket, ceiling medallion
+- replace-fixture: old light fixture, damaged fixture, dated chandelier
+- replace-receptacle: damaged outlet, burned switch, broken cover plate
+- service-call: general electrical issue, panel, hard to classify
+- unknown: cannot determine job type from this image
+
+If the image does not show a job site or is unclear, use "unknown" with confidence "low".
+
+Return ONLY valid JSON.`;
     } else {
       prompt = `You are a master electrician reviewing a job site photo. Analyze this image and provide a brief technical assessment relevant to electrical estimating. Note: panel brand and condition, existing wiring type, service size if visible, potential code issues, access difficulty, and anything that would affect the estimate. Keep response under 100 words. Be specific and technical.`;
     }
@@ -284,6 +313,17 @@ Return ONLY the JSON array.`;
         console.error('Catalog parse error:', e.message);
       }
       res.json({ catalogPrices });
+    } else if (mode === 'scan') {
+      let scanResult = { likelyJobType: 'unknown', confidence: 'low', detectedDetails: [], notes: '' };
+      try {
+        const cleaned = text.replace(/```json|```/g, '').trim();
+        const match = cleaned.match(/\{[\s\S]*\}/);
+        if (match) scanResult = { ...scanResult, ...JSON.parse(match[0]) };
+      } catch(e) {
+        console.error('Scan parse error:', e.message);
+      }
+      console.log('Scan result:', JSON.stringify(scanResult));
+      res.json({ scanResult });
     } else {
       res.json({ analysis: text });
     }

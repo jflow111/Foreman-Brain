@@ -1198,6 +1198,142 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
 .pt-no-match-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .pt-no-match-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
 
+/* ── SCAN RESULT STATE ── */
+.se-scan-photo-thumb {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  display: block;
+}
+.se-scan-result-card {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.se-scan-result-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.se-scan-result-icon { font-size: 26px; flex-shrink: 0; }
+.se-scan-result-info { flex: 1; min-width: 0; }
+.se-scan-result-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.se-scan-result-job {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.se-scan-result-conf {
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 3px;
+}
+.se-scan-result-conf.high   { color: var(--green); }
+.se-scan-result-conf.medium { color: var(--gold); }
+.se-scan-result-conf.low    { color: var(--text-muted); }
+.se-scan-details {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.se-scan-details-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.se-scan-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.se-scan-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+}
+.se-scan-notes {
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  font-style: italic;
+}
+.se-scan-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+.se-scan-confirm-btn {
+  flex: 1;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #0a0d10;
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.se-scan-confirm-btn:hover { opacity: 0.85; }
+.se-scan-change-btn {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.se-scan-change-btn:hover { color: var(--text); border-color: var(--border2); }
+
+/* low-confidence layout */
+.se-scan-low-conf-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.se-scan-low-conf-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+.se-scan-low-conf-cta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
 /* ── CAMERA MODAL ── */
 .se-camera-modal {
   display: none;
@@ -1443,7 +1579,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
       <button class="pt-submit-btn" id="ptSubmitBtn" title="Price it">&#9658;</button>
       <button class="pt-icon-btn" id="ptMicBtn" title="Voice input (coming soon)" disabled>&#127908;</button>
-      <button class="pt-icon-btn" id="ptCameraBtn" title="Scan job site" onclick="seOpenCamera()">&#128247;</button>
+      <button class="pt-icon-btn" id="ptCameraBtn" title="Scan job site" onclick="seEntryMode='pt-scan';seOpenCamera()">&#128247;</button>
     </div>
     <div class="pt-chips">
       <button class="pt-chip" data-pt="add outlet">Add Outlet</button>
@@ -1558,6 +1694,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
       </div>
     </div>
     <div class="se-classic-link" onclick="showEstimatorPage()">&#8592; Back to Classic Estimate</div>
+  </div>
+
+  <!-- STATE: Scan Result -->
+  <div class="se-state" id="se-state-scanResult">
+    <button class="se-back-btn" onclick="seShowState('entry')">&#8592; Retake Photo</button>
+    <div id="se-scan-result-content"></div>
   </div>
 
   <!-- STATE: Job Type Select -->
@@ -2429,7 +2571,7 @@ var SE_JOB_LABELS = {
 };
 
 function seShowState(state) {
-  ['entry','jobtype','questions','preview'].forEach(function(s) {
+  ['entry','scanResult','jobtype','questions','preview'].forEach(function(s) {
     var el = document.getElementById('se-state-' + s);
     if (el) el.classList.remove('active');
   });
@@ -2508,16 +2650,113 @@ function seCaptureFromCamera() {
 
 function seProcessScanPhoto(fileOrBlob) {
   seShowAnalysisLoading();
+  var mediaType = fileOrBlob.type || 'image/jpeg';
   fileToBase64(fileOrBlob).then(function(b64) {
-    capturedPhotos = [{ base64: b64, type: fileOrBlob.type || 'image/jpeg' }];
-    setTimeout(function() {
-      seHideAnalysisLoading();
-      seShowState('jobtype');
-    }, 1500);
-  }).catch(function() {
+    capturedPhotos = [{ base64: b64, type: mediaType }];
+    return fetch(BACKEND + '/analyze-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: b64, mediaType: mediaType, mode: 'scan' })
+    });
+  }).then(function(res) { return res.json(); })
+  .then(function(data) {
     seHideAnalysisLoading();
-    seShowState('jobtype');
+    var result = data.scanResult || { likelyJobType: 'unknown', confidence: 'low', detectedDetails: [], notes: '' };
+    seShowScanResult(result);
+  }).catch(function(err) {
+    console.error('Scan analysis error:', err);
+    seHideAnalysisLoading();
+    seShowScanResult({ likelyJobType: 'unknown', confidence: 'low', detectedDetails: [], notes: '' });
   });
+}
+
+function seShowScanResult(result) {
+  var photo = capturedPhotos && capturedPhotos[0];
+  var isConfident = result.confidence === 'high' || result.confidence === 'medium';
+  var jobKey = result.likelyJobType && result.likelyJobType !== 'unknown' ? result.likelyJobType : null;
+  var jobLabel = jobKey ? (SE_JOB_LABELS[jobKey] || jobKey) : null;
+
+  var jobIcons = {
+    'ev-charger': '🔋', 'recessed-lighting': '🔦', 'troubleshooting': '🔍',
+    'subpanel': '⚡', 'service-upgrade': '🏗️', 'hot-tub': '🛁',
+    'receptacle-add': '🔌', 'kitchen-circuits': '🍳', 'fan-install': '🌀',
+    'service-call': '🔧', 'replace-fixture': '💡', 'replace-receptacle': '🔄'
+  };
+  var icon = jobKey ? (jobIcons[jobKey] || '⚡') : '📷';
+
+  var confText = result.confidence === 'high' ? '● High confidence' :
+                 result.confidence === 'medium' ? '● Good match' : '● Low confidence';
+
+  var html = '';
+
+  // Photo thumbnail
+  if (photo) {
+    html += '<img class="se-scan-photo-thumb" src="data:' + escHtml(photo.type) + ';base64,' + photo.base64 + '" alt="Captured photo" />';
+  }
+
+  if (isConfident && jobKey && jobLabel) {
+    // High/medium confidence — show detected job
+    html += '<div class="se-scan-result-card">' +
+      '<div class="se-scan-result-header">' +
+        '<span class="se-scan-result-icon">' + icon + '</span>' +
+        '<div class="se-scan-result-info">' +
+          '<div class="se-scan-result-label">Likely job detected</div>' +
+          '<div class="se-scan-result-job">' + escHtml(jobLabel) + '</div>' +
+          '<div class="se-scan-result-conf ' + escHtml(result.confidence) + '">' + confText + '</div>' +
+        '</div>' +
+      '</div>';
+
+    if (result.detectedDetails && result.detectedDetails.length) {
+      html += '<div class="se-scan-details">' +
+        '<div class="se-scan-details-label">Detected</div>' +
+        '<div class="se-scan-chips">' +
+        result.detectedDetails.map(function(d) {
+          return '<span class="se-scan-chip">' + escHtml(d) + '</span>';
+        }).join('') +
+        '</div></div>';
+    }
+
+    if (result.notes) {
+      html += '<div class="se-scan-notes">' + escHtml(result.notes) + '</div>';
+    }
+
+    html += '<div class="se-scan-actions">' +
+      '<button class="se-scan-confirm-btn" id="seScanConfirmBtn">&#9889; Confirm — Start Questions</button>' +
+      '<button class="se-scan-change-btn" onclick="seShowState(\'jobtype\')">Change Job Type</button>' +
+    '</div></div>';
+
+  } else {
+    // Low confidence — photo captured but couldn't identify
+    html += '<div class="se-scan-result-card">' +
+      '<div style="padding:16px 16px 12px;">' +
+        '<div class="se-scan-result-label" style="margin-bottom:8px;">📷 Photo captured</div>' +
+        '<div class="se-scan-low-conf-title">Couldn\'t fully identify the job</div>' +
+        '<div class="se-scan-low-conf-sub">The photo has been saved and will appear in your estimate. We just need a little more info.</div>' +
+        '<div class="se-scan-low-conf-cta">What are we doing here?</div>' +
+      '</div>' +
+      '<div class="se-scan-actions">' +
+        '<button class="se-scan-confirm-btn" onclick="seShowState(\'jobtype\')">Select Job Type &#8594;</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  var container = document.getElementById('se-scan-result-content');
+  if (container) container.innerHTML = html;
+
+  // Wire confirm button for detected job
+  var confirmBtn = document.getElementById('seScanConfirmBtn');
+  if (confirmBtn && jobKey) {
+    confirmBtn.addEventListener('click', function() { seSelectJobType(jobKey); });
+  }
+
+  // If opened from SE scan flow, navigate to Smart Estimate + scanResult state
+  // If opened from PT camera on Estimate page, stay on current page (photo stored only)
+  if (seEntryMode === 'scan') {
+    hideAllPages();
+    document.getElementById('smartEstimatePage').style.display = 'block';
+    setActiveNav('navSmartEstimate');
+    seShowState('scanResult');
+  }
 }
 
 function seShowAnalysisLoading() {
@@ -2532,7 +2771,13 @@ function seHideAnalysisLoading() {
 
 function seSkipPhoto() {
   seCloseCameraModal();
-  seShowState('jobtype');
+  // If camera was opened from SE flow, go to jobtype; otherwise just close
+  if (seEntryMode === 'scan') {
+    hideAllPages();
+    document.getElementById('smartEstimatePage').style.display = 'block';
+    setActiveNav('navSmartEstimate');
+    seShowState('jobtype');
+  }
 }
 
 function seSelectJobType(jobKey) {
