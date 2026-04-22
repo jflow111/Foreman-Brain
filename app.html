@@ -12,6 +12,7 @@
 <link rel="apple-touch-icon" href="icon-192.png" />
 <title>Foreman Brain — AI Electrical Estimating</title>
 <script src="question-schemas.js"></script>
+<script src="price-this-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (async function() {
@@ -888,6 +889,315 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
   .eso-job-title { font-size: 20px; }
 }
 
+/* ── PRICE THIS ── */
+.pt-section {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 16px 18px 14px;
+  margin-bottom: 16px;
+}
+.pt-header-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.pt-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+.pt-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.pt-lightning {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.pt-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.pt-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 14px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+.pt-input:focus { border-color: var(--gold); }
+.pt-input::placeholder { color: var(--text-muted); font-size: 13px; }
+.pt-submit-btn {
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #0a0d10;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+.pt-submit-btn:hover { opacity: 0.85; }
+.pt-icon-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: 15px;
+  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+.pt-icon-btn:hover { color: var(--text); border-color: var(--border2); }
+.pt-icon-btn:disabled { opacity: 0.35; cursor: default; }
+.pt-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pt-chip {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-dim);
+  font-family: var(--body);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.pt-chip:hover { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-glow2); }
+
+/* Follow-up card */
+.pt-followup-card {
+  margin-top: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  animation: fade-in 0.18s ease;
+}
+.pt-followup-progress {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.pt-followup-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.pt-followup-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pt-followup-opt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 13px;
+  padding: 9px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.pt-followup-opt:hover { border-color: var(--gold); background: var(--gold-glow2); }
+
+/* Result card */
+.pt-result-card {
+  margin-top: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  overflow: hidden;
+  animation: fade-in 0.2s ease;
+}
+.pt-result-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.pt-result-icon { font-size: 22px; flex-shrink: 0; }
+.pt-result-job-info { flex: 1; min-width: 0; }
+.pt-result-label { font-size: 14px; font-weight: 700; color: var(--text); }
+.pt-result-confidence {
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+.pt-result-confidence.high  { color: var(--green); }
+.pt-result-confidence.medium{ color: var(--gold);  }
+.pt-result-confidence.low   { color: var(--text-muted); }
+.pt-reset-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.pt-reset-btn:hover { color: var(--text); }
+.pt-price-band {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--gold-glow2);
+}
+.pt-price-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.pt-price-range {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+.pt-price-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.pt-mat-preview {
+  padding: 12px 14px 0;
+}
+.pt-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.pt-mat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.pt-mat-list li {
+  font-size: 12px;
+  color: var(--text-dim);
+  padding-left: 14px;
+  position: relative;
+}
+.pt-mat-list li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--text-muted);
+}
+.pt-scope-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 10px 14px;
+  line-height: 1.5;
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+}
+.pt-assumptions {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 14px 10px;
+}
+.pt-assumption {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.pt-result-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+}
+.pt-btn-primary {
+  flex: 1;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #0a0d10;
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.pt-btn-primary:hover { opacity: 0.85; }
+.pt-btn-ghost {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.pt-btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+
+/* No match state */
+.pt-no-match {
+  margin-top: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 14px;
+  text-align: center;
+  animation: fade-in 0.18s ease;
+}
+.pt-no-match-icon { font-size: 22px; margin-bottom: 6px; }
+.pt-no-match-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.pt-no-match-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+
 /* ── CAMERA MODAL ── */
 .se-camera-modal {
   display: none;
@@ -1116,6 +1426,36 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); min-
       </div>
     </div>
     <div style="font-size:11px;color:var(--text-muted);margin-top:10px;">These appear automatically at the top of every proposal you generate.</div>
+  </div>
+
+  <!-- PRICE THIS — primary quick entry -->
+  <div class="pt-section" id="priceThisSection">
+    <div class="pt-header-row">
+      <span class="pt-lightning">&#9889;</span>
+      <div>
+        <div class="pt-title">Price This Job</div>
+        <div class="pt-subtitle">Instant rough estimate — no forms required</div>
+      </div>
+    </div>
+    <div class="pt-input-row">
+      <input class="pt-input" id="ptInput" type="text"
+             placeholder="Try: EV charger, add outlet, 6 recessed lights, subpanel..."
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      <button class="pt-submit-btn" id="ptSubmitBtn" title="Price it">&#9658;</button>
+      <button class="pt-icon-btn" id="ptMicBtn" title="Voice input (coming soon)" disabled>&#127908;</button>
+      <button class="pt-icon-btn" id="ptCameraBtn" title="Scan job site" onclick="seOpenCamera()">&#128247;</button>
+    </div>
+    <div class="pt-chips">
+      <button class="pt-chip" data-pt="add outlet">Add Outlet</button>
+      <button class="pt-chip" data-pt="EV charger">EV Charger</button>
+      <button class="pt-chip" data-pt="6 recessed lights">Recessed Lights</button>
+      <button class="pt-chip" data-pt="subpanel in garage">Subpanel</button>
+      <button class="pt-chip" data-pt="troubleshoot no power">Troubleshoot</button>
+      <button class="pt-chip" data-pt="dedicated circuit">Dedicated Circuit</button>
+      <button class="pt-chip" data-pt="replace fan">Replace Fan</button>
+      <button class="pt-chip" data-pt="service upgrade">Service Upgrade</button>
+    </div>
+    <div id="ptResultArea"></div>
   </div>
 
   <div class="se-entry-banner" onclick="showSmartEstimatePage()">
@@ -2800,6 +3140,318 @@ async function seSearchCustomers(query) {
   });
 }
 
+// ── PRICE THIS ENGINE ──
+
+var ptCurrentJob = null;
+var ptParsedData = null;
+var ptFollowUpAnswers = {};
+var ptCurrentFollowUpIndex = 0;
+var ptPendingFollowUps = [];
+
+function ptParse(text) {
+  if (!text || !text.trim()) return null;
+  var lower = text.toLowerCase().trim();
+  var jobs = (window.PT_CONFIG && window.PT_CONFIG.jobs) ? window.PT_CONFIG.jobs : [];
+
+  // Extract quantity (number before a job noun)
+  var qtyMatch = lower.match(/(\d+)\s*(?:outlet|light|can|fan|circuit|charger|fixture|receptacle)/);
+  var parsedQty = qtyMatch ? parseInt(qtyMatch[1]) : null;
+
+  // Extract amperage
+  var ampMatch = lower.match(/(\d+)\s*a(?:mp)?/);
+  var parsedAmp = ampMatch ? parseInt(ampMatch[1]) : null;
+
+  var scores = [];
+  jobs.forEach(function(job) {
+    var score = 0;
+    job.patterns.forEach(function(p) { if (lower.includes(p.toLowerCase())) score += 10; });
+    job.keywords.forEach(function(kw) { if (lower.includes(kw.toLowerCase())) score += 5; });
+    job.triggerWords.forEach(function(tw) { if (lower.includes(tw.toLowerCase())) score += 2; });
+    if (score > 0) scores.push({ job: job, score: score });
+  });
+
+  if (!scores.length) return null;
+  scores.sort(function(a, b) { return b.score - a.score; });
+  var best = scores[0];
+
+  return {
+    job: best.job,
+    confidence: best.score >= 10 ? 'high' : best.score >= 5 ? 'medium' : 'low',
+    qty: parsedQty,
+    amp: parsedAmp,
+    rawText: text
+  };
+}
+
+function ptCalculatePrice(job, answers) {
+  var lr = getLaborRate();
+  var mu = getMarkup();
+  var qty = 1;
+
+  // Look for qty from answers
+  if (answers) {
+    job.followUps.forEach(function(fq) {
+      if (!fq.isQty) return;
+      var ans = answers[fq.id];
+      if (!ans) return;
+      var opt = fq.options.find(function(o) { return o.value === ans; });
+      if (opt && opt.qty) qty = opt.qty;
+    });
+  }
+
+  // Use quantityDefault if set and no answer
+  if (qty === 1 && job.quantityDefault) qty = job.quantityDefault;
+
+  // Apply modifiers
+  var laborMod = 1.0;
+  var matMod = 1.0;
+  var matAdd = 0;
+
+  if (answers) {
+    job.followUps.forEach(function(fq) {
+      var ans = answers[fq.id];
+      if (!ans) return;
+      var opt = fq.options.find(function(o) { return o.value === ans; });
+      if (!opt) return;
+      if (opt.laborMod != null) laborMod *= opt.laborMod;
+      if (opt.matMod != null) matMod *= opt.matMod;
+      if (opt.matAdd) matAdd += opt.matAdd;
+    });
+  }
+
+  var laborHrsMin = job.baseLaborHrs[0] * laborMod * qty;
+  var laborHrsMax = job.baseLaborHrs[1] * laborMod * qty;
+  var matMin = (job.baseMaterialCost[0] * matMod + matAdd) * qty;
+  var matMax = (job.baseMaterialCost[1] * matMod + matAdd) * qty;
+
+  var rawMin = (laborHrsMin * lr) + (matMin * mu);
+  var rawMax = (laborHrsMax * lr) + (matMax * mu);
+  var totalMin = Math.round(Math.max(job.minCharge, rawMin) / 50) * 50;
+  var totalMax = Math.round(Math.max(job.minCharge, rawMax) / 50) * 50;
+  if (totalMax <= totalMin) totalMax = totalMin + 150;
+
+  return {
+    laborHrsMin: Math.round(laborHrsMin * 10) / 10,
+    laborHrsMax: Math.round(laborHrsMax * 10) / 10,
+    matMin: Math.round(matMin),
+    matMax: Math.round(matMax),
+    totalMin: totalMin,
+    totalMax: totalMax,
+    qty: qty
+  };
+}
+
+function ptSubmit(text) {
+  if (!text) {
+    var inp = document.getElementById('ptInput');
+    text = inp ? inp.value.trim() : '';
+  }
+  if (!text) return;
+
+  var parsed = ptParse(text);
+  if (!parsed) { ptShowNoMatch(); return; }
+
+  ptCurrentJob = parsed.job;
+  ptParsedData = parsed;
+  ptFollowUpAnswers = {};
+  ptCurrentFollowUpIndex = 0;
+  ptPendingFollowUps = [];
+
+  parsed.job.followUps.forEach(function(fq) {
+    if (fq.isQty && parsed.qty) { ptFollowUpAnswers[fq.id] = String(parsed.qty); return; }
+    if (fq.id === 'amperage' && parsed.amp) { ptFollowUpAnswers[fq.id] = parsed.amp + 'a'; return; }
+    ptPendingFollowUps.push(fq);
+  });
+
+  if (ptPendingFollowUps.length > 0) {
+    ptShowFollowUps();
+  } else {
+    ptShowResult();
+  }
+}
+
+function ptShowFollowUps() {
+  var fq = ptPendingFollowUps[ptCurrentFollowUpIndex];
+  if (!fq) { ptShowResult(); return; }
+
+  var current = ptCurrentFollowUpIndex + 1;
+  var total = ptPendingFollowUps.length;
+
+  var html = '<div class="pt-followup-card">' +
+    '<div class="pt-followup-progress">Question ' + current + ' of ' + total + '</div>' +
+    '<div class="pt-followup-label">' + escHtml(fq.label) + '</div>' +
+    '<div class="pt-followup-options">';
+  fq.options.forEach(function(opt) {
+    html += '<button class="pt-followup-opt" data-fq-id="' + escHtml(fq.id) + '" data-fq-val="' + escHtml(opt.value) + '">' + escHtml(opt.label) + '</button>';
+  });
+  html += '</div></div>';
+
+  var area = document.getElementById('ptResultArea');
+  if (!area) return;
+  area.innerHTML = html;
+  area.querySelectorAll('.pt-followup-opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      ptFollowUpAnswers[this.getAttribute('data-fq-id')] = this.getAttribute('data-fq-val');
+      ptCurrentFollowUpIndex++;
+      if (ptCurrentFollowUpIndex < ptPendingFollowUps.length) {
+        ptShowFollowUps();
+      } else {
+        ptShowResult();
+      }
+    });
+  });
+}
+
+function ptShowResult() {
+  var job = ptCurrentJob;
+  var pricing = ptCalculatePrice(job, ptFollowUpAnswers);
+  var locationAns = ptFollowUpAnswers.location || 'specified location';
+  var scopeText = job.scopeTemplate
+    .replace('{qty}', pricing.qty)
+    .replace('{location}', locationAns)
+    .replace('{type}', ptFollowUpAnswers.type || 'standard');
+
+  var confLabel = ptParsedData.confidence === 'high' ? '&#9679; High confidence' :
+                  ptParsedData.confidence === 'medium' ? '&#9679; Good match' : '&#9679; Rough match';
+
+  var html = '<div class="pt-result-card">' +
+    '<div class="pt-result-header">' +
+      '<span class="pt-result-icon">' + escHtml(job.icon) + '</span>' +
+      '<div class="pt-result-job-info">' +
+        '<div class="pt-result-label">' + escHtml(job.label) + '</div>' +
+        '<div class="pt-result-confidence ' + escHtml(ptParsedData.confidence) + '">' + confLabel + '</div>' +
+      '</div>' +
+      '<button class="pt-reset-btn" id="ptResetBtn">&#10005;</button>' +
+    '</div>' +
+    '<div class="pt-price-band">' +
+      '<div class="pt-price-label">Rough Estimate</div>' +
+      '<div class="pt-price-range">$' + pricing.totalMin.toLocaleString() + ' &ndash; $' + pricing.totalMax.toLocaleString() + '</div>' +
+      '<div class="pt-price-sub">Labor: ' + pricing.laborHrsMin + '&ndash;' + pricing.laborHrsMax + ' hrs &nbsp;&middot;&nbsp; Materials: ~$' + pricing.matMin + '&ndash;$' + pricing.matMax + '</div>' +
+    '</div>' +
+    '<div class="pt-mat-preview">' +
+      '<div class="pt-section-label">Materials Preview</div>' +
+      '<ul class="pt-mat-list">' +
+        job.materialPreview.map(function(m) { return '<li>' + escHtml(m) + '</li>'; }).join('') +
+      '</ul>' +
+    '</div>' +
+    '<div class="pt-scope-text">' + escHtml(scopeText) + '</div>' +
+    '<div class="pt-assumptions">' +
+      job.assumptions.map(function(a) { return '<span class="pt-assumption">&#10003; ' + escHtml(a) + '</span>'; }).join('') +
+    '</div>' +
+    '<div class="pt-result-actions">' +
+      '<button class="pt-btn-primary" id="ptRefineBtn">&#9889; Refine Estimate</button>' +
+      '<button class="pt-btn-ghost" id="ptSaveBtn">&#128190; Save Quote</button>' +
+    '</div>' +
+  '</div>';
+
+  var area = document.getElementById('ptResultArea');
+  if (!area) return;
+  area.innerHTML = html;
+  area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  document.getElementById('ptResetBtn').addEventListener('click', ptReset);
+  document.getElementById('ptRefineBtn').addEventListener('click', ptRefineEstimate);
+  document.getElementById('ptSaveBtn').addEventListener('click', ptSaveRoughQuote);
+}
+
+function ptShowNoMatch() {
+  var area = document.getElementById('ptResultArea');
+  if (!area) return;
+  area.innerHTML = '<div class="pt-no-match">' +
+    '<div class="pt-no-match-icon">&#128269;</div>' +
+    '<div class="pt-no-match-title">Couldn\'t identify that job type</div>' +
+    '<div class="pt-no-match-sub">Try one of the chips above, or open Smart Estimate for full control</div>' +
+    '<button class="pt-btn-ghost" onclick="showSmartEstimatePage()" style="margin:0 auto;display:block;">Open Smart Estimate &#8594;</button>' +
+  '</div>';
+}
+
+function ptRefineEstimate() {
+  if (!ptCurrentJob) return;
+  var seKey = ptCurrentJob.seKey;
+  showSmartEstimatePage();
+  // Set globals AFTER showSmartEstimatePage so seShowState('entry') doesn't wipe them
+  seCurrentJobType = seKey;
+  // Map Price This answers into SE answers where keys overlap
+  seAnswers = {};
+  Object.keys(ptFollowUpAnswers).forEach(function(k) { seAnswers[k] = ptFollowUpAnswers[k]; });
+  if (ptParsedData && ptParsedData.qty) seAnswers._ptQty = ptParsedData.qty;
+  // Jump straight into questions
+  seSelectJobType(seKey);
+}
+
+function ptSaveRoughQuote() {
+  if (!ptCurrentJob) return;
+  var pricing = ptCalculatePrice(ptCurrentJob, ptFollowUpAnswers);
+  var job = ptCurrentJob;
+  var roughJob = {
+    id: Date.now(),
+    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+    input: ptParsedData ? ptParsedData.rawText : job.label,
+    customerName: (document.getElementById('customerName') || {}).value || '',
+    customerAddress: (document.getElementById('customerAddress') || {}).value || '',
+    jobType: job.label,
+    total: pricing.totalMax,
+    laborHours: pricing.laborHrsMax,
+    laborRate: getLaborRate(),
+    markup: getMarkup(),
+    isRoughQuote: true,
+    status: 'pending',
+    estimate: {
+      customerProposal: 'Rough quote: $' + pricing.totalMin.toLocaleString() + '–$' + pricing.totalMax.toLocaleString() + ' for ' + job.label + '. ' + job.scopeTemplate.replace('{qty}', pricing.qty).replace('{location}', 'job site').replace('{type}', 'standard'),
+      projectSummary: { jobType: job.label }
+    },
+    materials: []
+  };
+  var jobs = loadHistory();
+  jobs.unshift(roughJob);
+  if (jobs.length > 100) jobs = jobs.slice(0, 100);
+  saveHistory(jobs);
+  updateHistoryBadge();
+  renderRecentJobs();
+  showToast();
+  var btn = document.getElementById('ptSaveBtn');
+  if (btn) { btn.textContent = '&#10003; Saved!'; btn.disabled = true; }
+}
+
+function ptReset() {
+  ptCurrentJob = null;
+  ptParsedData = null;
+  ptFollowUpAnswers = {};
+  ptCurrentFollowUpIndex = 0;
+  ptPendingFollowUps = [];
+  var area = document.getElementById('ptResultArea');
+  if (area) area.innerHTML = '';
+  var input = document.getElementById('ptInput');
+  if (input) { input.value = ''; input.focus(); }
+}
+
+function ptInitListeners() {
+  var input = document.getElementById('ptInput');
+  if (input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); ptSubmit(this.value.trim()); }
+    });
+  }
+  var submitBtn = document.getElementById('ptSubmitBtn');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', function() {
+      var inp = document.getElementById('ptInput');
+      ptSubmit(inp ? inp.value.trim() : '');
+    });
+  }
+  document.querySelectorAll('.pt-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      var val = this.getAttribute('data-pt');
+      var inp = document.getElementById('ptInput');
+      if (inp) inp.value = val;
+      ptSubmit(val);
+    });
+  });
+}
+
+// ── END PRICE THIS ──
+
 function seInitListeners() {
   var scanBtn = document.getElementById('se-btn-scan');
   var quickBtn = document.getElementById('se-btn-quick');
@@ -2898,6 +3550,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('navCustomers').addEventListener('click', showCustomersPage);
   document.getElementById('navInvoices').addEventListener('click', showInvoicesPage);
   seInitListeners();
+  ptInitListeners();
 
   document.getElementById('clearHistoryBtn').addEventListener('click', function() {
     if (confirm('Delete all saved jobs? This cannot be undone.')) { localStorage.removeItem(HISTORY_KEY); renderHistoryList(); updateHistoryBadge(); }
