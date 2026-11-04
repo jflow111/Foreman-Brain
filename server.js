@@ -1,6 +1,19 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6';
+
+function sendAIError(res, response, data) {
+  if (response.ok && !data.error) return false;
+  console.error('AI request failed:', response.status, data.error?.type);
+  const message = response.status === 404
+    ? 'The estimating AI model is unavailable. Please contact support.'
+    : response.status === 429
+      ? 'The estimating AI is busy. Please try again shortly.'
+      : 'The estimating AI could not complete this request. Please try again later.';
+  res.status(response.status === 429 ? 429 : 502).json({ error: { message } });
+  return true;
+}
 
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -127,7 +140,7 @@ app.post('/jobs', async (req, res) => {
 // ─── AI ESTIMATE ───
 app.post('/estimate', async (req, res) => {
   try {
-    const { system, messages, model, max_tokens } = req.body;
+    const { system, messages, max_tokens } = req.body;
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -136,13 +149,14 @@ app.post('/estimate', async (req, res) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: model || 'claude-sonnet-4-20250514',
+        model: ANTHROPIC_MODEL,
         max_tokens: max_tokens || 4000,
         system: system,
         messages: messages
       })
     });
     const data = await response.json();
+    if (sendAIError(res, response, data)) return;
     console.log('HTTP status:', response.status);
     console.log('API error:', JSON.stringify(data.error));
     console.log('Stop reason:', data.stop_reason);
@@ -150,6 +164,12 @@ app.post('/estimate', async (req, res) => {
     console.log('Content types:', data.content ? data.content.map(b=>b.type).join(',') : 'none');
     console.log('Usage:', JSON.stringify(data.usage));
     const finalText = (data.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('');
+    if (!finalText.trim()) {
+      return res.status(502).json({ error: { message: 'The estimating AI returned no estimate. Please try again.' } });
+    }
+    if (data.stop_reason === 'max_tokens') {
+      return res.status(502).json({ error: { message: 'The estimate response was incomplete. Try a smaller job scope.' } });
+    }
     console.log('Estimate length:', finalText.length);
     console.log('First 100 chars:', finalText.substring(0, 100));
     res.json({ ...data, content: [{ type: 'text', text: finalText }] });
@@ -287,7 +307,7 @@ Return ONLY valid JSON.`;
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: ANTHROPIC_MODEL,
         max_tokens: 2000,
         messages: [{
           role: 'user',
@@ -300,6 +320,7 @@ Return ONLY valid JSON.`;
     });
 
     const data = await response.json();
+    if (sendAIError(res, response, data)) return;
     const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('');
     console.log('Photo analysis mode:', mode, '| Length:', text.length);
 

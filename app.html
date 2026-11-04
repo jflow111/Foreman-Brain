@@ -2427,9 +2427,12 @@ async function runEstimate() {
       : input;
     var response = await fetch(BACKEND + '/estimate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: msgContent }] })
+      body: JSON.stringify({ max_tokens: 4000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: msgContent }] })
     });
     var data = await response.json();
+    if (!response.ok || data.error) {
+      throw new Error((data.error && (data.error.message || data.error)) || 'The estimating service is unavailable. Please try again later.');
+    }
     var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
     var cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
     var parsed;
@@ -3162,9 +3165,12 @@ async function seGenerateEstimate() {
   try {
     var response = await fetch(BACKEND + '/estimate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ max_tokens: 4000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: prompt }] })
     });
     var data = await response.json();
+    if (!response.ok || data.error) {
+      throw new Error((data.error && (data.error.message || data.error)) || 'The estimating service is unavailable. Please try again later.');
+    }
     var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
     var cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
     var parsed;
@@ -4565,9 +4571,12 @@ async function runChangeOrder() {
   try {
     var response = await fetch(BACKEND + '/estimate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 3000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: changeOrderPrompt }] })
+      body: JSON.stringify({ max_tokens: 3000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: changeOrderPrompt }] })
     });
     var data = await response.json();
+    if (!response.ok || data.error) {
+      throw new Error((data.error && (data.error.message || data.error)) || 'The estimating service is unavailable. Please try again later.');
+    }
     var raw = (data.content || []).map(function(b) { return b.text || ''; }).join('');
     var cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
     var parsed;
